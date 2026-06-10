@@ -1,2 +1,2 @@
-# RadDex
+# RaDex
 Data Exchange Layer for RCT
