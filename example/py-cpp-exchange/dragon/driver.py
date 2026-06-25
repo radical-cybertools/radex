@@ -1,0 +1,84 @@
+import pathlib
+import os
+import time
+import textwrap
+
+import numpy as np
+
+import dragon
+from dragon.data.ddict import DDict
+from dragon.native.process import ProcessTemplate, Process
+
+from raddex import DragonClient as Client
+
+HERE = pathlib.Path(__file__).parent
+
+def main() -> int:
+    dd = DDict(managers_per_node=1, n_nodes=1, trace=False)
+    serial_dd = dd.serialize()
+    app_tmpl = ProcessTemplate(
+            target=os.fspath(HERE / "app"),
+            env={"SERIALIZED_DDICT": serial_dd}
+            )
+    app = Process.from_template(app_tmpl)
+
+    print(f"Driver: Making client")
+    client = Client(serial_dd, 5)
+
+    print(f"Driver: Starting app")
+    app.start()
+    try:
+        time.sleep(3)
+        print("Driver: Setting Int")
+        client.put_scalar("py-int", 123)
+
+        time.sleep(3)
+        print("Driver: Setting Double")
+        client.put_scalar("py-double", 9.87)
+
+        time.sleep(3)
+        print("Driver: Setting Int Tensor")
+        client.put_tensor("py-int-tensor", np.arange(4, dtype=np.int32))
+
+        time.sleep(3)
+        print("Driver: Setting Float Tensor")
+        client.put_tensor("py-float-tensor",
+                          np.arange(12, dtype=np.float64).reshape((6, 2)))
+
+        print(f"Driver: Looking for keys")
+        poll_for_scalar_key(client, np.float64, "cpp-double")
+        poll_for_scalar_key(client, np.int32, "cpp-int")
+        poll_for_tensor_key(client, "cpp-double-tensor")
+        poll_for_tensor_key(client, "cpp-long-tensor")
+    finally:
+        app.join()
+
+    return 0
+
+def poll_for_key(client, key, max_attempts=10):
+    while not client.contains(key):
+        print(f"Driver: Waiting for key `{key}`")
+        if max_attempts == 0:
+            raise RuntimeError(f"Too many attempts polling for `{key}`")
+        max_attempts -= 1
+        time.sleep(1)
+
+def poll_for_scalar_key(client, dtype, key):
+    poll_for_key(client, key)
+    scalar = client.get_scalar(dtype, key)
+    print(f"Driver: Got scalar: {scalar}")
+
+def poll_for_tensor_key(client, key):
+    poll_for_key(client, key)
+    tensor = client.get_tensor(key)
+    print(textwrap.dedent(f"""\
+        Driver: Got tensor:
+                |- {tensor.dtype}
+                |- Dims: {tensor.shape}
+                \\- Data:
+        {tensor.ravel()}
+        """))
+    print("Driver: Got tensor!!")
+
+if __name__ == "__main__":
+    raise SystemExit(main())

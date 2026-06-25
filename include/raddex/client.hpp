@@ -7,33 +7,136 @@
 #include <numeric>
 #include <string>
 #include <type_traits>
-#include <variant>
 #include <vector>
 
 namespace raddex {
 
+namespace detail {
+using MetaInt = std::uint64_t;
+}
+
 namespace data {
 
-enum DType {
-    INT32,
-    INT64,
-    FLOAT64,
+template <typename... Ts> struct TypeSet {};
+
+using ValidTypes = TypeSet<std::int32_t, std::int64_t, double>;
+
+template <typename T, typename Set, raddex::detail::MetaInt i = 0>
+struct get_index {};
+
+template <typename T, typename U, typename... Rest, raddex::detail::MetaInt i>
+struct get_index<T, TypeSet<U, Rest...>, i>
+    : std::conditional<std::is_same<T, U>::value,
+                       std::integral_constant<raddex::detail::MetaInt, i>,
+                       get_index<T, TypeSet<Rest...>, i + 1>>::type {};
+
+template <typename T> struct enumerate_type : get_index<T, ValidTypes> {};
+
+template <typename, typename = void>
+struct has_value_member : std::false_type {};
+
+template <typename T>
+struct has_value_member<T, std::void_t<decltype(&T::value)>> : std::true_type {
 };
 
-using _DType = std::variant<std::int32_t, std::int64_t, double>;
-
-template <DType dtype> struct FromDType {
-    using type = std::remove_reference_t<decltype(std::get<dtype>(
-        std::declval<_DType>()))>;
+template <typename T>
+struct is_supported_type
+    : std::integral_constant<bool, has_value_member<enumerate_type<T>>::value> {
 };
+
+// FIXME: I would really prefer to see this created dynamically when adding to
+//        the `ValidTypes` set, or vice-versa.
+enum class DType : raddex::detail::MetaInt {
+    INT32 = enumerate_type<std::int32_t>::value,
+    INT64 = enumerate_type<std::int64_t>::value,
+    FLOAT64 = enumerate_type<double>::value
+};
+
+template <typename T>
+typename std::enable_if<is_supported_type<T>::value, DType>::type
+encode_type() {
+    return static_cast<DType>(enumerate_type<T>::value);
+}
 
 } // namespace data
 
 namespace detail {
 
-using MetaInt = std::uint64_t;
+class MetaData {
+    std::unique_ptr<MetaInt[]> buffer;
 
-}
+  public:
+    template <typename T>
+    static MetaData make_tensor(const MetaInt *dims, MetaInt n_dims) {
+        return make_buffer(raddex::data::encode_type<T>(), dims, n_dims);
+    }
+
+    MetaData(std::unique_ptr<MetaInt[]> ptr) : buffer{std::move(ptr)} {}
+
+    MetaInt n_dims() const { return buffer[Index::N_DIMS]; }
+    MetaInt *dims_ptr() const { return dims_begin(); }
+    MetaInt n_elements() const {
+        return std::accumulate(dims_begin(), dims_end(), 1,
+                               std::multiplies<detail::MetaInt>());
+    }
+    const MetaInt *get_buffer() const { return buffer.get(); }
+    MetaInt size() const {
+        return (n_dims() + Index::END_OF_HEADER) * sizeof(buffer[0]);
+    }
+    raddex::data::DType type() const {
+        return static_cast<raddex::data::DType>(buffer[Index::TYPE]);
+    }
+
+  private:
+    static MetaData make_buffer(const raddex::data::DType dtype,
+                                const MetaInt *dims, MetaInt n_dims) {
+        auto buf = std::make_unique<MetaInt[]>(n_dims + Index::END_OF_HEADER);
+        buf[Index::TYPE] = static_cast<MetaInt>(dtype);
+        buf[Index::N_DIMS] = n_dims;
+        std::memcpy(buf.get() + Index::END_OF_HEADER, dims,
+                    n_dims * sizeof(*dims));
+        return {std::move(buf)};
+    }
+    MetaInt *dims_begin() const { return buffer.get() + Index::END_OF_HEADER; }
+    MetaInt *dims_end() const { return dims_begin() + n_dims(); }
+
+    struct Index {
+        enum {
+            TYPE = 0,
+            N_DIMS,
+            END_OF_HEADER,
+        };
+    };
+};
+
+class ItemInfo {
+    MetaData _metadata;
+    std::unique_ptr<std::uint8_t[]> _data;
+
+  public:
+    ItemInfo(MetaData metadata, std::unique_ptr<std::uint8_t[]> data)
+        : _metadata{std::move(metadata)}, _data{std::move(data)} {};
+    const MetaData &metadata() const { return _metadata; }
+    const void *data() const { return _data.get(); }
+};
+
+} // namespace detail
+
+template <typename T> struct TensorInfo {
+    std::vector<detail::MetaInt> dims;
+    std::vector<T> data;
+
+  public:
+    TensorInfo(const T *data, detail::MetaInt n_elements,
+               const detail::MetaInt *dims, detail::MetaInt n_dims)
+        : data{data, data + n_elements}, dims{dims, dims + n_dims} {}
+
+    TensorInfo(const TensorInfo &other) = delete;
+    TensorInfo(TensorInfo &&other) = default;
+    TensorInfo &operator=(const TensorInfo &other) = delete;
+    TensorInfo &operator=(TensorInfo &&other) = default;
+    ~TensorInfo() = default;
+};
 
 class IClient {
   public:
@@ -47,68 +150,74 @@ class IClient {
 
     // <<< End Virtual Methods <<<
 
-    template <data::DType dtype>
-    void put_scalar(const std::string &key,
-                    const typename data::FromDType<dtype>::type &value) {
-        put_bytes(key, &value, sizeof(typename data::FromDType<dtype>::type));
+    template <typename T>
+    typename std::enable_if<data::is_supported_type<T>::value, void>::type
+    put_scalar(const std::string &key, const T &value) {
+        put_bytes(key, &value, sizeof(T));
     }
 
-    template <data::DType dtype>
-    typename data::FromDType<dtype>::type get_scalar(const std::string &key) {
-        using T = typename data::FromDType<dtype>::type;
+    template <typename T>
+    typename std::enable_if<data::is_supported_type<T>::value, T>::type
+    get_scalar(const std::string &key) {
         auto bytes = get_bytes(key);
         T converted;
         std::memcpy(&converted, bytes.get(), sizeof(T));
         return converted;
     }
 
-    template <data::DType dtype>
-    void
+    template <typename T>
+    typename std::enable_if<data::is_supported_type<T>::value, void>::type
     put_tensor(const std::string &key, const std::vector<detail::MetaInt> &dims,
-               const std::vector<typename data::FromDType<dtype>::type> &data) {
-        using T = typename data::FromDType<dtype>::type;
-        std::string metakey = build_meta_key(key);
-        detail::MetaInt ndims = dims.size();
-
-        std::vector<detail::MetaInt> metadata;
-        metadata.push_back(dims.size());
-        for (auto &d : dims) {
-            metadata.push_back(d);
-        }
-
-        put_bytes(metakey, metadata.data(),
-                  metadata.size() * sizeof(detail::MetaInt));
-        put_bytes(key, data.data(), data.size() * sizeof(T));
+               const std::vector<T> &data) {
+        put_tensor<T>(key, dims.data(), dims.size(), data.data(), data.size());
     }
 
-    template <data::DType dtype>
-    std::tuple<std::vector<detail::MetaInt>,
-               std::vector<typename data::FromDType<dtype>::type>>
-    get_tensor(const std::string &key) {
-        using T = typename data::FromDType<dtype>::type;
+    template <typename T>
+    typename std::enable_if<data::is_supported_type<T>::value, void>::type
+    put_tensor(const std::string &key, const detail::MetaInt *dims,
+               detail::MetaInt n_dims, const T *elements,
+               detail::MetaInt n_elements) {
         std::string metakey = build_meta_key(key);
-        auto meta_buf = get_bytes(metakey);
-        const detail::MetaInt *meta_ptr =
-            static_cast<detail::MetaInt *>(static_cast<void *>(meta_buf.get()));
+        auto meta = detail::MetaData::make_tensor<T>(dims, n_dims);
+        put_bytes(metakey, meta.get_buffer(), meta.size());
+        put_bytes(key, elements, n_elements * sizeof(T));
+    }
 
-        detail::MetaInt ndims = *meta_ptr;
-        std::vector<detail::MetaInt> dims{(meta_ptr + 1),
-                                          (meta_ptr + 1) + ndims};
-        detail::MetaInt n_elements = std::accumulate(
-            dims.begin(), dims.end(), 1, std::multiplies<detail::MetaInt>());
-                                          // detail::MetaInt n_elements = 1;
+    template <typename T>
+    typename std::enable_if<data::is_supported_type<T>::value,
+                            TensorInfo<T>>::type
+    get_tensor(const std::string &key) {
+        const auto info = get_item_info(key);
+        const T *data_ptr = static_cast<const T *>(info.data());
+        return {data_ptr, info.metadata().n_elements(),
+                info.metadata().dims_ptr(), info.metadata().n_dims()};
+    }
 
-        auto data_buf = get_bytes(key);
-        const T *data_ptr =
-            static_cast<T *>(static_cast<void *>(data_buf.get()));
-        std::vector<T> data{data_ptr, data_ptr + n_elements};
+    detail::ItemInfo get_item_info(const std::string &key) {
+        return {get_meta_data(key), get_bytes(key)};
+    }
 
-        return {dims, data};
+    std::unique_ptr<detail::ItemInfo>
+    get_item_info_ptr(const std::string &key) {
+        return std::make_unique<detail::ItemInfo>(get_meta_data(key),
+                                                  get_bytes(key));
     }
 
   private:
     std::string build_meta_key(const std::string &s) {
         return "__metadata::" + s;
+    }
+
+    detail::MetaData get_meta_data(const std::string &key) {
+        auto meta_key = build_meta_key(key);
+        auto buf = get_bytes(meta_key);
+
+        // FIXME: Need use the deleter from the original unique ptr
+        auto p =
+            static_cast<detail::MetaInt *>(static_cast<void *>(buf.release()));
+        std::unique_ptr<detail::MetaInt[]> arr{p};
+
+        return detail::MetaData{std::move(arr)};
     }
 };
 

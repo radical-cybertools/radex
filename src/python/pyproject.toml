@@ -1,0 +1,14 @@
+[build-system]
+requires = [
+    "setuptools",
+    "Cython",
+    "numpy",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "raddex"
+version = "0.0.0"
+dependencies = [
+    "numpy",
+]

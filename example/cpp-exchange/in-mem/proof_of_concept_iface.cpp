@@ -58,31 +58,33 @@ int main() {
     int i = 123;
     double d = 1.23;
 
-    using DType = raddex::data::DType;
-
     pkg::localkv::UnorderedMapClient client{};
-    client.put_scalar<DType::INT64>("some-int", i);
-    client.put_scalar<DType::FLOAT64>("some-double", d);
+    client.put_scalar("some-int", i);
+    client.put_scalar("some-double", d);
 
     std::cout << "=============\n"
               << "Hello World!!\n"
               << "=============\n";
 
-    auto some_int = client.get_scalar<DType::INT64>("some-int");
-    auto some_double = client.get_scalar<DType::FLOAT64>("some-double");
+    auto some_int = client.get_scalar<int>("some-int");
+    auto some_double = client.get_scalar<double>("some-double");
 
     std::vector<int> itensor{0, 1, 2, 3};
     std::vector<double> dtensor{0.1, 2.3, 4.5, 6.7};
 
-    client.put_tensor<DType::INT32>("int-tensor", {2, 2}, itensor);
-    client.put_tensor<DType::FLOAT64>("double-tensor", {4}, dtensor);
+    client.put_tensor("int-tensor", {2, 2}, itensor);
+    client.put_tensor("double-tensor", {4}, dtensor);
 
     auto [some_itensor_dims, some_itensor] =
-        client.get_tensor<DType::INT32>("int-tensor");
+        client.get_tensor<int>("int-tensor");
     auto [some_dtensor_dims, some_dtensor] =
-        client.get_tensor<DType::FLOAT64>("double-tensor");
+        client.get_tensor<double>("double-tensor");
 
-    std::cout << "Some Int Tensor:    " << vec_to_str(some_itensor) << "\n"
+    std::cout << ""
+              << "Some Int:           " << some_int << "\n"
+              << "Some Double:        " << some_double << "\n"
+              << "\n"
+              << "Some Int Tensor:    " << vec_to_str(some_itensor) << "\n"
               << "        \\- Dims:    " << vec_to_str(some_itensor_dims)
               << "\n"
               << "Some Double Tensor: " << vec_to_str(some_dtensor) << "\n"
