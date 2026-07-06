@@ -94,8 +94,9 @@ class IClient {
         detail::MetaInt ndims = *meta_ptr;
         std::vector<detail::MetaInt> dims{(meta_ptr + 1),
                                           (meta_ptr + 1) + ndims};
-        detail::MetaInt n_elements = std::reduce(
+        detail::MetaInt n_elements = std::accumulate(
             dims.begin(), dims.end(), 1, std::multiplies<detail::MetaInt>());
+                                          // detail::MetaInt n_elements = 1;
 
         auto data_buf = get_bytes(key);
         const T *data_ptr =

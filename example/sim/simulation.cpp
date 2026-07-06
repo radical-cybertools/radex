@@ -1,12 +1,13 @@
 #include <cstdlib>
+#include <cmath>
 #include <mpi.h>
-#include <numbers>
 #include <random>
 #include <stdexcept>
 
 #include "raddex/client.hpp"
 #include "raddex/dragon.hpp"
 
+const double pi = std::atan(1.) * 4.;
 static timespec_t TIMEOUT = {0, 5000000000};
 static size_t N_SAMPLES_PER_RANK = 8;
 
@@ -44,8 +45,7 @@ int main(int argc, char **argv) {
     unsigned seed = world_rank + iteration * world_size;
     std::default_random_engine rng(seed);
     std::normal_distribution<double> noise_dist(0.0, 0.1);
-    std::uniform_real_distribution<double> query_dist(0.0,
-                                                      2 * std::numbers::pi);
+    std::uniform_real_distribution<double> query_dist(0.0, 2 * pi);
 
     // Check to see if we should initialize with random points, or use points
     // from the active learner

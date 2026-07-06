@@ -26,7 +26,7 @@ int main() {
               << "Hello World from Consumer!!\n"
               << "---------------------------\n";
 
-    std::timespec timeout{0, 5000000000};
+    timespec timeout{5, 0};
     raddex::drg::ddict::Client client{serialized_dd, &timeout};
 
     using DType = raddex::data::DType;
