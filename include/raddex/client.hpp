@@ -5,6 +5,7 @@
 #include <cstring>
 #include <memory>
 #include <numeric>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -69,6 +70,10 @@ class MetaData {
     template <typename T>
     static MetaData make_tensor(const MetaInt *dims, MetaInt n_dims) {
         return make_buffer(raddex::data::encode_type<T>(), dims, n_dims);
+    }
+
+    template <typename T> static MetaData make_scalar() {
+        return make_buffer(raddex::data::encode_type<T>(), nullptr, 0);
     }
 
     MetaData(std::unique_ptr<MetaInt[]> ptr) : buffer{std::move(ptr)} {}
@@ -153,15 +158,28 @@ class IClient {
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, void>::type
     put_scalar(const std::string &key, const T &value) {
+        std::string metakey = build_meta_key(key);
+        auto meta = detail::MetaData::make_scalar<T>();
+        put_bytes(metakey, meta.get_buffer(), meta.size());
         put_bytes(key, &value, sizeof(T));
     }
 
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, T>::type
     get_scalar(const std::string &key) {
-        auto bytes = get_bytes(key);
+        const auto info = get_item_info(key);
+        if (info.metadata().n_dims() != 0) {
+            // TODO: Better error type/message here
+            throw std::runtime_error(
+                "Attempted to retrieve scalar at a key with a vector");
+        }
+        if (info.metadata().type() != data::encode_type<T>()) {
+            // TODO: Better error type/message here
+            throw std::runtime_error(
+                "Attempted to retrieve scalar of mismatched type");
+        }
         T converted;
-        std::memcpy(&converted, bytes.get(), sizeof(T));
+        std::memcpy(&converted, info.data(), sizeof(T));
         return converted;
     }
 
@@ -188,6 +206,17 @@ class IClient {
                             TensorInfo<T>>::type
     get_tensor(const std::string &key) {
         const auto info = get_item_info(key);
+        if (info.metadata().n_dims() == 0) {
+            // TODO: Better error type/message here
+            throw std::runtime_error(
+                "Attempted to retrieve vector at a key with a scalar");
+        }
+        if (info.metadata().type() != data::encode_type<T>()) {
+            // TODO: Better error type/message here
+            throw std::runtime_error(
+                "Attempted to retrieve vector of mismatched type");
+        }
+
         const T *data_ptr = static_cast<const T *>(info.data());
         return {data_ptr, info.metadata().n_elements(),
                 info.metadata().dims_ptr(), info.metadata().n_dims()};

@@ -25,7 +25,6 @@ cdef extern from "raddex/dragon.hpp" namespace "raddex::drg::ddict":
         Client(const char*, const timespec*) except +
         bint contains(const string&) except +
         void put_scalar[T](const string&, T) except +
-        T get_scalar[T](const string&) except +
         void put_tensor[T](const string&,
                            const np.uint64_t*, np.uint64_t,
                            const T*, np.uint64_t) except +

@@ -46,8 +46,8 @@ def main() -> int:
                           np.arange(12, dtype=np.float64).reshape((6, 2)))
 
         print(f"Driver: Looking for keys")
-        poll_for_scalar_key(client, np.float64, "cpp-double")
-        poll_for_scalar_key(client, np.int32, "cpp-int")
+        poll_for_scalar_key(client, "cpp-double")
+        poll_for_scalar_key(client, "cpp-int")
         poll_for_tensor_key(client, "cpp-double-tensor")
         poll_for_tensor_key(client, "cpp-long-tensor")
     finally:
@@ -63,22 +63,25 @@ def poll_for_key(client, key, max_attempts=10):
         max_attempts -= 1
         time.sleep(1)
 
-def poll_for_scalar_key(client, dtype, key):
+def poll_for_scalar_key(client, key):
     poll_for_key(client, key)
-    scalar = client.get_scalar(dtype, key)
-    print(f"Driver: Got scalar: {scalar}")
+    scalar = client.get_scalar(key)
+    print(textwrap.dedent(f"""
+        Driver: Got scalar:
+                |- Type: {scalar.dtype}
+                \\- Value: {scalar}
+        """))
 
 def poll_for_tensor_key(client, key):
     poll_for_key(client, key)
     tensor = client.get_tensor(key)
     print(textwrap.dedent(f"""\
         Driver: Got tensor:
-                |- {tensor.dtype}
+                |- Type: {tensor.dtype}
                 |- Dims: {tensor.shape}
                 \\- Data:
         {tensor.ravel()}
         """))
-    print("Driver: Got tensor!!")
 
 if __name__ == "__main__":
     raise SystemExit(main())

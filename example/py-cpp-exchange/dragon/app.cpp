@@ -36,6 +36,7 @@ void poll_for_scalar_key(raddex::IClient &client, const std::string &key) {
     poll_for_key(client, key);
     auto val = client.get_scalar<T>(key);
     std::cout << IDENT << "App: Got key `" << key << "` has value " << val
+              << "\n"
               << std::endl;
 }
 
@@ -45,7 +46,8 @@ void poll_for_vector_key(raddex::IClient &client, const std::string &key) {
     auto [dims, data] = client.get_tensor<T>(key);
     std::cout << IDENT << "App: Got key `" << key << "`\n"
               << IDENT << "      |- Data: " << vec_to_str(data) << "\n"
-              << IDENT << "      \\- Dims: " << vec_to_str(dims) << std::endl;
+              << IDENT << "      \\- Dims: " << vec_to_str(dims) << "\n"
+              << std::endl;
 }
 
 int main() {
