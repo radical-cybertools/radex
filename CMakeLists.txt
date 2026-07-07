@@ -48,13 +48,22 @@ if(BUILD_DRAGON)
     find_path(DRAGON_INCLUDE_DIR
         NAMES dragon/ddict.h
         HINTS ENV DRAGON_BASE_DIR
+        HINTS ${dragon_DIR}
         PATH_SUFFIXES include
     )
     find_library(DRAGON_LIBRARY
         NAMES dragon
         HINTS ENV DRAGON_BASE_DIR
+        HINTS ${dragon_DIR}
         PATH_SUFFIXES lib
     )
+
+    if(NOT DRAGON_LIBRARY)
+        message(FATAL_ERROR
+        "Dragon backend requested, but library cannot be found. Set dragon_DIR to "
+    )
+    endif()
+
     add_library(dragon UNKNOWN IMPORTED)
     set_target_properties(dragon PROPERTIES
         IMPORTED_LOCATION ${DRAGON_LIBRARY}
@@ -66,49 +75,49 @@ endif()
 # ============================================================================
 # RaDex Library
 # ============================================================================
-set(RADDEX_SOURCES)
+set(RADEX_SOURCES)
 
 if(BUILD_SMARTREDIS)
-    list(APPEND RADDEX_SOURCES src/cpp/smartredis.cpp)
+    list(APPEND RADEX_SOURCES src/cpp/smartredis.cpp)
 endif()
 
 if(BUILD_DRAGON)
-    list(APPEND RADDEX_SOURCES src/cpp/dragon.cpp)
+    list(APPEND RADEX_SOURCES src/cpp/dragon.cpp)
 endif()
 
-if(NOT RADDEX_SOURCES)
+if(NOT RADEX_SOURCES)
     message(FATAL_ERROR "At least one backend must be enabled: BUILD_SMARTREDIS or BUILD_DRAGON")
 endif()
 
-add_library(raddex ${RADDEX_SOURCES})
+add_library(radex ${RADEX_SOURCES})
 
 if(BUILD_SHARED_LIBS)
-    set_target_properties(raddex PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(radex PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
 # Include directories for the library
-target_include_directories(raddex PUBLIC
+target_include_directories(radex PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 # Link dependencies
 if(BUILD_SMARTREDIS)
-    target_link_libraries(raddex PUBLIC smartredis)
+    target_link_libraries(radex PUBLIC smartredis)
 endif()
 
 if(BUILD_DRAGON)
-    target_link_libraries(raddex PUBLIC dragon)
+    target_link_libraries(radex PUBLIC dragon)
 endif()
 
-target_link_libraries(raddex PUBLIC Threads::Threads)
+target_link_libraries(radex PUBLIC Threads::Threads)
 
 # ============================================================================
 # Install library and headers
 # ============================================================================
 install(
-    TARGETS raddex
-    EXPORT raddex-targets
+    TARGETS radex
+    EXPORT radex-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -119,29 +128,29 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-install(EXPORT raddex-targets
-    FILE raddex-targets.cmake
+install(EXPORT radex-targets
+    FILE radex-targets.cmake
     NAMESPACE RaDex::
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/cmake/raddex
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/cmake/radex
 )
 
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/raddex-config.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/raddex-config.cmake
-    INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/cmake/raddex
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/radex-config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/radex-config.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/cmake/radex
 )
 
 write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/raddex-config-version.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/radex-config-version.cmake
     VERSION ${CMAKE_PROJECT_VERSION}
     COMPATIBILITY AnyNewerVersion
 )
 
 install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/raddex-config.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/raddex-config-version.cmake
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/cmake/raddex
+    ${CMAKE_CURRENT_BINARY_DIR}/radex-config.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/radex-config-version.cmake
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/cmake/radex
 )
 
 # ============================================================================
@@ -157,7 +166,7 @@ if(BUILD_EXAMPLES)
         add_executable(redis-producer
             example/cpp-exchange/redis/producer.cpp
         )
-        target_link_libraries(redis-producer PRIVATE raddex)
+        target_link_libraries(redis-producer PRIVATE radex)
         target_include_directories(redis-producer PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
@@ -166,7 +175,7 @@ if(BUILD_EXAMPLES)
         add_executable(redis-consumer
             example/cpp-exchange/redis/consumer.cpp
         )
-        target_link_libraries(redis-consumer PRIVATE raddex)
+        target_link_libraries(redis-consumer PRIVATE radex)
         target_include_directories(redis-consumer PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
@@ -178,7 +187,7 @@ if(BUILD_EXAMPLES)
         add_executable(dragon-producer
             example/cpp-exchange/dragon/producer.cpp
         )
-        target_link_libraries(dragon-producer PRIVATE raddex dragon)
+        target_link_libraries(dragon-producer PRIVATE radex dragon)
         target_include_directories(dragon-producer PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
@@ -187,7 +196,7 @@ if(BUILD_EXAMPLES)
         add_executable(dragon-consumer
             example/cpp-exchange/dragon/consumer.cpp
         )
-        target_link_libraries(dragon-consumer PRIVATE raddex dragon)
+        target_link_libraries(dragon-consumer PRIVATE radex dragon)
         target_include_directories(dragon-consumer PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
@@ -196,7 +205,7 @@ if(BUILD_EXAMPLES)
         add_executable(in-mem-poc
             example/cpp-exchange/in-mem/proof_of_concept_iface.cpp
         )
-        target_link_libraries(in-mem-poc PRIVATE raddex dragon)
+        target_link_libraries(in-mem-poc PRIVATE radex dragon)
         target_include_directories(in-mem-poc PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
@@ -207,7 +216,7 @@ if(BUILD_EXAMPLES)
         add_executable(simulation
             example/sim/simulation.cpp
         )
-        target_link_libraries(simulation PRIVATE raddex MPI::MPI_CXX dragon)
+        target_link_libraries(simulation PRIVATE radex MPI::MPI_CXX dragon)
         target_include_directories(simulation PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
