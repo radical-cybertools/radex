@@ -4,10 +4,8 @@
 #include "raddex/client.hpp"
 #include "raddex/constants.hpp"
 
-#include <cstdint>
 #include <dragon/dictionary.hpp>
 #include <dragon/serializable.hpp>
-#include <memory>
 #include <string>
 
 namespace raddex::drg::ddict {
@@ -31,7 +29,7 @@ class Client : public IClient {
     bool contains(const std::string &key) override;
     void put_bytes(const std::string &key, const void *bytes,
                    detail::MetaInt length) override;
-    std::unique_ptr<std::uint8_t[]> get_bytes(const std::string &key) override;
+    raddex::detail::BytesBuffer get_bytes(const std::string &key) override;
 };
 
 } // namespace raddex::drg::ddict

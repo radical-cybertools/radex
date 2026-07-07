@@ -1,7 +1,8 @@
-import pathlib
+import dataclasses
 import os
-import time
+import pathlib
 import textwrap
+import time
 
 import numpy as np
 
@@ -50,6 +51,14 @@ def main() -> int:
         poll_for_scalar_key(client, "cpp-int")
         poll_for_tensor_key(client, "cpp-double-tensor")
         poll_for_tensor_key(client, "cpp-long-tensor")
+
+        print("Driver: Setting a py object")
+        py_obj_key = "my-py-obj"
+        obj = C("spam-and-eggs")
+        client.put_picklable(py_obj_key, obj)
+        print("Driver: Getting a py object")
+        recv = client.get_picklable(py_obj_key)
+        print(f"Driver: Got object `{recv}`")
     finally:
         app.join()
 
@@ -82,6 +91,10 @@ def poll_for_tensor_key(client, key):
                 \\- Data:
         {tensor.ravel()}
         """))
+
+@dataclasses.dataclass(frozen=True)
+class C:
+    msg: str
 
 if __name__ == "__main__":
     raise SystemExit(main())

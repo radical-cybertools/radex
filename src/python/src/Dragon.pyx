@@ -4,11 +4,14 @@ from libcpp.string cimport string
 from libcpp.memory cimport unique_ptr
 from libc.time cimport timespec
 
-from Dragon cimport Client, ItemInfo
+from Dragon cimport Client, ItemInfo, BytesBuffer
 from Data cimport SupportedType, make_ndarray, DType
+
+import pickle
 
 cimport numpy as np
 import numpy as np
+
 
 np.import_array()
 
@@ -76,3 +79,20 @@ cdef class DragonClient:
 
         data = make_ndarray(type_, info_.data(), n_elements)
         return data.reshape(dims)
+
+    def put_picklable(self, str key, object picklable):
+        cdef string key_ = key.encode("utf-8")
+        cdef bytes bytes_ = pickle.dumps(picklable)
+        cdef void* ptr = <void*><char*>bytes_
+        cdef np.uint64_t len_ = len(bytes_)
+        self._client.put_bytes(key_, ptr, len_)
+
+    def get_picklable(self, str key):
+        cdef string key_ = key.encode("utf-8")
+        cdef BytesBuffer buf = self._client.get_bytes(key_)
+
+        cdef np.uint64_t len_ = buf.get_length()
+        cdef np.uint8_t *ptr = <np.uint8_t*>buf.get_ptr()
+
+        cdef bytes bytes_ = <bytes>ptr[:len_]
+        return pickle.loads(bytes_)

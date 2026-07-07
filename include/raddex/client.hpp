@@ -114,6 +114,35 @@ class MetaData {
     };
 };
 
+class BytesBuffer {
+    std::unique_ptr<std::uint8_t[]> data;
+    detail::MetaInt length;
+
+  public:
+    BytesBuffer() : data{std::unique_ptr<std::uint8_t[]>(nullptr)}, length{0} {}
+    BytesBuffer(std::unique_ptr<std::uint8_t[]> data, detail::MetaInt length)
+        : data{std::move(data)}, length{length} {}
+
+    BytesBuffer(const BytesBuffer &other) = delete;
+
+    // FIXME: Need to zero out the length member on move
+    //        but this was leading to some problems with Python compatibility.
+    //        This is an internal(ish) class, so this is OK for now, but should
+    //        be fixed later.
+    BytesBuffer(BytesBuffer &&other) = default;
+    BytesBuffer &operator=(const BytesBuffer &other) = delete;
+    BytesBuffer &operator=(BytesBuffer &&other) = default;
+    ~BytesBuffer() = default;
+
+    std::unique_ptr<std::uint8_t[]> release() {
+        length = 0;
+        return std::move(data);
+    }
+
+    const void *get_ptr() const { return data.get(); }
+    detail::MetaInt get_length() const { return length; }
+};
+
 class ItemInfo {
     MetaData _metadata;
     std::unique_ptr<std::uint8_t[]> _data;
@@ -150,7 +179,7 @@ class IClient {
     virtual bool contains(const std::string &key) = 0;
     virtual void put_bytes(const std::string &key, const void *bytes,
                            detail::MetaInt length) = 0;
-    virtual std::unique_ptr<uint8_t[]> get_bytes(const std::string &key) = 0;
+    virtual detail::BytesBuffer get_bytes(const std::string &key) = 0;
     virtual ~IClient() {}
 
     // <<< End Virtual Methods <<<
@@ -223,13 +252,14 @@ class IClient {
     }
 
     detail::ItemInfo get_item_info(const std::string &key) {
-        return {get_meta_data(key), get_bytes(key)};
+        auto buf = get_bytes(key);
+        return {get_meta_data(key), buf.release()};
     }
 
     std::unique_ptr<detail::ItemInfo>
     get_item_info_ptr(const std::string &key) {
         return std::make_unique<detail::ItemInfo>(get_meta_data(key),
-                                                  get_bytes(key));
+                                                  get_bytes(key).release());
     }
 
   private:
@@ -240,13 +270,19 @@ class IClient {
     detail::MetaData get_meta_data(const std::string &key) {
         auto meta_key = build_meta_key(key);
         auto buf = get_bytes(meta_key);
+        auto original_size = buf.get_length();
 
         // FIXME: Need use the deleter from the original unique ptr
-        auto p =
-            static_cast<detail::MetaInt *>(static_cast<void *>(buf.release()));
+        auto p = static_cast<detail::MetaInt *>(
+            static_cast<void *>(buf.release().release()));
         std::unique_ptr<detail::MetaInt[]> arr{p};
 
-        return detail::MetaData{std::move(arr)};
+        detail::MetaData meta{std::move(arr)};
+        if (original_size != meta.size()) {
+            // TODO: Better error msg/type here
+            throw std::runtime_error("Malformed item metadata buffer recieved");
+        }
+        return meta;
     }
 };
 
