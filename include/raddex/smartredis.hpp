@@ -2,6 +2,7 @@
 #define __RADDEX_SMARTREDIS_HPP__
 
 #include "raddex/client.hpp"
+#include "raddex/constants.hpp"
 
 #include <client.h>
 
@@ -16,6 +17,7 @@ class Client : public IClient {
     SmartRedis::Client client;
 
   public:
+    Client();
     Client(const std::string& logger_name);
 
     Client(const Client &other) = delete;

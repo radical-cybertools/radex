@@ -1,0 +1,11 @@
+#ifndef __RADDEX_CONSTANTS_HPP__
+#define __RADDEX_CONSTANTS_HPP__
+
+#include <string>
+
+const std::string RADEX_STORE_VAR = "RADEX_STORE";
+const std::string RADEX_STORE_OPTS_VAR = "RADEX_STORE_OPTS";
+const std::string RADEX_CONNECTION_TIMEOUT_VAR = "RADEX_CONNECTION_TIMEOUT";
+const int RADEX_DEFAULT_CONNECTION_TIMEOUT_SECONDS = 5;
+
+#endif

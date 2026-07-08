@@ -2,6 +2,7 @@
 #define __RADDEX_DRAGON_HPP__
 
 #include "raddex/client.hpp"
+#include "raddex/constants.hpp"
 
 #include <cstdint>
 #include <dragon/dictionary.hpp>
@@ -16,8 +17,10 @@ class Client : public IClient {
     dragon::DDict<dragon::Serializable, dragon::Serializable> ddict;
 
     Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict);
+    Client(const char *descriptor, timespec_t timeout);
 
   public:
+    Client();
     Client(const char *descriptor, const timespec_t *timeout);
 
     Client(const Client &other) = delete;
