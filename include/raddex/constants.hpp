@@ -3,9 +3,9 @@
 
 #include <string>
 
-const std::string RADEX_STORE_VAR = "RADEX_STORE";
-const std::string RADEX_STORE_OPTS_VAR = "RADEX_STORE_OPTS";
-const std::string RADEX_CONNECTION_TIMEOUT_VAR = "RADEX_CONNECTION_TIMEOUT";
-const int RADEX_DEFAULT_CONNECTION_TIMEOUT_SECONDS = 5;
+inline const std::string RADEX_STORE_VAR = "RADEX_STORE";
+inline const std::string RADEX_STORE_OPTS_VAR = "RADEX_STORE_OPTS";
+inline const std::string RADEX_CONNECTION_TIMEOUT_VAR = "RADEX_CONNECTION_TIMEOUT";
+constexpr int RADEX_DEFAULT_CONNECTION_TIMEOUT_SECONDS = 5;
 
 #endif
