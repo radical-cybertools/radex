@@ -15,6 +15,8 @@ namespace raddex::redis::smartredis {
 class Client : public IClient {
   private:
     SmartRedis::Client client;
+    Client(std::unique_ptr<SmartRedis::ConfigOptions> options,
+           const std::string &logger_name);
 
   public:
     Client();

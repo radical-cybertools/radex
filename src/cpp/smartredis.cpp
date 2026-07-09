@@ -7,9 +7,10 @@
 #include <stdexcept>
 #include <string>
 
-namespace raddex::redis::smartredis {
+namespace {
 
-Client::Client() {
+std::unique_ptr<SmartRedis::ConfigOptions> _configOptions_from_radex_env() {
+
     auto opts = SmartRedis::ConfigOptions::create_from_environment("");
 
     const char *radex_ssdb = getenv(RADEX_STORE_VAR.c_str());
@@ -31,11 +32,24 @@ Client::Client() {
         opts->override_integer_option("SR_CONN_TIMEOUT", std::stoll(radex_conn_timeout));
     }
 
-    const char *logger = getenv("SMARTREDIS_LOGGER_NAME");
-
-    // Initialize client with ConfigOptions
-    client = SmartRedis::Client(opts.get(), logger ? logger : "radex-client");
+    return opts;
 }
+
+std::string _logger_name_from_env() {
+    const char *logger = getenv("SMARTREDIS_LOGGER_NAME");
+    return logger ? logger : "radex-client";
+}
+}
+
+
+namespace raddex::redis::smartredis {
+
+Client::Client()
+    : Client(_configOptions_from_radex_env(), _logger_name_from_env()) {}
+
+Client::Client(std::unique_ptr<SmartRedis::ConfigOptions> options,
+               const std::string &logger_name)
+    : client{options.get(), logger_name} {}
 
 Client::Client(const std::string &logger_name) : client{logger_name} {}
 
