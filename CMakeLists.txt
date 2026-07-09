@@ -212,6 +212,16 @@ if(BUILD_EXAMPLES)
         )
         list(APPEND EXAMPLES dragon-cpp-consumer)
 
+        # Dragon Python/C++ examples
+        add_executable(dragon-cpp-with-py
+            example/py-cpp-exchange/dragon/app.cpp
+        )
+        target_link_libraries(dragon-cpp-with-py PRIVATE radex dragon)
+        target_include_directories(dragon-cpp-with-py PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        list(APPEND EXAMPLES dragon-cpp-with-py)
+
         # Simulation example
         find_package(MPI)
         add_executable(simulation

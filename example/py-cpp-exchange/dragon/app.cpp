@@ -56,7 +56,7 @@ int main() {
         throw std::runtime_error("DDict descriptor not found!");
     }
 
-    std::timespec timeout{0, 5'000'000'000};
+    timespec timeout{0, 5'000'000'000};
     std::cout << IDENT << "App: Creating client" << std::endl;
     raddex::drg::ddict::Client client{serialized_dd, &timeout};
     std::cout << IDENT << "App: Client created" << std::endl;

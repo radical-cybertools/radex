@@ -13,14 +13,16 @@ from dragon.native.process import ProcessTemplate, Process
 from raddex import DragonClient as Client
 
 HERE = pathlib.Path(__file__).parent
+ROOT = HERE.parent.parent.parent
+BUILD = ROOT / "build"
+
 
 def main() -> int:
     dd = DDict(managers_per_node=1, n_nodes=1, trace=False)
     serial_dd = dd.serialize()
     app_tmpl = ProcessTemplate(
-            target=os.fspath(HERE / "app"),
-            env={"SERIALIZED_DDICT": serial_dd}
-            )
+        target=os.fspath(BUILD / "dragon-cpp-with-py"), env={"SERIALIZED_DDICT": serial_dd}
+    )
     app = Process.from_template(app_tmpl)
 
     print(f"Driver: Making client")
@@ -43,8 +45,9 @@ def main() -> int:
 
         time.sleep(3)
         print("Driver: Setting Float Tensor")
-        client.put_tensor("py-float-tensor",
-                          np.arange(12, dtype=np.float64).reshape((6, 2)))
+        client.put_tensor(
+            "py-float-tensor", np.arange(12, dtype=np.float64).reshape((6, 2))
+        )
 
         print(f"Driver: Looking for keys")
         poll_for_scalar_key(client, "cpp-double")
@@ -64,6 +67,7 @@ def main() -> int:
 
     return 0
 
+
 def poll_for_key(client, key, max_attempts=10):
     while not client.contains(key):
         print(f"Driver: Waiting for key `{key}`")
@@ -71,6 +75,7 @@ def poll_for_key(client, key, max_attempts=10):
             raise RuntimeError(f"Too many attempts polling for `{key}`")
         max_attempts -= 1
         time.sleep(1)
+
 
 def poll_for_scalar_key(client, key):
     poll_for_key(client, key)
@@ -80,6 +85,7 @@ def poll_for_scalar_key(client, key):
                 |- Type: {scalar.dtype}
                 \\- Value: {scalar}
         """))
+
 
 def poll_for_tensor_key(client, key):
     poll_for_key(client, key)
@@ -92,9 +98,11 @@ def poll_for_tensor_key(client, key):
         {tensor.ravel()}
         """))
 
+
 @dataclasses.dataclass(frozen=True)
 class C:
     msg: str
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
