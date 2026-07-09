@@ -33,11 +33,11 @@ class UnorderedMapClient : public raddex::IClient {
         _map.insert({key, std::vector<uint8_t>{ptr, ptr + length}});
     }
 
-    std::unique_ptr<uint8_t[]> get_bytes(const std::string &key) override {
+    raddex::detail::BytesBuffer get_bytes(const std::string &key) override {
         auto buf = _map.at(key);
         auto ptr = std::make_unique<uint8_t[]>(buf.size());
         std::copy(buf.begin(), buf.end(), ptr.get());
-        return ptr;
+        return {std::move(ptr), buf.size()};
     }
 };
 
