@@ -3,33 +3,38 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <stdexcept>
 
 #include "dragon/serializable.hpp"
 
-namespace raddex::drg::ddict {
-
 namespace {
 
-time_t get_env_timeout_seconds() {
-    const char *timeout_str = getenv(RADEX_CONNECTION_TIMEOUT_VAR.c_str());
-    if (timeout_str) {
-        return std::stol(timeout_str);
+dragon::DDict<dragon::Serializable, dragon::Serializable> _ddict_from_radex_env() {
+
+    const char *serialized_ddict = getenv(RADEX_STORE_VAR.c_str());
+    if (!serialized_ddict) {
+        throw std::invalid_argument(RADEX_STORE_VAR + " was not set.");
     }
 
-    return RADEX_DEFAULT_CONNECTION_TIMEOUT_SECONDS;
+    unsigned int timeout_seconds = RADEX_DEFAULT_CONNECTION_TIMEOUT_SECONDS;
+    const char *timeout_str = getenv(RADEX_CONNECTION_TIMEOUT_VAR.c_str());
+    if (timeout_str) {
+        timeout_seconds = (unsigned int) std::stoul(timeout_str);
+    }
+    timespec_t timeout{timeout_seconds, 0};
+
+    return dragon::DDict<dragon::Serializable, dragon::Serializable>{serialized_ddict, &timeout};
+
 }
 
 } // namespace
 
-Client::Client()
-    : Client(getenv(RADEX_STORE_VAR.c_str()),
-             timespec_t{get_env_timeout_seconds(), 0}) {}
+namespace raddex::drg::ddict {
+
+Client::Client() : Client(_ddict_from_radex_env()) {}
 
 Client::Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict)
     : ddict{ddict} {}
-
-Client::Client(const char *descriptor, timespec_t timeout)
-    : ddict{descriptor, &timeout} {}
 
 Client::Client(const char *descriptor, const timespec_t *timeout)
     : ddict{descriptor, timeout} {}
@@ -38,6 +43,7 @@ bool Client::contains(const std::string &key) {
     dragon::SerializableString key_(key);
     return ddict.contains(key_);
 }
+
 
 void Client::put_bytes(const std::string &key, const void *bytes,
                        detail::MetaInt length) {

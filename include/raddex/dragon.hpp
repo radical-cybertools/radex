@@ -17,7 +17,6 @@ class Client : public IClient {
     dragon::DDict<dragon::Serializable, dragon::Serializable> ddict;
 
     Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict);
-    Client(const char *descriptor, timespec_t timeout);
 
   public:
     Client();

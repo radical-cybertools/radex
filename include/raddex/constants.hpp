@@ -6,6 +6,6 @@
 inline const std::string RADEX_STORE_VAR = "RADEX_STORE";
 inline const std::string RADEX_STORE_OPTS_VAR = "RADEX_STORE_OPTS";
 inline const std::string RADEX_CONNECTION_TIMEOUT_VAR = "RADEX_CONNECTION_TIMEOUT";
-constexpr int RADEX_DEFAULT_CONNECTION_TIMEOUT_SECONDS = 5;
+constexpr unsigned int RADEX_DEFAULT_CONNECTION_TIMEOUT_SECONDS = 5;
 
 #endif
