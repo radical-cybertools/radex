@@ -225,7 +225,7 @@ if(BUILD_EXAMPLES)
         # Simulation example
         find_package(MPI)
         add_executable(simulation
-            example/sim/simulation.cpp
+            example/active-learn/cpp-mpi-with-ddict/simulation.cpp
         )
         target_link_libraries(simulation PRIVATE radex MPI::MPI_CXX dragon)
         target_include_directories(simulation PRIVATE

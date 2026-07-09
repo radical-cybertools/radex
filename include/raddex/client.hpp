@@ -163,7 +163,7 @@ template <typename T> struct TensorInfo {
   public:
     TensorInfo(const T *data, detail::MetaInt n_elements,
                const detail::MetaInt *dims, detail::MetaInt n_dims)
-        : data{data, data + n_elements}, dims{dims, dims + n_dims} {}
+        : dims{dims, dims + n_dims}, data{data, data + n_elements} {}
 
     TensorInfo(const TensorInfo &other) = delete;
     TensorInfo(TensorInfo &&other) = default;

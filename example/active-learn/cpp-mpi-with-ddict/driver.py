@@ -42,7 +42,6 @@ from pathlib import Path
 import dragon  # noqa: F401  – must precede dragon.data imports
 import numpy as np
 from dragon.data.ddict import DDict
-from dragon.utils import XPickler
 from radical.asyncflow import WorkflowEngine
 from rhapsody.backends import DragonExecutionBackendV3
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -53,15 +52,18 @@ from rose.al.active_learner import SequentialActiveLearner
 from rose.learner import LearnerConfig, TaskConfig
 from rose.metrics import MEAN_SQUARED_ERROR_MSE
 
+from raddex import DragonClient as Client
+
 import rhapsody
+
 rhapsody.enable_logging()
 
 # ── Configuration ──────────────────────────────────────────────────────────────
-N_MPI_RANKS: int = 4            # MPI ranks per simulation launch
-N_SAMPLES_PER_RANK: int = 16   # few pts per rank → sparse start, AL drives exploration
-N_QUERY: int = 8                # query points selected per AL step
-MSE_THRESHOLD: float = 0.1   # convergence target
-MAX_ITER: int = 10             # hard cap on iterations
+N_MPI_RANKS: int = 4          # MPI ranks per simulation launch
+N_SAMPLES_PER_RANK: int = 16  # few pts per rank → sparse start, AL drives exploration
+N_QUERY: int = 8              # query points selected per AL step
+MSE_THRESHOLD: float = 0.1    # convergence target
+MAX_ITER: int = 10            # hard cap on iterations
 
 # ── Consts ─────────────────────────────────────────────────────────────────────
 HERE = Path(__file__).parent
@@ -73,7 +75,7 @@ async def rose_mpi_ddict() -> None:
     ddict = DDict(
         managers_per_node=1,
         n_nodes=1,
-        total_mem=512 * 1024 * 1024,   # 512 MB – scales with ranks × samples × iters
+        total_mem=512 * 1024 * 1024,  # 512 MB – scales with ranks × samples × iters
         wait_for_keys=True,
         working_set_size=MAX_ITER + 2,
     )
@@ -94,11 +96,17 @@ async def rose_mpi_ddict() -> None:
     async def simulation(
         *args,
         ddict_descriptor: str,
-        task_description={"process_templates": [(N_MPI_RANKS, {"env": {"ROSE_DDICT_DESCRIPTOR": ddict_descriptor}})]},
+        task_description={
+            "process_templates": [
+                (N_MPI_RANKS, {"env": {"ROSE_DDICT_DESCRIPTOR": ddict_descriptor}})
+            ]
+        },
     ):
         path = HERE / "simulation"
-        if not Path(path).exists():
-            raise Exception("`simulation` binary does not exist. Compile using the provided Makefile")
+        if not path.exists():
+            raise Exception(
+                "`simulation` binary does not exist. Compile using the provided Makefile"
+            )
         return os.fspath(path)
 
     @acl.training_task(as_executable=False)
@@ -112,7 +120,11 @@ async def rose_mpi_ddict() -> None:
         print("Starting trainer", file=sys.stderr)
         client = Client(ddict_descriptor, 5)
 
-        iteration = client.get_scalar("sim_meta_iter_count") if client.contains("sim_meta_iter_count") else 0
+        iteration = (
+            client.get_scalar("sim_meta_iter_count")
+            if client.contains("sim_meta_iter_count")
+            else 0
+        )
         iteration -= 1  # latest completed simulation
 
         X_parts, y_parts = [], []
@@ -121,11 +133,15 @@ async def rose_mpi_ddict() -> None:
             X_parts.append(client.get_tensor(f"sim_rank_{rank}_iter_{iteration}_X"))
             y_parts.append(client.get_tensor(f"sim_rank_{rank}_iter_{iteration}_y"))
 
-        X_train = np.vstack(X_parts).ravel().reshape(-1,1)
+        X_train = np.vstack(X_parts).ravel().reshape(-1, 1)
         y_train = np.vstack(y_parts).ravel()
 
-        kernel = RBF(length_scale=0.3, length_scale_bounds=(0.01, 5.0)) + WhiteKernel(noise_level=1e-2)
-        gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10, normalize_y=True)
+        kernel = RBF(length_scale=0.3, length_scale_bounds=(0.01, 5.0)) + WhiteKernel(
+            noise_level=1e-2
+        )
+        gp = GaussianProcessRegressor(
+            kernel=kernel, n_restarts_optimizer=10, normalize_y=True
+        )
         gp.fit(X_train, y_train)
 
         X_test = np.linspace(0.0, 2.0 * np.pi, 300).reshape(-1, 1)
@@ -134,7 +150,7 @@ async def rose_mpi_ddict() -> None:
         mse = float(mean_squared_error(y_true, y_pred))
 
         client.put_scalar("model_iter_count", iteration + 1)
-        d[f"model_iter_{iteration}"] = gp
+        client.put_picklable(f"model_iter_{iteration}", gp)
         client.put_scalar(f"mse_iter_{iteration}", mse)
 
         print(
@@ -152,17 +168,23 @@ async def rose_mpi_ddict() -> None:
         """
         client = Client(ddict_descriptor, 5)
 
-        iteration = client.get_scalar("model_iter_count") if client.contains("model_iter_count") else 0
+        iteration = (
+            client.get_scalar("model_iter_count")
+            if client.contains("model_iter_count")
+            else 0
+        )
         iteration -= 1  # latest trained model
 
-        gp: GaussianProcessRegressor = d[f"model_iter_{iteration}"]
+        gp: GaussianProcessRegressor = client.get_picklable(f"model_iter_{iteration}")
 
         X_candidates = np.linspace(0.0, 2.0 * np.pi, 500).reshape(-1, 1)
         _, std = gp.predict(X_candidates, return_std=True)
 
         top_idx = np.argsort(std)[-N_QUERY:]
 
-        client.put_tensor(f"query_points_iter_{iteration}", X_candidates[top_idx].ravel())
+        client.put_tensor(
+            f"query_points_iter_{iteration}", X_candidates[top_idx].ravel()
+        )
 
         mean_unc = float(std.mean())
         max_unc = float(std.max())
@@ -176,7 +198,9 @@ async def rose_mpi_ddict() -> None:
         mean_unc = max_unc = 0
         return {"mean_uncertainty": mean_unc, "max_uncertainty": max_unc}
 
-    @acl.as_stop_criterion(metric_name=MEAN_SQUARED_ERROR_MSE, threshold=MSE_THRESHOLD, as_executable=False)
+    @acl.as_stop_criterion(
+        metric_name=MEAN_SQUARED_ERROR_MSE, threshold=MSE_THRESHOLD, as_executable=False
+    )
     async def check_mse(*args, ddict_descriptor: str) -> float:
         """Read the scalar MSE for the latest trained model from DDict.
 
@@ -184,7 +208,11 @@ async def rose_mpi_ddict() -> None:
         """
         client = Client(ddict_descriptor, 5)
 
-        iteration = client.get_scalar("model_iter_count") if client.contains("model_iter_count") else 0
+        iteration = (
+            client.get_scalar("model_iter_count")
+            if client.contains("model_iter_count")
+            else 0
+        )
         iteration -= 1  # latest computed MSE
 
         mse: float = client.get_scalar(f"mse_iter_{iteration}")
@@ -224,8 +252,8 @@ async def rose_mpi_ddict() -> None:
     print("\n── Convergence Summary ──────────────────────────────────────────────")
     for i in range(last_iter + 1):
         key = f"mse_iter_{i}"
-        if key in d:
-            print(f"  iter {i:2d} │ MSE = {d[key]:.6f}")
+        if client.contains(key):
+            print(f"  iter {i:2d} │ MSE = {client.get_scalar(key):.6f}")
 
     # ── 6. Cleanup ────────────────────────────────────────────────────────────
     ddict.destroy()
