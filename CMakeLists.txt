@@ -32,6 +32,7 @@ option(BUILD_EXAMPLES "Build example applications" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(BUILD_SMARTREDIS "Build with smartredis support" ON)
 option(BUILD_DRAGON "Build with Dragon support" ON)
+option(BUILD_DOCS "Build API documentation with Doxygen and Sphinx" OFF)
 
 # ============================================================================
 # Find required packages
@@ -153,6 +154,13 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/radex-config-version.cmake
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/cmake/radex
 )
+
+# ============================================================================
+# Documentation
+# ============================================================================
+if(BUILD_DOCS)
+    add_subdirectory(docs)
+endif()
 
 # ============================================================================
 # Examples
