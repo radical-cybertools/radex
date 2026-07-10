@@ -1,5 +1,14 @@
 cmake_minimum_required(VERSION 3.13)
 
+if(POLICY CMP0109)
+    cmake_policy(SET CMP0109 NEW)
+endif()
+
+project(RaDexDocs VERSION 0.0.1 LANGUAGES NONE)
+
+get_filename_component(RADEX_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+set(RADEX_PROJECT_VERSION ${PROJECT_VERSION})
+
 find_package(Doxygen REQUIRED)
 find_program(SPHINX_EXECUTABLE NAMES sphinx-build REQUIRED)
 
@@ -19,7 +28,7 @@ add_custom_target(doxygen
     VERBATIM
 )
 
-add_custom_target(docs
+add_custom_target(docs ALL
     COMMAND ${SPHINX_EXECUTABLE}
             -b html
             -Dbreathe_projects.raddex=${DOXYGEN_XML_DIR}
@@ -30,5 +39,3 @@ add_custom_target(docs
     COMMENT "Generating Sphinx documentation"
     VERBATIM
 )
-
-message(STATUS "Documentation enabled. Build docs with target: docs")

@@ -1,5 +1,5 @@
 PROJECT_NAME           = "RaDex"
-PROJECT_NUMBER         = "@PROJECT_VERSION@"
+PROJECT_NUMBER         = "@RADEX_PROJECT_VERSION@"
 OUTPUT_DIRECTORY       = "@DOXYGEN_OUTPUT_DIR@"
 GENERATE_HTML          = NO
 GENERATE_LATEX         = NO
@@ -9,5 +9,5 @@ RECURSIVE              = YES
 EXTRACT_ALL            = YES
 QUIET                  = YES
 WARN_IF_UNDOCUMENTED   = NO
-INPUT                  = "@CMAKE_SOURCE_DIR@/include/raddex"
+INPUT                  = "@RADEX_SOURCE_DIR@/include/raddex"
 FILE_PATTERNS          = *.h *.hpp *.c *.cc *.cpp

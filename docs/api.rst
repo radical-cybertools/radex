@@ -1,7 +1,12 @@
 C++ API
 =======
 
-The API below is pulled from Doxygen XML via Breathe.
+The API reference is split into backend-aware pages, similar to the grouped
+reference layout used in rhapsody's MkDocs documentation.
 
-.. doxygenindex::
-   :project: raddex
+.. toctree::
+   :maxdepth: 1
+
+   api_iface
+   api_dragon
+   api_smartredis

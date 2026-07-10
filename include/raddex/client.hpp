@@ -18,31 +18,23 @@ using MetaInt = std::uint64_t;
 
 namespace data {
 
-template <typename... Ts> struct TypeSet {};
-
-using ValidTypes = TypeSet<std::int32_t, std::int64_t, double>;
-
-template <typename T, typename Set, raddex::detail::MetaInt i = 0>
-struct get_index {};
-
-template <typename T, typename U, typename... Rest, raddex::detail::MetaInt i>
-struct get_index<T, TypeSet<U, Rest...>, i>
-    : std::conditional<std::is_same<T, U>::value,
-                       std::integral_constant<raddex::detail::MetaInt, i>,
-                       get_index<T, TypeSet<Rest...>, i + 1>>::type {};
-
-template <typename T> struct enumerate_type : get_index<T, ValidTypes> {};
-
-template <typename, typename = void>
-struct has_value_member : std::false_type {};
-
-template <typename T>
-struct has_value_member<T, std::void_t<decltype(&T::value)>> : std::true_type {
+/// Supported scalar element types for RaDeX values.
+enum DType {
+    /// 32-bit signed integer element type.
+    INT32,
+    /// 64-bit signed integer element type.
+    INT64,
+    /// 64-bit floating point element type.
+    FLOAT64,
 };
 
-template <typename T>
-struct is_supported_type
-    : std::integral_constant<bool, has_value_member<enumerate_type<T>>::value> {
+/// Runtime variant used to map DType values to C++ types.
+using _DType = std::variant<std::int32_t, std::int64_t, double>;
+
+/// Compile-time mapping from DType enum to C++ types.
+template <DType dtype> struct FromDType {
+    using type = std::remove_reference_t<decltype(std::get<dtype>(
+        std::declval<_DType>()))>;
 };
 
 // FIXME: I would really prefer to see this created dynamically when adding to
@@ -63,9 +55,8 @@ encode_type() {
 
 namespace detail {
 
-class BytesBuffer {
-    std::unique_ptr<std::uint8_t[]> data;
-    detail::MetaInt length;
+/// Integer type used to represent sizes of variaous metadata fields
+using MetaInt = std::uint64_t;
 
   public:
     BytesBuffer() : data{std::unique_ptr<std::uint8_t[]>(nullptr)}, length{0} {}
@@ -176,58 +167,68 @@ template <typename T> struct TensorInfo {
     ~TensorInfo() = default;
 };
 
+/// Abstract byte-addressable key-value client.
+///
+/// Concrete backends provide basic byte put/get primitives, while this class
+/// offers typed scalar/tensor convenience helpers layered on top.
 class IClient {
   public:
     // >>> Start Virtual Methods >>>
 
+        /// Return true when the key exists in the backend store.
     virtual bool contains(const std::string &key) = 0;
+
+        /// Store a byte buffer under the given key.
+        ///
+        /// @param key Key to store data at.
+        /// @param bytes Pointer to buffer contents.
+        /// @param length Number of bytes to write from bytes.
     virtual void put_bytes(const std::string &key, const void *bytes,
                            detail::MetaInt length) = 0;
-    virtual detail::BytesBuffer get_bytes(const std::string &key) = 0;
+
+        /// Retrieve the byte buffer associated with the given key.
+        ///
+        /// Ownership of the returned memory is transferred to the caller.
+    virtual std::unique_ptr<uint8_t[]> get_bytes(const std::string &key) = 0;
+
+        /// Virtual destructor for interface-safe polymorphic deletion.
     virtual ~IClient() {}
 
     // <<< End Virtual Methods <<<
 
-    template <typename T>
-    typename std::enable_if<data::is_supported_type<T>::value, void>::type
-    put_scalar(const std::string &key, const T &value) {
-        std::string metakey = build_meta_key(key);
-        auto meta = detail::MetaData::make_scalar<T>();
-        put_bytes(metakey, meta.get_buffer(), meta.size());
-        put_bytes(key, &value, sizeof(T));
+    /// Store a typed scalar value by serializing its bytes.
+    template <data::DType dtype>
+    void put_scalar(const std::string &key,
+                    const typename data::FromDType<dtype>::type &value) {
+        put_bytes(key, &value, sizeof(typename data::FromDType<dtype>::type));
     }
 
-    template <typename T>
-    typename std::enable_if<data::is_supported_type<T>::value, T>::type
-    get_scalar(const std::string &key) {
-        const auto info = get_item_info(key);
-        if (info.metadata().n_dims() != 0) {
-            // TODO: Better error type/message here
-            throw std::runtime_error(
-                "Attempted to retrieve scalar at a key with a vector");
-        }
-        if (info.metadata().type() != data::encode_type<T>()) {
-            // TODO: Better error type/message here
-            throw std::runtime_error(
-                "Attempted to retrieve scalar of mismatched type");
-        }
+    /// Load a typed scalar value by deserializing backend bytes.
+    template <data::DType dtype>
+    typename data::FromDType<dtype>::type get_scalar(const std::string &key) {
+        using T = typename data::FromDType<dtype>::type;
+        auto bytes = get_bytes(key);
         T converted;
         std::memcpy(&converted, info.data(), sizeof(T));
         return converted;
     }
 
-    template <typename T>
-    typename std::enable_if<data::is_supported_type<T>::value, void>::type
+    /// Store a typed tensor and its shape metadata.
+    ///
+    /// Metadata is stored at a key which contais rank and dimensions.
+    template <data::DType dtype>
+    void
     put_tensor(const std::string &key, const std::vector<detail::MetaInt> &dims,
                const std::vector<T> &data) {
         put_tensor<T>(key, dims.data(), dims.size(), data.data(), data.size());
     }
 
-    template <typename T>
-    typename std::enable_if<data::is_supported_type<T>::value, void>::type
-    put_tensor(const std::string &key, const detail::MetaInt *dims,
-               detail::MetaInt n_dims, const T *elements,
-               detail::MetaInt n_elements) {
+    /// Retrieve a typed tensor and reconstruct it using stored shape metadata.
+    template <data::DType dtype>
+    std::tuple<std::vector<detail::MetaInt>,
+               std::vector<typename data::FromDType<dtype>::type>>
+    get_tensor(const std::string &key) {
+        using T = typename data::FromDType<dtype>::type;
         std::string metakey = build_meta_key(key);
         auto meta = detail::MetaData::make_tensor<T>(dims, n_dims);
         put_bytes(metakey, meta.get_buffer(), meta.size());
@@ -267,6 +268,7 @@ class IClient {
     }
 
   private:
+        /// Build the metadata key used to store tensor shape information.
     std::string build_meta_key(const std::string &s) {
         return "__metadata::" + s;
     }
