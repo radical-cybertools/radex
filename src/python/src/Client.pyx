@@ -4,25 +4,19 @@ from libcpp.string cimport string
 from libcpp.memory cimport unique_ptr
 from libc.time cimport timespec
 
-from Dragon cimport Client, ItemInfo, BytesBuffer
+from Client cimport IClient, ItemInfo, BytesBuffer
+from Dragon cimport Client
 from Data cimport SupportedType, make_ndarray, DType
 
 import pickle
 
 cimport numpy as np
 import numpy as np
-
-
 np.import_array()
 
 
-cdef class DragonClient:
-    cdef Client *_client
-
-    def __cinit__(self, str descriptor, int timeout):
-        cdef string desc = descriptor.encode("utf-8");
-        cdef timespec spec = timespec(timeout, 0)
-        self._client = new Client(desc.c_str(), &spec)
+cdef class PyClient:
+    cdef IClient *_client
 
     def __dealloc__(self):
         del self._client
@@ -96,3 +90,10 @@ cdef class DragonClient:
 
         cdef bytes bytes_ = <bytes>ptr[:len_]
         return pickle.loads(bytes_)
+
+
+cdef class DragonClient(PyClient):
+    def __cinit__(self, str descriptor, int timeout):
+        cdef string desc = descriptor.encode("utf-8");
+        cdef timespec spec = timespec(timeout, 0)
+        self._client = new Client(desc.c_str(), &spec)

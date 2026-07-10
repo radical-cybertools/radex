@@ -6,12 +6,13 @@ import numpy
 
 HERE = pathlib.Path(__file__).parent
 ROOT = HERE.parent.parent
+PY_SRC = HERE / "src"
 CPP_SRC = ROOT / "src/cpp"
 
 core = Extension(
     "raddex",
     sources=[
-        os.fspath(HERE / "src/Dragon.pyx"),
+        os.fspath(PY_SRC / "Client.pyx"),
         os.fspath(CPP_SRC / "dragon.cpp"),
     ],
     include_dirs=[
