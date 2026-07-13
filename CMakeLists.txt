@@ -76,6 +76,7 @@ endif()
 # RaDex Library
 # ============================================================================
 set(RADEX_SOURCES)
+list(APPEND RADEX_SOURCES src/cpp/client.cpp)
 
 if(BUILD_SMARTREDIS)
     list(APPEND RADEX_SOURCES src/cpp/smartredis.cpp)
@@ -161,60 +162,71 @@ if(BUILD_EXAMPLES)
 
     set(EXAMPLES)
 
+    # In memory example
+    add_executable(in-mem-poc
+        example/cpp-exchange/in-mem/proof_of_concept_iface.cpp
+    )
+    target_link_libraries(in-mem-poc PRIVATE radex dragon)
+    target_include_directories(in-mem-poc PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    list(APPEND EXAMPLES in-mem-poc)
+
     # Redis examples
     if(BUILD_SMARTREDIS)
-        add_executable(redis-producer
+        add_executable(redis-cpp-producer
             example/cpp-exchange/redis/producer.cpp
         )
-        target_link_libraries(redis-producer PRIVATE radex)
-        target_include_directories(redis-producer PRIVATE
+        target_link_libraries(redis-cpp-producer PRIVATE radex)
+        target_include_directories(redis-cpp-producer PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
-        list(APPEND EXAMPLES redis-producer)
+        list(APPEND EXAMPLES redis-cpp-producer)
 
-        add_executable(redis-consumer
+        add_executable(redis-cpp-consumer
             example/cpp-exchange/redis/consumer.cpp
         )
-        target_link_libraries(redis-consumer PRIVATE radex)
-        target_include_directories(redis-consumer PRIVATE
+        target_link_libraries(redis-cpp-consumer PRIVATE radex)
+        target_include_directories(redis-cpp-consumer PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
-        list(APPEND EXAMPLES redis-consumer)
+        list(APPEND EXAMPLES redis-cpp-consumer)
     endif()
 
     if(BUILD_DRAGON)
-        # Dragon examples
-        add_executable(dragon-producer
+        # Dragon C++ examples
+        add_executable(dragon-cpp-producer
             example/cpp-exchange/dragon/producer.cpp
         )
-        target_link_libraries(dragon-producer PRIVATE radex dragon)
-        target_include_directories(dragon-producer PRIVATE
+        target_link_libraries(dragon-cpp-producer PRIVATE radex dragon)
+        target_include_directories(dragon-cpp-producer PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
-        list(APPEND EXAMPLES dragon-producer)
+        list(APPEND EXAMPLES dragon-cpp-producer)
 
-        add_executable(dragon-consumer
+        add_executable(dragon-cpp-consumer
             example/cpp-exchange/dragon/consumer.cpp
         )
-        target_link_libraries(dragon-consumer PRIVATE radex dragon)
-        target_include_directories(dragon-consumer PRIVATE
+        target_link_libraries(dragon-cpp-consumer PRIVATE radex dragon)
+        target_include_directories(dragon-cpp-consumer PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
-        list(APPEND EXAMPLES dragon-consumer)
+        list(APPEND EXAMPLES dragon-cpp-consumer)
 
-        add_executable(in-mem-poc
-            example/cpp-exchange/in-mem/proof_of_concept_iface.cpp
+        # Dragon Python/C++ examples
+        add_executable(dragon-cpp-with-py
+            example/py-cpp-exchange/dragon/app.cpp
         )
-        target_link_libraries(in-mem-poc PRIVATE radex dragon)
-        target_include_directories(in-mem-poc PRIVATE
+        target_link_libraries(dragon-cpp-with-py PRIVATE radex dragon)
+        target_include_directories(dragon-cpp-with-py PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
-        list(APPEND EXAMPLES in-mem-poc)
+        list(APPEND EXAMPLES dragon-cpp-with-py)
 
         # Simulation example
         find_package(MPI)
         add_executable(simulation
-            example/sim/simulation.cpp
+            example/active-learn/cpp-mpi-with-ddict/simulation.cpp
         )
         target_link_libraries(simulation PRIVATE radex MPI::MPI_CXX dragon)
         target_include_directories(simulation PRIVATE

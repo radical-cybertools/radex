@@ -60,12 +60,13 @@ void Client::put_bytes(const std::string &key, const void *bytes,
     client.put_bytes(key, bytes, length);
 }
 
-std::unique_ptr<std::uint8_t[]> Client::get_bytes(const std::string &key) {
+raddex::detail::BytesBuffer Client::get_bytes(const std::string &key) {
     void *out_buf = nullptr;
     detail::MetaInt out_n_bytes = 0;
     client.get_bytes(key, out_buf, out_n_bytes);
     auto ptr = static_cast<std::uint8_t *>(out_buf);
-    return std::unique_ptr<std::uint8_t[]>(ptr);
+    auto uniq = std::unique_ptr<std::uint8_t[]>(ptr);
+    return {std::move(uniq), out_n_bytes};
 }
 
 } // namespace raddex::redis::smartredis

@@ -56,14 +56,15 @@ void Client::put_bytes(const std::string &key, const void *bytes,
     ddict[key_] = buf;
 }
 
-std::unique_ptr<std::uint8_t[]> Client::get_bytes(const std::string &key) {
+raddex::detail::BytesBuffer Client::get_bytes(const std::string &key) {
     SerializableString key_{key};
     SerializableByteBuffer buf = ddict[key_];
 
     std::uint8_t *ptr = buf.getPtr();
     auto uniq = std::unique_ptr<std::uint8_t[]>(ptr);
+    auto len = buf.getSize();
 
-    return uniq;
+    return {std::move(uniq), len};
 }
 
 } // namespace raddex::drg::ddict
