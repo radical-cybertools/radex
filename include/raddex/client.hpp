@@ -63,57 +63,6 @@ encode_type() {
 
 namespace detail {
 
-class MetaData {
-    std::unique_ptr<MetaInt[]> buffer;
-
-  public:
-    template <typename T>
-    static MetaData make_tensor(const MetaInt *dims, MetaInt n_dims) {
-        return make_buffer(raddex::data::encode_type<T>(), dims, n_dims);
-    }
-
-    template <typename T> static MetaData make_scalar() {
-        return make_buffer(raddex::data::encode_type<T>(), nullptr, 0);
-    }
-
-    MetaData(std::unique_ptr<MetaInt[]> ptr) : buffer{std::move(ptr)} {}
-
-    MetaInt n_dims() const { return buffer[Index::N_DIMS]; }
-    MetaInt *dims_ptr() const { return dims_begin(); }
-    MetaInt n_elements() const {
-        return std::accumulate(dims_begin(), dims_end(), 1,
-                               std::multiplies<detail::MetaInt>());
-    }
-    const MetaInt *get_buffer() const { return buffer.get(); }
-    MetaInt size() const {
-        return (n_dims() + Index::END_OF_HEADER) * sizeof(buffer[0]);
-    }
-    raddex::data::DType type() const {
-        return static_cast<raddex::data::DType>(buffer[Index::TYPE]);
-    }
-
-  private:
-    static MetaData make_buffer(const raddex::data::DType dtype,
-                                const MetaInt *dims, MetaInt n_dims) {
-        auto buf = std::make_unique<MetaInt[]>(n_dims + Index::END_OF_HEADER);
-        buf[Index::TYPE] = static_cast<MetaInt>(dtype);
-        buf[Index::N_DIMS] = n_dims;
-        std::memcpy(buf.get() + Index::END_OF_HEADER, dims,
-                    n_dims * sizeof(*dims));
-        return {std::move(buf)};
-    }
-    MetaInt *dims_begin() const { return buffer.get() + Index::END_OF_HEADER; }
-    MetaInt *dims_end() const { return dims_begin() + n_dims(); }
-
-    struct Index {
-        enum {
-            TYPE = 0,
-            N_DIMS,
-            END_OF_HEADER,
-        };
-    };
-};
-
 class BytesBuffer {
     std::unique_ptr<std::uint8_t[]> data;
     detail::MetaInt length;
@@ -141,6 +90,56 @@ class BytesBuffer {
 
     const void *get_ptr() const { return data.get(); }
     detail::MetaInt get_length() const { return length; }
+};
+
+class MetaData {
+    BytesBuffer buffer;
+
+  private:
+    struct Index {
+        enum {
+            TYPE = 0,
+            N_DIMS,
+            END_OF_HEADER,
+        };
+    };
+
+  public:
+    template <typename T>
+    static MetaData make_tensor(const MetaInt *dims, MetaInt n_dims) {
+        return make_buffer(raddex::data::encode_type<T>(), dims, n_dims);
+    }
+
+    template <typename T> static MetaData make_scalar() {
+        return make_buffer(raddex::data::encode_type<T>(), nullptr, 0);
+    }
+
+    static MetaData from_buffer(BytesBuffer buf);
+
+    MetaInt n_dims() const { return get_buffer()[Index::N_DIMS]; }
+    const MetaInt *dims_ptr() const { return dims_begin(); }
+    MetaInt n_elements() const {
+        return std::accumulate(dims_begin(), dims_end(), 1,
+                               std::multiplies<MetaInt>());
+    }
+    const MetaInt *get_buffer() const {
+        return static_cast<const MetaInt *>(buffer.get_ptr());
+    }
+
+    MetaInt size() const { return buffer.get_length(); }
+    raddex::data::DType type() const {
+        return static_cast<raddex::data::DType>(val_at(Index::TYPE));
+    }
+
+  private:
+    MetaData(BytesBuffer buffer) : buffer{std::move(buffer)} {}
+    static MetaData make_buffer(const raddex::data::DType dtype,
+                                const MetaInt *dims, MetaInt n_dims);
+    MetaInt val_at(MetaInt idx) const { return get_buffer()[idx]; }
+    const MetaInt *dims_begin() const {
+        return get_buffer() + Index::END_OF_HEADER;
+    }
+    const MetaInt *dims_end() const { return dims_begin() + n_dims(); }
 };
 
 class ItemInfo {
@@ -269,20 +268,7 @@ class IClient {
 
     detail::MetaData get_meta_data(const std::string &key) {
         auto meta_key = build_meta_key(key);
-        auto buf = get_bytes(meta_key);
-        auto original_size = buf.get_length();
-
-        // FIXME: Need use the deleter from the original unique ptr
-        auto p = static_cast<detail::MetaInt *>(
-            static_cast<void *>(buf.release().release()));
-        std::unique_ptr<detail::MetaInt[]> arr{p};
-
-        detail::MetaData meta{std::move(arr)};
-        if (original_size != meta.size()) {
-            // TODO: Better error msg/type here
-            throw std::runtime_error("Malformed item metadata buffer recieved");
-        }
-        return meta;
+        return detail::MetaData::from_buffer(get_bytes(meta_key));
     }
 };
 

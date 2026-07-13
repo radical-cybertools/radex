@@ -13,6 +13,7 @@ core = Extension(
     "raddex",
     sources=[
         os.fspath(PY_SRC / "Client.pyx"),
+        os.fspath(CPP_SRC / "client.cpp"),
         os.fspath(CPP_SRC / "dragon.cpp"),
     ],
     include_dirs=[

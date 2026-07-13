@@ -66,7 +66,9 @@ cdef class PyClient:
         if n_dims == 0:
             # TODO: Better error type/msg here
             raise ValueError("Attempted to retrieve vector at a key with a scalar")
-        cdef np.uint64_t[:] dims = <np.uint64_t[:n_dims]> info_.metadata().dims_ptr()
+        cdef const np.uint64_t[:] dims = (
+            <const np.uint64_t[:n_dims]> info_.metadata().dims_ptr()
+        )
 
         cdef np.uint64_t n_elements = info_.metadata().n_elements()
         cdef DType type_ = info_.metadata().type()

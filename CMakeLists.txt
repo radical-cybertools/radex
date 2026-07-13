@@ -76,6 +76,7 @@ endif()
 # RaDex Library
 # ============================================================================
 set(RADEX_SOURCES)
+list(APPEND RADEX_SOURCES src/cpp/client.cpp)
 
 if(BUILD_SMARTREDIS)
     list(APPEND RADEX_SOURCES src/cpp/smartredis.cpp)

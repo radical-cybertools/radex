@@ -14,7 +14,7 @@ cdef extern from "raddex/client.hpp" namespace "raddex::detail":
 
     cdef cppclass MetaData:
         np.uint64_t n_dims() except +
-        np.uint64_t *dims_ptr() except +
+        const np.uint64_t *dims_ptr() except +
         np.uint64_t n_elements() except +
         DType type() except +
 
