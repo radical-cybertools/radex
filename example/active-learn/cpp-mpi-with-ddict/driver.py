@@ -81,6 +81,7 @@ async def rose_mpi_ddict() -> None:
     )
     ddict_descriptor: str = ddict.serialize()
     print(f"[ROSE] DDict ready  (descriptor prefix: {ddict_descriptor[:32]}…)")
+    client = Client(ddict_descriptor, 5)
 
     # ── 2. Set up ROSE engine and learner ─────────────────────────────────────
     engine = await DragonExecutionBackendV3()

@@ -14,7 +14,7 @@ def main() -> int:
     db = exp.create_database(db_nodes=1, interface="hsn0")
 
     producer_settings = exp.create_run_settings(os.fspath(BUILD / "redis-cpp-producer"))
-    producer = exp.create_model("produer", producer_settings)
+    producer = exp.create_model("producer", producer_settings)
 
     consumer_settings = exp.create_run_settings(os.fspath(BUILD / "redis-cpp-consumer"))
     consumer = exp.create_model("consumer", consumer_settings)
