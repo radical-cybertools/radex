@@ -73,14 +73,19 @@ class BytesBuffer {
         : data{std::move(data)}, length{length} {}
 
     BytesBuffer(const BytesBuffer &other) = delete;
-
-    // FIXME: Need to zero out the length member on move
-    //        but this was leading to some problems with Python compatibility.
-    //        This is an internal(ish) class, so this is OK for now, but should
-    //        be fixed later.
-    BytesBuffer(BytesBuffer &&other) = default;
+    BytesBuffer(BytesBuffer &&other) noexcept
+        : data{std::move(other.data)}, length{other.length} {
+        other.length = 0;
+    };
     BytesBuffer &operator=(const BytesBuffer &other) = delete;
-    BytesBuffer &operator=(BytesBuffer &&other) = default;
+    BytesBuffer &operator=(BytesBuffer &&other) noexcept {
+        if (this != &other) {
+            data = std::move(other.data);
+            length = other.length;
+            other.length = 0;
+        }
+        return *this;
+    }
     ~BytesBuffer() = default;
 
     std::unique_ptr<std::uint8_t[]> release() {

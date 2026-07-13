@@ -105,7 +105,7 @@ async def rose_mpi_ddict() -> None:
     ):
         path = HERE / "simulation"
         if not path.exists():
-            raise Exception(
+            raise FileNotFoundError(
                 "`simulation` binary does not exist. Compile using the provided Makefile"
             )
         return os.fspath(path)

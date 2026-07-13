@@ -19,7 +19,9 @@ cdef class PyClient:
     cdef IClient *_client
 
     def __dealloc__(self):
-        del self._client
+        # TODO: The clients really should be using a unique_ptr instead
+        if self._client != NULL:
+            del self._client
 
     def contains(self, str key):
         cdef string key_ = key.encode("utf-8")
