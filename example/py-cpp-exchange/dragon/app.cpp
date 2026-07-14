@@ -63,6 +63,7 @@ int main() {
 
     poll_for_scalar_key<int>(client, "py-int");
     poll_for_scalar_key<double>(client, "py-double");
+    poll_for_scalar_key<int>(client, "py-np-int");
     poll_for_vector_key<int>(client, "py-int-tensor");
     poll_for_vector_key<double>(client, "py-float-tensor");
 

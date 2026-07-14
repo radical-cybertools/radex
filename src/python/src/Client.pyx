@@ -22,14 +22,33 @@ cdef class PyClient:
         # TODO: The clients really should be using a unique_ptr instead
         if self._client != NULL:
             del self._client
+            self._client = NULL
 
     def contains(self, str key):
         cdef string key_ = key.encode("utf-8")
         return self._client.contains(key_)
 
-    def put_scalar(self, str key, SupportedType value):
+    def put_scalar(self, str key, object value):
+        if isinstance(value, int):
+            value = np.int32(value)
+        elif isinstance(value, float):
+            value = np.float64(value)
+        return self._put_scalar(key, value)
+
+    def _put_scalar(self, str key, np.number value):
         cdef string key_ = key.encode("utf-8")
-        self._client.put_scalar[cython.typeof(value)](key_, value)
+
+        # FIXME: Get rid of this ugly swith statment. Ideally we could used the
+        #        fused `SupportedType` type, but there seems to be a known
+        #        issue with how it dispatches
+        # https://github.com/cython/cython/issues/4932
+        if isinstance(value, np.int32):
+            return self._client.put_scalar[np.int32_t](key_, value)
+        if isinstance(value, np.int64):
+            return self._client.put_scalar[np.int64_t](key_, value)
+        if isinstance(value, np.float64):
+            return self._client.put_scalar[np.float64_t](key_, value)
+        raise TypeError(f"Unsupported data type: {type(value)}")
 
     def get_scalar(self, str key):
         cdef string key_ = key.encode("utf-8")

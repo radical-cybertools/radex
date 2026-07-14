@@ -2,3 +2,4 @@ asyncflow.session.*
 ddict_orc_*
 core
 simulation
+runinfo

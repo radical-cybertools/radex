@@ -40,6 +40,10 @@ def main() -> int:
         client.put_scalar("py-double", 9.87)
 
         time.sleep(3)
+        print("Driver: Setting Numpy Int")
+        client.put_scalar("py-np-int", np.int32(456))
+
+        time.sleep(3)
         print("Driver: Setting Int Tensor")
         client.put_tensor("py-int-tensor", np.arange(4, dtype=np.int32))
 
