@@ -43,7 +43,7 @@ class Client : public IClient {
                    detail::MetaInt length) override;
 
     /// Retrieve raw bytes for the provided key from the DDict store.
-    std::unique_ptr<std::uint8_t[]> get_bytes(const std::string &key) override;
+    raddex::detail::BytesBuffer get_bytes(const std::string &key) override;
 };
 
 } // namespace raddex::drg::ddict
