@@ -1,13 +1,11 @@
+#include "raddex/dragon.hpp"
 #include <cstdlib>
-#include <cmath>
 #include <mpi.h>
 #include <random>
 #include <stdexcept>
 
-#include "raddex/dragon.hpp"
-
-const double pi = std::atan(1.) * 4.;
-static timespec_t TIMEOUT = {0, 5000000000};
+constexpr double pi = 3.14159265358979323846;
+static timespec_t TIMEOUT = {5, 0};
 static size_t N_SAMPLES_PER_RANK = 8;
 
 int main(int argc, char **argv) {
@@ -33,7 +31,7 @@ int main(int argc, char **argv) {
     raddex::drg::ddict::Client client{ddict_descriptor, &TIMEOUT};
 
     // Retrieve the iteration count of the active learning loop
-    std::string iter_key("sim_meta_iter_count");
+    const std::string iter_key("sim_meta_iter_count");
     int iteration = 0;
     if (client.contains(iter_key)) {
         iteration = client.get_scalar<int>(iter_key);

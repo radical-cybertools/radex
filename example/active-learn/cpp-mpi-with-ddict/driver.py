@@ -15,7 +15,7 @@ Architecture
 
   Argument-passing discipline
   ───────────────────────────
-  DragonExecutionBackendV3 serialises (cloudpickle) every function task before
+  DragonExecutionBackend serialises (cloudpickle) every function task before
   submitting it to a Dragon process. Objects that are not safely serialisable
   (live DDict connections, SequentialActiveLearner with asyncio internals, ...)
   must never appear in a task function's closure.
@@ -39,14 +39,18 @@ import os
 import sys
 from pathlib import Path
 
-import dragon  # noqa: F401  – must precede dragon.data imports
-import numpy as np
-from dragon.data.ddict import DDict
-from radical.asyncflow import WorkflowEngine
-from rhapsody.backends import DragonExecutionBackendV3
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, WhiteKernel
 from sklearn.metrics import mean_squared_error
+import numpy as np
+
+import dragon  # noqa: F401  – must precede dragon.data imports
+from dragon.data.ddict import DDict
+
+from radical.asyncflow import WorkflowEngine
+
+import rhapsody
+from rhapsody.backends import DragonExecutionBackend
 
 from rose.al.active_learner import SequentialActiveLearner
 from rose.learner import LearnerConfig, TaskConfig
@@ -54,7 +58,6 @@ from rose.metrics import MEAN_SQUARED_ERROR_MSE
 
 from raddex import DragonClient as Client
 
-import rhapsody
 
 rhapsody.enable_logging()
 
@@ -67,6 +70,7 @@ MAX_ITER: int = 10            # hard cap on iterations
 
 # ── Consts ─────────────────────────────────────────────────────────────────────
 HERE = Path(__file__).parent
+BUILD_DIR = HERE.parent.parent.parent / "build"
 
 
 async def rose_mpi_ddict() -> None:
@@ -84,7 +88,7 @@ async def rose_mpi_ddict() -> None:
     client = Client(ddict_descriptor, 5)
 
     # ── 2. Set up ROSE engine and learner ─────────────────────────────────────
-    engine = await DragonExecutionBackendV3()
+    engine = await DragonExecutionBackend()
     asyncflow = await WorkflowEngine.create(engine)
     acl = SequentialActiveLearner(asyncflow)
 
@@ -99,14 +103,18 @@ async def rose_mpi_ddict() -> None:
         ddict_descriptor: str,
         task_description={
             "process_templates": [
-                (N_MPI_RANKS, {"env": {"ROSE_DDICT_DESCRIPTOR": ddict_descriptor}})
+                (
+                    N_MPI_RANKS,
+                    {"env": {"ROSE_DDICT_DESCRIPTOR": ddict_descriptor}},
+                )
             ]
         },
     ):
-        path = HERE / "simulation"
+        path = BUILD_DIR / "simulation"
         if not path.exists():
             raise FileNotFoundError(
-                "`simulation` binary does not exist. Compile using the provided Makefile"
+                f"`{os.fspath(path)}` binary does not exist. "
+                "Try building the project examples"
             )
         return os.fspath(path)
 
@@ -216,7 +224,7 @@ async def rose_mpi_ddict() -> None:
         )
         iteration -= 1  # latest computed MSE
 
-        mse: float = client.get_scalar(f"mse_iter_{iteration}")
+        mse = client.get_scalar(f"mse_iter_{iteration}")
         print(
             f"[check]    iter={iteration} | MSE={mse:.6f} (threshold < {MSE_THRESHOLD})",
             flush=True,
@@ -257,10 +265,10 @@ async def rose_mpi_ddict() -> None:
             print(f"  iter {i:2d} │ MSE = {client.get_scalar(key):.6f}")
 
     # ── 6. Cleanup ────────────────────────────────────────────────────────────
+    del client  # FIXME: would really like this to instead be `client.disconnect()`
     ddict.destroy()
     await acl.shutdown()
 
 
 if __name__ == "__main__":
-
     asyncio.run(rose_mpi_ddict())
