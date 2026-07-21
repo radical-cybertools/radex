@@ -1,23 +1,25 @@
 cimport numpy as np
 import numpy as np
+from libc.stdint cimport int32_t, int64_t, uint64_t
 
 np.import_array()
 
 ctypedef fused SupportedType:
-    np.int32_t
-    np.int64_t
-    np.float32_t
-    np.float64_t
+    int32_t
+    int64_t
+    float
+    double
 
 cdef extern from "raddex/client.hpp" namespace "raddex::data":
-    cdef enum class DType(np.uint64_t):
+    cdef enum class DType(uint64_t):
         INT32,
         INT64,
         FLOAT32,
         FLOAT64
 
+
 # TODO: Don't like this method name
-cdef inline make_ndarray(DType dtype, const void* data, np.uint64_t size):
+cdef inline make_ndarray(DType dtype, const void* data, uint64_t size):
     if dtype == DType.INT32:
         return np.copy(<np.int32_t[:size]> data)
     if dtype == DType.INT64:
