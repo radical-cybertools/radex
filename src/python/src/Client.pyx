@@ -45,10 +45,9 @@ cdef class PyClient:
         return make_ndarray(type_, info_.data(), 1)[0]
 
     def put_tensor(self, str key, np.ndarray tensor not None):
-        cdef np.ndarray dims_arr = np.asarray((<object>tensor).shape,
+        cdef np.ndarray[uint64_t, ndim=1] dims_arr = np.asarray((<object>tensor).shape,
                               dtype=np.uint64)
-        cdef const uint64_t[:] dims = dims_arr
-        self._put_tensor(key, dims, tensor.ravel())
+        self._put_tensor(key, dims_arr, tensor.ravel())
 
     def _put_tensor(
         self,
