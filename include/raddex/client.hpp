@@ -13,7 +13,7 @@
 namespace raddex {
 
 namespace detail {
-using MetaInt = std::uint64_t;
+using MetaInt = std::size_t;
 }
 
 namespace data {
