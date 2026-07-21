@@ -1,6 +1,7 @@
 cimport numpy as np
 import numpy as np
-from libc.stdint cimport int32_t, int64_t, uint64_t
+from libc.stddef cimport size_t
+from libc.stdint cimport int32_t, int64_t
 
 np.import_array()
 
@@ -11,7 +12,7 @@ ctypedef fused SupportedType:
     double
 
 cdef extern from "radex/client.hpp" namespace "radex::data":
-    cdef enum class DType(uint64_t):
+    cdef enum class DType(size_t):
         INT32,
         INT64,
         FLOAT32,
@@ -19,7 +20,7 @@ cdef extern from "radex/client.hpp" namespace "radex::data":
 
 
 # TODO: Don't like this method name
-cdef inline make_ndarray(DType dtype, const void* data, uint64_t size):
+cdef inline make_ndarray(DType dtype, const void* data, size_t size):
     if dtype == DType.INT32:
         return np.copy(<np.int32_t[:size]> data)
     if dtype == DType.INT64:
