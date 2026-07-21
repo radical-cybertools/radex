@@ -41,7 +41,7 @@ def main() -> int:
 
         time.sleep(3)
         print("Driver: Setting Numpy Int")
-        client.put_scalar("py-np-int", np.int32(456))
+        client.put_scalar("py-np-float", np.float32(45.6))
 
         time.sleep(3)
         print("Driver: Setting Int Tensor")

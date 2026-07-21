@@ -20,7 +20,7 @@ namespace data {
 
 template <typename... Ts> struct TypeSet {};
 
-using ValidTypes = TypeSet<std::int32_t, std::int64_t, double>;
+using ValidTypes = TypeSet<std::int32_t, std::int64_t, float, double>;
 
 template <typename T, typename Set, raddex::detail::MetaInt i = 0>
 struct get_index {};
@@ -50,6 +50,7 @@ struct is_supported_type
 enum class DType : raddex::detail::MetaInt {
     INT32 = enumerate_type<std::int32_t>::value,
     INT64 = enumerate_type<std::int64_t>::value,
+    FLOAT32 = enumerate_type<float>::value,
     FLOAT64 = enumerate_type<double>::value
 };
 

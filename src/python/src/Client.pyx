@@ -35,7 +35,7 @@ cdef class PyClient:
             value = np.float64(value)
         return self._put_scalar(key, value)
 
-    def _put_scalar(self, str key, np.number value):
+    def _put_scalar(self, str key, np.number value not None):
         cdef string key_ = key.encode("utf-8")
 
         # FIXME: Get rid of this ugly swith statment. Ideally we could used the
@@ -46,6 +46,8 @@ cdef class PyClient:
             return self._client.put_scalar[np.int32_t](key_, value)
         if isinstance(value, np.int64):
             return self._client.put_scalar[np.int64_t](key_, value)
+        if isinstance(value, np.float32):
+            return self._client.put_scalar[np.float32_t](key_, value)
         if isinstance(value, np.float64):
             return self._client.put_scalar[np.float64_t](key_, value)
         raise TypeError(f"Unsupported data type: {type(value)}")
