@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
             "'ROSE_DDICT_DESCRIPTOR' is set.");
     }
 
-    // Create the connection to the existing DDct
+    // Create the connection to the existing DDict
     raddex::drg::ddict::Client client{ddict_descriptor, &TIMEOUT};
 
     // Retrieve the iteration count of the active learning loop
