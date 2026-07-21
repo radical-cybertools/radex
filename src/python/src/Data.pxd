@@ -27,3 +27,18 @@ cdef inline make_ndarray(DType dtype, const void* data, np.uint64_t size):
     if dtype == DType.FLOAT64:
         return np.copy(<np.float64_t[:size]> data)
     raise TypeError("Unknown type encountered")
+
+
+cdef inline np.number coerce_py_objects_to_np_numbers(object value):
+    _DEFAULT_FIXED_WIDTH_INT = np.int32
+    _DEFAULT_FIXED_WIDTH_FLOAT = np.float64
+
+    if isinstance(value, int):
+        value = _DEFAULT_FIXED_WIDTH_INT(value)
+    if isinstance(value, float):
+        value = _DEFAULT_FIXED_WIDTH_FLOAT(value)
+    if not isinstance(value, np.number):
+        raise TypeError(
+            f"Could not figure out how to coerce {type(value)} to a numpy.number"
+        )
+    return value

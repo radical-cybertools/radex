@@ -6,7 +6,12 @@ from libc.time cimport timespec
 
 from Client cimport IClient, ItemInfo, BytesBuffer
 from Dragon cimport Client
-from Data cimport SupportedType, make_ndarray, DType
+from Data cimport (
+    DType,
+    SupportedType,
+    coerce_py_objects_to_np_numbers,
+    make_ndarray,
+)
 
 import pickle
 
@@ -28,12 +33,9 @@ cdef class PyClient:
         cdef string key_ = key.encode("utf-8")
         return self._client.contains(key_)
 
-    def put_scalar(self, str key, object value):
-        if isinstance(value, int):
-            value = np.int32(value)
-        elif isinstance(value, float):
-            value = np.float64(value)
-        return self._put_scalar(key, value)
+    def put_scalar(self, str key, object value not None):
+        cdef np.number val = coerce_py_objects_to_np_numbers(value)
+        return self._put_scalar(key, val)
 
     def _put_scalar(self, str key, np.number value not None):
         cdef string key_ = key.encode("utf-8")
