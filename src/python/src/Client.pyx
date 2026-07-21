@@ -2,8 +2,9 @@ import cython
 
 from libcpp.string cimport string
 from libcpp.memory cimport unique_ptr
+from libc.stddef cimport size_t
 from libc.time cimport timespec
-from libc.stdint cimport uint64_t
+from libc.stdint cimport uint64_t, int32_t, int64_t
 
 from Client cimport IClient, ItemInfo, BytesBuffer
 from Dragon cimport Client
@@ -46,9 +47,9 @@ cdef class PyClient:
         #        issue with how it dispatches
         # https://github.com/cython/cython/issues/4932
         if isinstance(value, np.int32):
-            return self._client.put_scalar[np.int32_t](key_, value)
+            return self._client.put_scalar[int32_t](key_, value)
         if isinstance(value, np.int64):
-            return self._client.put_scalar[np.int64_t](key_, value)
+            return self._client.put_scalar[int64_t](key_, value)
         if isinstance(value, np.float32):
             return self._client.put_scalar[np.float32_t](key_, value)
         if isinstance(value, np.float64):
@@ -68,14 +69,14 @@ cdef class PyClient:
         return make_ndarray(type_, info_.data(), 1)[0]
 
     def put_tensor(self, str key, np.ndarray tensor not None):
-        cdef np.ndarray[uint64_t, ndim=1] dims_arr = np.asarray((<object>tensor).shape,
-                              dtype=np.uint64)
+        cdef np.ndarray[np.uintp_t, ndim=1] dims_arr = np.asarray((<object>tensor).shape,
+                              dtype=np.uintp)
         self._put_tensor(key, dims_arr, tensor.ravel())
 
     def _put_tensor(
         self,
         str key,
-        const uint64_t[:] dims not None,
+        const size_t[:] dims not None,
         const SupportedType[:] data not None,
     ):
         cdef string key_ = key.encode("utf-8")
@@ -88,15 +89,15 @@ cdef class PyClient:
         cdef unique_ptr[ItemInfo] info = self._client.get_item_info_ptr(key_)
         cdef ItemInfo* info_ = info.get()
 
-        cdef uint64_t n_dims = info_.metadata().n_dims()
+        cdef size_t n_dims = info_.metadata().n_dims()
         if n_dims == 0:
             # TODO: Better error type/msg here
             raise ValueError("Attempted to retrieve vector at a key with a scalar")
-        cdef const uint64_t[:] dims = (
-            <const uint64_t[:n_dims]> info_.metadata().dims_ptr()
+        cdef const size_t[:] dims = (
+            <const size_t[:n_dims]> info_.metadata().dims_ptr()
         )
 
-        cdef uint64_t n_elements = info_.metadata().n_elements()
+        cdef size_t n_elements = info_.metadata().n_elements()
         cdef DType type_ = info_.metadata().type()
 
         data = make_ndarray(type_, info_.data(), n_elements)
