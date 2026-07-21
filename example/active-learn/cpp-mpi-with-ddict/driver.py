@@ -62,11 +62,11 @@ from raddex import DragonClient as Client
 rhapsody.enable_logging()
 
 # ── Configuration ──────────────────────────────────────────────────────────────
-N_MPI_RANKS: int = 4  # MPI ranks per simulation launch
+N_MPI_RANKS: int = 4          # MPI ranks per simulation launch
 N_SAMPLES_PER_RANK: int = 16  # few pts per rank → sparse start, AL drives exploration
-N_QUERY: int = 8  # query points selected per AL step
-MSE_THRESHOLD: float = 0.1  # convergence target
-MAX_ITER: int = 10  # hard cap on iterations
+N_QUERY: int = 8              # query points selected per AL step
+MSE_THRESHOLD: float = 0.1    # convergence target
+MAX_ITER: int = 10            # hard cap on iterations
 
 # ── Consts ─────────────────────────────────────────────────────────────────────
 HERE = Path(__file__).parent
