@@ -8,13 +8,13 @@
 #include <unordered_map>
 #include <vector>
 
-#include "raddex/client.hpp"
+#include "radex/client.hpp"
 
 namespace pkg {
 
 namespace localkv {
 
-class UnorderedMapClient : public raddex::IClient {
+class UnorderedMapClient : public radex::IClient {
   public:
     std::unordered_map<std::string, std::vector<uint8_t>> _map{};
 
@@ -28,12 +28,12 @@ class UnorderedMapClient : public raddex::IClient {
     }
 
     void put_bytes(const std::string &key, const void *bytes,
-                   raddex::detail::MetaInt length) override {
+                   radex::detail::MetaInt length) override {
         auto ptr = static_cast<const std::uint8_t*>(bytes);
         _map.insert({key, std::vector<uint8_t>{ptr, ptr + length}});
     }
 
-    raddex::detail::BytesBuffer get_bytes(const std::string &key) override {
+    radex::detail::BytesBuffer get_bytes(const std::string &key) override {
         auto buf = _map.at(key);
         auto ptr = std::make_unique<uint8_t[]>(buf.size());
         std::copy(buf.begin(), buf.end(), ptr.get());

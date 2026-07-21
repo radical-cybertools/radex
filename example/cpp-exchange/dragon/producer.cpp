@@ -2,7 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "raddex/dragon.hpp"
+#include "radex/dragon.hpp"
 
 int main() {
     char *serialized_dd = getenv("SERIALIZED_DDICT");
@@ -15,7 +15,7 @@ int main() {
               << "---------------------------\n";
 
     timespec timeout{5, 0};
-    raddex::drg::ddict::Client client{serialized_dd, &timeout};
+    radex::drg::ddict::Client client{serialized_dd, &timeout};
 
     client.put_scalar<long>("some-int", 123);
     client.put_scalar<double>("some-float", 1.23);

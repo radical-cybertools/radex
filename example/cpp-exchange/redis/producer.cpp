@@ -1,14 +1,14 @@
 #include <ctime>
 #include <iostream>
 
-#include "raddex/smartredis.hpp"
+#include "radex/smartredis.hpp"
 
 int main() {
     std::cout << "===========================\n"
               << "Hello World from Producer!!\n"
               << "---------------------------\n";
 
-    raddex::redis::smartredis::Client client{"example-sr-producer"};
+    radex::redis::smartredis::Client client{"example-sr-producer"};
 
     client.put_scalar<long>("some-int", 123);
     client.put_scalar<double>("some-float", 1.23);

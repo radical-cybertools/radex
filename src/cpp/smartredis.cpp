@@ -1,5 +1,5 @@
-#include "raddex/smartredis.hpp"
-#include "raddex/constants.hpp"
+#include "radex/smartredis.hpp"
+#include "radex/constants.hpp"
 
 #include <cstdlib>
 #include <configoptions.h>
@@ -42,7 +42,7 @@ std::string _logger_name_from_env() {
 }
 
 
-namespace raddex::redis::smartredis {
+namespace radex::redis::smartredis {
 
 Client::Client()
     : Client(_configOptions_from_radex_env(), _logger_name_from_env()) {}
@@ -60,7 +60,7 @@ void Client::put_bytes(const std::string &key, const void *bytes,
     client.put_bytes(key, bytes, length);
 }
 
-raddex::detail::BytesBuffer Client::get_bytes(const std::string &key) {
+radex::detail::BytesBuffer Client::get_bytes(const std::string &key) {
     void *out_buf = nullptr;
     detail::MetaInt out_n_bytes = 0;
     client.get_bytes(key, out_buf, out_n_bytes);
@@ -69,4 +69,4 @@ raddex::detail::BytesBuffer Client::get_bytes(const std::string &key) {
     return {std::move(uniq), out_n_bytes};
 }
 
-} // namespace raddex::redis::smartredis
+} // namespace radex::redis::smartredis

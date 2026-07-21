@@ -10,7 +10,7 @@ ctypedef fused SupportedType:
     float
     double
 
-cdef extern from "raddex/client.hpp" namespace "raddex::data":
+cdef extern from "radex/client.hpp" namespace "radex::data":
     cdef enum class DType(uint64_t):
         INT32,
         INT64,

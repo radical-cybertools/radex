@@ -7,7 +7,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "raddex"
+name = "radex"
 version = "0.0.0"
 dependencies = [
     "numpy",

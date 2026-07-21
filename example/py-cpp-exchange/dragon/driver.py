@@ -10,7 +10,7 @@ import dragon
 from dragon.data.ddict import DDict
 from dragon.native.process import ProcessTemplate, Process
 
-from raddex import DragonClient as Client
+from radex import DragonClient as Client
 
 HERE = pathlib.Path(__file__).parent
 ROOT = HERE.parent.parent.parent

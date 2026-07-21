@@ -1,14 +1,14 @@
-#ifndef __RADDEX_SMARTREDIS_HPP__
-#define __RADDEX_SMARTREDIS_HPP__
+#ifndef __RADEX_SMARTREDIS_HPP__
+#define __RADEX_SMARTREDIS_HPP__
 
-#include "raddex/client.hpp"
-#include "raddex/constants.hpp"
+#include "radex/client.hpp"
+#include "radex/constants.hpp"
 
 #include <client.h>
 
 #include <string>
 
-namespace raddex::redis::smartredis {
+namespace radex::redis::smartredis {
 
 class Client : public IClient {
   private:
@@ -29,9 +29,9 @@ class Client : public IClient {
     bool contains(const std::string &key) override;
     void put_bytes(const std::string &key, const void *bytes,
                    detail::MetaInt length) override;
-    raddex::detail::BytesBuffer get_bytes(const std::string &key) override;
+    radex::detail::BytesBuffer get_bytes(const std::string &key) override;
 };
 
-} // namespace raddex::redis::smartredis
+} // namespace radex::redis::smartredis
 
 #endif

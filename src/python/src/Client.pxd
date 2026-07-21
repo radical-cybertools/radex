@@ -7,7 +7,7 @@ from Data cimport DType
 cimport numpy as np
 np.import_array()
 
-cdef extern from "raddex/client.hpp" namespace "raddex::detail":
+cdef extern from "radex/client.hpp" namespace "radex::detail":
     cdef cppclass BytesBuffer:
         const void* get_ptr() except +
         uint64_t get_length() except +
@@ -24,7 +24,7 @@ cdef extern from "raddex/client.hpp" namespace "raddex::detail":
         const void *data() except +
 
 
-cdef extern from "raddex/client.hpp" namespace "raddex":
+cdef extern from "radex/client.hpp" namespace "radex":
     cdef cppclass IClient:
         bint contains(const string&) except +
         void put_bytes(const string&, const void*, uint64_t) except +

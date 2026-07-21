@@ -56,7 +56,7 @@ from rose.al.active_learner import SequentialActiveLearner
 from rose.learner import LearnerConfig, TaskConfig
 from rose.metrics import MEAN_SQUARED_ERROR_MSE
 
-from raddex import DragonClient as Client
+from radex import DragonClient as Client
 
 
 rhapsody.enable_logging()

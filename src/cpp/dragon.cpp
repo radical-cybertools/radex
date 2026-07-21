@@ -1,4 +1,4 @@
-#include "raddex/dragon.hpp"
+#include "radex/dragon.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -29,7 +29,7 @@ dragon::DDict<dragon::Serializable, dragon::Serializable> _ddict_from_radex_env(
 
 } // namespace
 
-namespace raddex::drg::ddict {
+namespace radex::drg::ddict {
 
 Client::Client() : Client(_ddict_from_radex_env()) {}
 
@@ -56,7 +56,7 @@ void Client::put_bytes(const std::string &key, const void *bytes,
     ddict[key_] = buf;
 }
 
-raddex::detail::BytesBuffer Client::get_bytes(const std::string &key) {
+radex::detail::BytesBuffer Client::get_bytes(const std::string &key) {
     SerializableString key_{key};
     SerializableByteBuffer buf = ddict[key_];
 
@@ -67,4 +67,4 @@ raddex::detail::BytesBuffer Client::get_bytes(const std::string &key) {
     return {std::move(uniq), len};
 }
 
-} // namespace raddex::drg::ddict
+} // namespace radex::drg::ddict
