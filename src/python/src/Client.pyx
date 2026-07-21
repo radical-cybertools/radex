@@ -3,6 +3,7 @@ import cython
 from libcpp.string cimport string
 from libcpp.memory cimport unique_ptr
 from libc.time cimport timespec
+from libc.stdint cimport uint64_t
 
 from Client cimport IClient, ItemInfo, BytesBuffer
 from Dragon cimport Client
@@ -44,14 +45,15 @@ cdef class PyClient:
         return make_ndarray(type_, info_.data(), 1)[0]
 
     def put_tensor(self, str key, np.ndarray tensor not None):
-        cdef np.ndarray[np.uint64_t, ndim=1] dims = np.asarray(
-                (<object>tensor).shape, dtype=np.uint64)
+        cdef np.ndarray dims_arr = np.asarray((<object>tensor).shape,
+                              dtype=np.uint64)
+        cdef const uint64_t[:] dims = dims_arr
         self._put_tensor(key, dims, tensor.ravel())
 
     def _put_tensor(
         self,
         str key,
-        const np.uint64_t[:] dims not None,
+        const uint64_t[:] dims not None,
         const SupportedType[:] data not None,
     ):
         cdef string key_ = key.encode("utf-8")
@@ -64,15 +66,15 @@ cdef class PyClient:
         cdef unique_ptr[ItemInfo] info = self._client.get_item_info_ptr(key_)
         cdef ItemInfo* info_ = info.get()
 
-        cdef np.uint64_t n_dims = info_.metadata().n_dims()
+        cdef uint64_t n_dims = info_.metadata().n_dims()
         if n_dims == 0:
             # TODO: Better error type/msg here
             raise ValueError("Attempted to retrieve vector at a key with a scalar")
-        cdef const np.uint64_t[:] dims = (
-            <const np.uint64_t[:n_dims]> info_.metadata().dims_ptr()
+        cdef const uint64_t[:] dims = (
+            <const uint64_t[:n_dims]> info_.metadata().dims_ptr()
         )
 
-        cdef np.uint64_t n_elements = info_.metadata().n_elements()
+        cdef uint64_t n_elements = info_.metadata().n_elements()
         cdef DType type_ = info_.metadata().type()
 
         data = make_ndarray(type_, info_.data(), n_elements)
@@ -82,14 +84,14 @@ cdef class PyClient:
         cdef string key_ = key.encode("utf-8")
         cdef bytes bytes_ = pickle.dumps(picklable)
         cdef void* ptr = <void*><char*>bytes_
-        cdef np.uint64_t len_ = len(bytes_)
+        cdef uint64_t len_ = len(bytes_)
         self._client.put_bytes(key_, ptr, len_)
 
     def get_picklable(self, str key):
         cdef string key_ = key.encode("utf-8")
         cdef BytesBuffer buf = self._client.get_bytes(key_)
 
-        cdef np.uint64_t len_ = buf.get_length()
+        cdef uint64_t len_ = buf.get_length()
         cdef np.uint8_t *ptr = <np.uint8_t*>buf.get_ptr()
 
         cdef bytes bytes_ = <bytes>ptr[:len_]
