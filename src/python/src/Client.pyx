@@ -121,7 +121,25 @@ cdef class PyClient:
 
 
 cdef class DragonClient(PyClient):
-    def __cinit__(self, str descriptor, int timeout):
-        cdef string desc = descriptor.encode("utf-8");
+
+    def __cinit__(self, descriptor: str | None=None, timeout: int | None=None):
+        if (descriptor is None) and (timeout is None):
+            self._init_from_env()
+        elif (descriptor is not None) and (timeout is not None):
+            self._init_from_args(descriptor, timeout)
+        else:
+            raise ValueError(
+                "Both descriptor and timeout must be set or both be None"
+            )
+
+    cdef void _init_from_env(self):
+        self._client = new Client()
+
+    cdef void _init_from_args(self, str descriptor, int timeout):
+        if len(descriptor)==0:
+            raise ValueError("DDict descriptor cannot be an empty string")
+        if timeout < 0:
+            raise ValueError("timeout must be positive")
+        cdef string desc = (descriptor).encode("utf-8")
         cdef timespec spec = timespec(timeout, 0)
         self._client = new Client(desc.c_str(), &spec)
