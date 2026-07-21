@@ -11,7 +11,3 @@ Core interface definitions shared across backend implementations.
 .. doxygennamespace:: raddex::data
    :project: raddex
    :members:
-
-.. doxygennamespace:: raddex::detail
-   :project: raddex
-   :members:
