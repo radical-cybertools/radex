@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "raddex/smartredis.hpp"
+#include "radex/smartredis.hpp"
 
 template <typename T> std::string vec_to_str(const std::vector<T> &vec) {
     std::string s{"[ "};
@@ -19,7 +19,7 @@ int main() {
               << "Hello World from Consumer!!\n"
               << "---------------------------\n";
 
-    raddex::redis::smartredis::Client client{"example-sr-consumer"};
+    radex::redis::smartredis::Client client{"example-sr-consumer"};
 
     auto some_int = client.get_scalar<long>("some-int");
     auto [some_int_tensor_dims, some_int_tensor] =

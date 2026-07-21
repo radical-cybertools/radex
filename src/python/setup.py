@@ -10,7 +10,7 @@ PY_SRC = HERE / "src"
 CPP_SRC = ROOT / "src/cpp"
 
 core = Extension(
-    "raddex",
+    "radex",
     sources=[
         os.fspath(PY_SRC / "Client.pyx"),
         os.fspath(CPP_SRC / "client.cpp"),

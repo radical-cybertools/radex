@@ -1,4 +1,4 @@
-#include "raddex/dragon.hpp"
+#include "radex/dragon.hpp"
 #include <cstdlib>
 #include <mpi.h>
 #include <random>
@@ -6,6 +6,7 @@
 
 constexpr double pi = 3.14159265358979323846;
 static timespec_t TIMEOUT = {5, 0};
+
 static size_t N_SAMPLES_PER_RANK = 8;
 
 int main(int argc, char **argv) {
@@ -28,7 +29,7 @@ int main(int argc, char **argv) {
     }
 
     // Create the connection to the existing DDict
-    raddex::drg::ddict::Client client{ddict_descriptor, &TIMEOUT};
+    radex::drg::ddict::Client client{ddict_descriptor, &TIMEOUT};
 
     // Retrieve the iteration count of the active learning loop
     const std::string iter_key("sim_meta_iter_count");

@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 
-#include "raddex/dragon.hpp"
+#include "radex/dragon.hpp"
 
 template <typename T> std::string vec_to_str(const std::vector<T> &vec) {
     std::string s{"[ "};
@@ -26,7 +26,7 @@ int main() {
               << "---------------------------\n";
 
     timespec timeout{5, 0};
-    raddex::drg::ddict::Client client{serialized_dd, &timeout};
+    radex::drg::ddict::Client client{serialized_dd, &timeout};
 
     auto some_int = client.get_scalar<long>("some-int");
     auto [some_int_tensor_dims, some_int_tensor] =

@@ -1,5 +1,5 @@
-#ifndef __RADDEX_CLIENT_HPP__
-#define __RADDEX_CLIENT_HPP__
+#ifndef __RADEX_CLIENT_HPP__
+#define __RADEX_CLIENT_HPP__
 
 #include <cstdint>
 #include <cstring>
@@ -10,7 +10,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace raddex {
+namespace radex {
 
 namespace detail {
 using MetaInt = std::size_t;
@@ -22,13 +22,13 @@ template <typename... Ts> struct TypeSet {};
 
 using ValidTypes = TypeSet<std::int32_t, std::int64_t, float, double>;
 
-template <typename T, typename Set, raddex::detail::MetaInt i = 0>
+template <typename T, typename Set, radex::detail::MetaInt i = 0>
 struct get_index {};
 
-template <typename T, typename U, typename... Rest, raddex::detail::MetaInt i>
+template <typename T, typename U, typename... Rest, radex::detail::MetaInt i>
 struct get_index<T, TypeSet<U, Rest...>, i>
     : std::conditional<std::is_same<T, U>::value,
-                       std::integral_constant<raddex::detail::MetaInt, i>,
+                       std::integral_constant<radex::detail::MetaInt, i>,
                        get_index<T, TypeSet<Rest...>, i + 1>>::type {};
 
 template <typename T> struct enumerate_type : get_index<T, ValidTypes> {};
@@ -47,7 +47,7 @@ struct is_supported_type
 
 // FIXME: I would really prefer to see this created dynamically when adding to
 //        the `ValidTypes` set, or vice-versa.
-enum class DType : raddex::detail::MetaInt {
+enum class DType : radex::detail::MetaInt {
     INT32 = enumerate_type<std::int32_t>::value,
     INT64 = enumerate_type<std::int64_t>::value,
     FLOAT32 = enumerate_type<float>::value,
@@ -113,11 +113,11 @@ class MetaData {
   public:
     template <typename T>
     static MetaData make_tensor(const MetaInt *dims, MetaInt n_dims) {
-        return make_buffer(raddex::data::encode_type<T>(), dims, n_dims);
+        return make_buffer(radex::data::encode_type<T>(), dims, n_dims);
     }
 
     template <typename T> static MetaData make_scalar() {
-        return make_buffer(raddex::data::encode_type<T>(), nullptr, 0);
+        return make_buffer(radex::data::encode_type<T>(), nullptr, 0);
     }
 
     static MetaData from_buffer(BytesBuffer buf);
@@ -133,13 +133,13 @@ class MetaData {
     }
 
     MetaInt size() const { return buffer.get_length(); }
-    raddex::data::DType type() const {
-        return static_cast<raddex::data::DType>(val_at(Index::TYPE));
+    radex::data::DType type() const {
+        return static_cast<radex::data::DType>(val_at(Index::TYPE));
     }
 
   private:
     MetaData(BytesBuffer buffer) : buffer{std::move(buffer)} {}
-    static MetaData make_buffer(const raddex::data::DType dtype,
+    static MetaData make_buffer(const radex::data::DType dtype,
                                 const MetaInt *dims, MetaInt n_dims);
     MetaInt val_at(MetaInt idx) const { return get_buffer()[idx]; }
     const MetaInt *dims_begin() const {
@@ -278,6 +278,6 @@ class IClient {
     }
 };
 
-} // namespace raddex
+} // namespace radex
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef __RADDEX_CONSTANTS_HPP__
-#define __RADDEX_CONSTANTS_HPP__
+#ifndef __RADEX_CONSTANTS_HPP__
+#define __RADEX_CONSTANTS_HPP__
 
 #include <string>
 

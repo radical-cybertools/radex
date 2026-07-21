@@ -1,6 +1,6 @@
-#include "raddex/client.hpp"
+#include "radex/client.hpp"
 
-namespace raddex {
+namespace radex {
 namespace detail {
 
 MetaData MetaData::from_buffer(BytesBuffer buffer) {
@@ -13,7 +13,7 @@ MetaData MetaData::from_buffer(BytesBuffer buffer) {
     return meta;
 }
 
-MetaData MetaData::make_buffer(const raddex::data::DType dtype,
+MetaData MetaData::make_buffer(const radex::data::DType dtype,
                                const MetaInt *dims, MetaInt n_dims) {
     MetaInt n_bytes = (n_dims + Index::END_OF_HEADER) * sizeof(MetaInt);
     auto bytes = std::make_unique<std::uint8_t[]>(n_bytes);
@@ -28,4 +28,4 @@ MetaData MetaData::make_buffer(const raddex::data::DType dtype,
 
 } // namespace detail
 
-} // namespace raddex
+} // namespace radex

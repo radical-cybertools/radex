@@ -5,8 +5,8 @@
 #include <thread>
 #include <vector>
 
-#include "raddex/client.hpp"
-#include "raddex/dragon.hpp"
+#include "radex/client.hpp"
+#include "radex/dragon.hpp"
 
 const std::string IDENT{"               "};
 
@@ -19,7 +19,7 @@ template <typename T> std::string vec_to_str(const std::vector<T> &vec) {
     return s;
 }
 
-void poll_for_key(raddex::IClient &client, const std::string &key,
+void poll_for_key(radex::IClient &client, const std::string &key,
                   int max_attempts = 10) {
     while (!client.contains(key)) {
         if (max_attempts-- == 0) {
@@ -32,7 +32,7 @@ void poll_for_key(raddex::IClient &client, const std::string &key,
 }
 
 template <typename T>
-void poll_for_scalar_key(raddex::IClient &client, const std::string &key) {
+void poll_for_scalar_key(radex::IClient &client, const std::string &key) {
     poll_for_key(client, key);
     auto val = client.get_scalar<T>(key);
     std::cout << IDENT << "App: Got key `" << key << "` has value " << val
@@ -41,7 +41,7 @@ void poll_for_scalar_key(raddex::IClient &client, const std::string &key) {
 }
 
 template <typename T>
-void poll_for_vector_key(raddex::IClient &client, const std::string &key) {
+void poll_for_vector_key(radex::IClient &client, const std::string &key) {
     poll_for_key(client, key);
     auto [dims, data] = client.get_tensor<T>(key);
     std::cout << IDENT << "App: Got key `" << key << "`\n"
@@ -58,7 +58,7 @@ int main() {
 
     timespec timeout{5, 0};
     std::cout << IDENT << "App: Creating client" << std::endl;
-    raddex::drg::ddict::Client client{serialized_dd, &timeout};
+    radex::drg::ddict::Client client{serialized_dd, &timeout};
     std::cout << IDENT << "App: Client created" << std::endl;
 
     poll_for_scalar_key<int>(client, "py-int");
