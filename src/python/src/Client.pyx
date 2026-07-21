@@ -121,7 +121,17 @@ cdef class PyClient:
 
 
 cdef class DragonClient(PyClient):
-    def __cinit__(self, str descriptor, int timeout):
-        cdef string desc = descriptor.encode("utf-8");
-        cdef timespec spec = timespec(timeout, 0)
+    def __cinit__(self, descriptor: str | None=None, int timeout=5):
+        cdef string desc
+        cdef timespec spec
+
+        if descriptor is None:
+            self._client = new Client()
+            return
+
+        if not isinstance(descriptor, str):
+            raise TypeError("descriptor must be a str or None")
+
+        desc = (<str>descriptor).encode("utf-8")
+        spec = timespec(timeout, 0)
         self._client = new Client(desc.c_str(), &spec)
