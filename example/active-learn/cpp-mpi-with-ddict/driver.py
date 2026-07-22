@@ -69,8 +69,9 @@ MSE_THRESHOLD: float = 0.1    # convergence target
 MAX_ITER: int = 10            # hard cap on iterations
 
 # ── Consts ─────────────────────────────────────────────────────────────────────
-HERE = Path(__file__).parent
-BUILD_DIR = HERE.parent.parent.parent / "build"
+HERE = Path(__file__).parent.absolute()
+ROOT = HERE.parent.parent.parent
+BUILD_DIR = ROOT / "build"
 
 
 async def rose_mpi_ddict() -> None:
