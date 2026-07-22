@@ -12,7 +12,7 @@ from dragon.native.process import ProcessTemplate, Process
 
 from radex import DragonClient as Client
 
-HERE = pathlib.Path(__file__).parent
+HERE = pathlib.Path(__file__).parent.absolute()
 ROOT = HERE.parent.parent.parent
 BUILD = ROOT / "build"
 

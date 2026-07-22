@@ -3,7 +3,7 @@ import os
 import pathlib
 import time
 
-HERE = pathlib.Path(__file__).parent
+HERE = pathlib.Path(__file__).parent.absolute()
 ROOT = HERE.parent.parent.parent
 BUILD = ROOT / "build"
 

@@ -4,7 +4,7 @@ import dragon
 from dragon.data.ddict import DDict
 from dragon.native.process import ProcessTemplate, Process
 
-HERE = pathlib.Path(__file__).parent
+HERE = pathlib.Path(__file__).parent.absolute()
 ROOT = HERE.parent.parent.parent
 BUILD = ROOT / "build"
 
@@ -32,6 +32,7 @@ def main() -> int:
     consumer.start()
     consumer.join()
     print("==> Consumer Joined", flush=True)
+    dd.destroy()
     return 0
 
 
