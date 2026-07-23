@@ -4,6 +4,7 @@ import dragon
 import pytest
 from dragon.data.ddict import DDict
 from dragon.globalservices.api_setup import get_gs_ret_cuid
+from dragon.infrastructure.facts import DRAGON_BASE_DIR
 from radex import DragonClient as Client
 
 
@@ -25,12 +26,12 @@ def _requires_dragon_runtime():
 
 @pytest.fixture(scope="session")
 def _dragon_include_dir():
-    yield os.environ["DRAGON_INCLUDE_DIR"]
+    yield os.path.join(DRAGON_BASE_DIR, "include")
 
 
 @pytest.fixture(scope="session")
 def _dragon_lib_dir():
-    yield os.environ["DRAGON_LIB_DIR"]
+    yield os.path.join(DRAGON_BASE_DIR, "lib")
 
 
 @pytest.fixture(scope="session")
