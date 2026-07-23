@@ -48,9 +48,9 @@ def test_put_and_get_tensor(client, size, shape, np_dtype):
     tensor = np.arange(size, dtype=np_dtype).reshape(shape)
 
     assert not client.contains(key)
-    client.put_tensor("some-tensor", tensor)
+    client.put_tensor(key, tensor)
     assert client.contains(key)
-    ret_tensor = client.get_tensor("some-tensor")
+    ret_tensor = client.get_tensor(key)
 
     assert tensor.dtype == ret_tensor.dtype == np_dtype
     assert tensor.shape == ret_tensor.shape == shape
