@@ -1,13 +1,6 @@
 scikit-learn
 numpy
+dragonhpc[telemetry]>=0.14.1
 radical.asyncflow==0.5.0
-rhapsody-py @ git+https://github.com/radical-cybertools/rhapsody.git@1ffd932
-ROSE @ git+https://github.com/radical-cybertools/ROSE.git@5db6c20
-
-# Dragon's build system is borked, but this is the commit that I manually built
-# against
-# dragonhpc @ git+ssh://git@github.hpe.com/hpe/hpc-pe-dragon-dragon.git@0fe4245#subdirectory=src
-
-# Additional dragon deps needed for telemetry not specified by package 
-flask
-gunicorn
+rhapsody-py @ git+https://github.com/radical-cybertools/rhapsody.git@feature/pre-release-0.5.0
+ROSE @ git+https://github.com/radical-cybertools/ROSE.git@main
