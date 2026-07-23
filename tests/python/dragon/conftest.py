@@ -13,11 +13,11 @@ def _requires_dragon_runtime():
     try:
         get_gs_ret_cuid()
     except Exception:
-        in_dargon_session = False
+        in_dragon_session = False
     else:
-        in_dargon_session = True
+        in_dragon_session = True
 
-    if not in_dargon_session:
+    if not in_dragon_session:
         pytest.skip(
             "Dragon session not detected!" "Try running with `dragon -s -- -m pytest`?"
         )
