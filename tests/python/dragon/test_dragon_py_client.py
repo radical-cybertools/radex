@@ -1,4 +1,5 @@
 import dataclasses
+import math
 
 import numpy as np
 import pytest
@@ -50,6 +51,30 @@ def test_put_and_get_tensor(client, size, shape, np_dtype):
     client.put_tensor("some-tensor", tensor)
     assert client.contains(key)
     ret_tensor = client.get_tensor("some-tensor")
+
+    assert tensor.dtype == ret_tensor.dtype == np_dtype
+    assert tensor.shape == ret_tensor.shape == shape
+    assert (tensor == ret_tensor).all()
+
+
+@pytest.mark.parametrize("size", [pytest.param(int(1e6), id="size=1MB")])
+@pytest.mark.parametrize(
+    "n_dims", [pytest.param(n, id=f"shape={n}D") for n in range(1, 5)]
+)
+def test_put_and_get_tensor_of_size(client, np_dtype, size, n_dims):
+    min_n_elements = math.ceil(size / np.dtype(np_dtype).itemsize)
+    n_elements_per_dim = math.ceil(math.pow(min_n_elements, 1 / n_dims))
+    shape = tuple([n_elements_per_dim] * n_dims)
+    n_elements = math.prod(shape)
+    assert n_elements >= min_n_elements, f"Tensor is smaller than {size} bytes"
+    assert len(shape) == n_dims, f"Got {len(shape)} dims but expected {n_dims}"
+
+    key = "spam-eggs"
+    tensor = np.arange(n_elements, dtype=np_dtype).reshape(shape)
+
+    client.put_tensor(key, tensor)
+    assert client.contains(key)
+    ret_tensor = client.get_tensor(key)
 
     assert tensor.dtype == ret_tensor.dtype == np_dtype
     assert tensor.shape == ret_tensor.shape == shape
