@@ -60,15 +60,15 @@ def cpp_dragon_compile(cpp_compile, _dragon_compile_args):
 
 
 @pytest.fixture(scope="session")
-def _session_ddict(_requires_dragon_runtime):
+def _persistent_ddict_client(_requires_dragon_runtime):
     ddict = DDict(managers_per_node=1, n_nodes=1)
     yield ddict
 
 
 @pytest.fixture(scope="function")
-def ddict(_session_ddict):
-    yield _session_ddict
-    _session_ddict.clear()
+def ddict(_persistent_ddict_client):
+    yield _persistent_ddict_client
+    _persistent_ddict_client.clear()
 
 
 @pytest.fixture(scope="function")
