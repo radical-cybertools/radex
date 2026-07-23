@@ -17,3 +17,6 @@ venv.bak/
 
 # Builds
 build/
+
+# Dragon Artifacts
+**/ddict_orc_*
