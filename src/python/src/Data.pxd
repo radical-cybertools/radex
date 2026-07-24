@@ -11,8 +11,13 @@ ctypedef fused SupportedType:
     float
     double
 
+
+cdef extern from "radex/client.hpp" namespace "radex::detail":
+    ctypedef size_t MetaInt
+
+
 cdef extern from "radex/client.hpp" namespace "radex::data":
-    cdef enum class DType(size_t):
+    cdef enum class DType(MetaInt):
         INT32,
         INT64,
         FLOAT32,
@@ -20,7 +25,7 @@ cdef extern from "radex/client.hpp" namespace "radex::data":
 
 
 # TODO: Don't like this method name
-cdef inline make_ndarray(DType dtype, const void* data, size_t size):
+cdef inline make_ndarray(DType dtype, const void* data, MetaInt size):
     if dtype == DType.INT32:
         return np.copy(<np.int32_t[:size]> data)
     if dtype == DType.INT64:

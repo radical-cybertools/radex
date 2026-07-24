@@ -1,8 +1,7 @@
 from libcpp.memory cimport unique_ptr
 from libcpp.string cimport string
-from libc.stddef cimport size_t
 
-from Data cimport DType
+from Data cimport DType, MetaInt as size_t
 
 cimport numpy as np
 np.import_array()

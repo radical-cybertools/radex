@@ -2,7 +2,6 @@ import cython
 
 from libcpp.string cimport string
 from libcpp.memory cimport unique_ptr
-from libc.stddef cimport size_t
 from libc.time cimport timespec
 from libc.stdint cimport uint64_t, int32_t, int64_t
 
@@ -13,6 +12,7 @@ from Data cimport (
     SupportedType,
     coerce_py_objects_to_np_numbers,
     make_ndarray,
+    MetaInt as size_t,
 )
 
 import pickle
