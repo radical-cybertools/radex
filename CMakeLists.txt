@@ -47,3 +47,7 @@ endif()
 if(BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS)
     add_subdirectory(src)
 endif()
+
+if(BUILD_TESTS)
+    add_subdirectory(tests/cpp)
+endif()
