@@ -15,8 +15,11 @@ venv.bak/
 # Mac
 .DS_Store
 
-# Builds
-build/
-
 # Dragon Artifacts
 **/ddict_orc_*
+
+# Builds
+build/
+CMakeFiles/
+CMakeCache.txt
+install/
