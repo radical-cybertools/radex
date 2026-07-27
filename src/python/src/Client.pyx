@@ -22,6 +22,13 @@ import numpy as np
 np.import_array()
 
 
+ctypedef string EncodedStr
+
+
+cdef inline EncodedStr _encode_str(str s):
+    return s.encode("utf-8")
+
+
 cdef class PyClient:
     cdef IClient *_client
 
@@ -32,33 +39,32 @@ cdef class PyClient:
             self._client = NULL
 
     def contains(self, str key):
-        cdef string key_ = key.encode("utf-8")
-        return self._client.contains(key_)
+        return self._client.contains(_encode_str(key).c_str())
 
     def put_scalar(self, str key, object value not None):
         cdef np.number val = coerce_py_objects_to_np_numbers(value)
         return self._put_scalar(key, val)
 
     def _put_scalar(self, str key, np.number value not None):
-        cdef string key_ = key.encode("utf-8")
+        cdef EncodedStr key_ = _encode_str(key)
 
         # FIXME: Get rid of this ugly swith statment. Ideally we could used the
         #        fused `SupportedType` type, but there seems to be a known
         #        issue with how it dispatches
         # https://github.com/cython/cython/issues/4932
         if isinstance(value, np.int32):
-            return self._client.put_scalar[int32_t](key_, value)
+            return self._client.put_scalar[int32_t](key_.c_str(), value)
         if isinstance(value, np.int64):
-            return self._client.put_scalar[int64_t](key_, value)
+            return self._client.put_scalar[int64_t](key_.c_str(), value)
         if isinstance(value, np.float32):
-            return self._client.put_scalar[np.float32_t](key_, value)
+            return self._client.put_scalar[np.float32_t](key_.c_str(), value)
         if isinstance(value, np.float64):
-            return self._client.put_scalar[np.float64_t](key_, value)
+            return self._client.put_scalar[np.float64_t](key_.c_str(), value)
         raise TypeError(f"Unsupported data type: {type(value)}")
 
     def get_scalar(self, str key):
-        cdef string key_ = key.encode("utf-8")
-        cdef unique_ptr[ItemInfo] info = self._client.get_item_info_ptr(key_)
+        cdef EncodedStr key_ = _encode_str(key)
+        cdef unique_ptr[ItemInfo] info = self._client.get_item_info_ptr(key_.c_str())
         cdef ItemInfo* info_ = info.get()
 
         if info_.metadata().n_dims() != 0:
@@ -79,14 +85,14 @@ cdef class PyClient:
         const size_t[:] dims not None,
         const SupportedType[:] data not None,
     ):
-        cdef string key_ = key.encode("utf-8")
-        return self._client.put_tensor(key_,
+        cdef EncodedStr key_ = _encode_str(key)
+        return self._client.put_tensor(key_.c_str(),
                                        &dims[0], dims.size,
                                        &data[0], data.size)
 
     def get_tensor(self, str key):
-        cdef string key_ = key.encode("utf-8")
-        cdef unique_ptr[ItemInfo] info = self._client.get_item_info_ptr(key_)
+        cdef string key_ = _encode_str(key)
+        cdef unique_ptr[ItemInfo] info = self._client.get_item_info_ptr(key_.c_str())
         cdef ItemInfo* info_ = info.get()
 
         cdef size_t n_dims = info_.metadata().n_dims()
@@ -104,17 +110,17 @@ cdef class PyClient:
         return data.reshape(dims)
 
     def put_picklable(self, str key, object picklable):
-        cdef string key_ = key.encode("utf-8")
+        cdef string key_ = _encode_str(key)
         cdef bytes bytes_ = pickle.dumps(picklable)
         cdef void* ptr = <void*><char*>bytes_
-        cdef uint64_t len_ = len(bytes_)
-        self._client.put_bytes(key_, ptr, len_)
+        cdef size_t len_ = len(bytes_)
+        self._client.put_bytes(key_.c_str(), ptr, len_)
 
     def get_picklable(self, str key):
-        cdef string key_ = key.encode("utf-8")
-        cdef BytesBuffer buf = self._client.get_bytes(key_)
+        cdef string key_ = _encode_str(key)
+        cdef BytesBuffer buf = self._client.get_bytes(key_.c_str())
 
-        cdef uint64_t len_ = buf.get_length()
+        cdef size_t len_ = buf.get_length()
         cdef np.uint8_t *ptr = <np.uint8_t*>buf.get_ptr()
 
         cdef bytes bytes_ = <bytes>ptr[:len_]
@@ -122,8 +128,9 @@ cdef class PyClient:
 
 
 cdef class DragonClient(PyClient):
-
-    def __cinit__(self, descriptor: str | None=None, timeout: int | None=None):
+    def __cinit__(
+        self, descriptor: str | None = None, timeout: int | None = None
+    ):
         if (descriptor is None) and (timeout is None):
             self._init_from_env()
         elif (descriptor is not None) and (timeout is not None):
@@ -137,10 +144,10 @@ cdef class DragonClient(PyClient):
         self._client = new Client()
 
     cdef void _init_from_args(self, str descriptor, int timeout):
-        if len(descriptor)==0:
+        if len(descriptor) == 0:
             raise ValueError("DDict descriptor cannot be an empty string")
         if timeout < 0:
             raise ValueError("timeout must be positive")
-        cdef string desc = (descriptor).encode("utf-8")
+        cdef EncodedStr desc = _encode_str(descriptor)
         cdef timespec spec = timespec(timeout, 0)
         self._client = new Client(desc.c_str(), &spec)
