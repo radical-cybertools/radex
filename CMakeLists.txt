@@ -32,6 +32,7 @@ include(GNUInstallDirs)
 # ============================================================================
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/radex-options.cmake)
 radex_define_root_options()
+radex_language_support()
 
 # ============================================================================
 # Find required packages
@@ -40,12 +41,12 @@ find_package(Threads REQUIRED)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/radex-backends.cmake)
 radex_find_backends()
 
-if(BUILD_EXAMPLES)
-    add_subdirectory(example)
+if(ENABLE_CXX AND (BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS))
+    add_subdirectory(src)
 endif()
 
-if(BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS)
-    add_subdirectory(src)
+if(BUILD_EXAMPLES)
+    add_subdirectory(example)
 endif()
 
 if(BUILD_TESTS)
