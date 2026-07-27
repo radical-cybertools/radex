@@ -2,11 +2,10 @@
 #define __RADEX_SMARTREDIS_HPP__
 
 #include "radex/client.hpp"
-#include "radex/constants.hpp"
 
 #include <client.h>
 
-#include <string>
+#include <string_view>
 
 namespace radex::redis::smartredis {
 
@@ -14,11 +13,11 @@ class Client : public IClient {
   private:
     SmartRedis::Client client;
     Client(std::unique_ptr<SmartRedis::ConfigOptions> options,
-           const std::string &logger_name);
+           std::string_view logger_name);
 
   public:
     Client();
-    Client(const std::string& logger_name);
+    Client(std::string_view logger_name);
 
     Client(const Client &other) = delete;
     Client(Client &&other) = default;
@@ -26,10 +25,10 @@ class Client : public IClient {
     Client &operator=(Client &&other) = default;
     ~Client() = default;
 
-    bool contains(const std::string &key) override;
-    void put_bytes(const std::string &key, const void *bytes,
+    bool contains(std::string_view key) override;
+    void put_bytes(std::string_view key, const void *bytes,
                    detail::MetaInt length) override;
-    radex::detail::BytesBuffer get_bytes(const std::string &key) override;
+    radex::detail::BytesBuffer get_bytes(std::string_view key) override;
 };
 
 } // namespace radex::redis::smartredis

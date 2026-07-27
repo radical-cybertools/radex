@@ -7,6 +7,7 @@
 #include <numeric>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -74,26 +75,12 @@ class BytesBuffer {
         : data{std::move(data)}, length{length} {}
 
     BytesBuffer(const BytesBuffer &other) = delete;
-    BytesBuffer(BytesBuffer &&other) noexcept
-        : data{std::move(other.data)}, length{other.length} {
-        other.length = 0;
-    };
+    BytesBuffer(BytesBuffer &&other) noexcept;
     BytesBuffer &operator=(const BytesBuffer &other) = delete;
-    BytesBuffer &operator=(BytesBuffer &&other) noexcept {
-        if (this != &other) {
-            data = std::move(other.data);
-            length = other.length;
-            other.length = 0;
-        }
-        return *this;
-    }
+    BytesBuffer &operator=(BytesBuffer &&other) noexcept;
     ~BytesBuffer() = default;
 
-    std::unique_ptr<std::uint8_t[]> release() {
-        length = 0;
-        return std::move(data);
-    }
-
+    std::unique_ptr<std::uint8_t[]> release() noexcept;
     const void *get_ptr() const { return data.get(); }
     detail::MetaInt get_length() const { return length; }
 };
@@ -181,17 +168,17 @@ class IClient {
   public:
     // >>> Start Virtual Methods >>>
 
-    virtual bool contains(const std::string &key) = 0;
-    virtual void put_bytes(const std::string &key, const void *bytes,
+    virtual bool contains(std::string_view key) = 0;
+    virtual void put_bytes(std::string_view key, const void *bytes,
                            detail::MetaInt length) = 0;
-    virtual detail::BytesBuffer get_bytes(const std::string &key) = 0;
+    virtual detail::BytesBuffer get_bytes(std::string_view key) = 0;
     virtual ~IClient() {}
 
     // <<< End Virtual Methods <<<
 
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, void>::type
-    put_scalar(const std::string &key, const T &value) {
+    put_scalar(std::string_view key, const T &value) {
         std::string metakey = build_meta_key(key);
         auto meta = detail::MetaData::make_scalar<T>();
         put_bytes(metakey, meta.get_buffer(), meta.size());
@@ -200,7 +187,7 @@ class IClient {
 
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, T>::type
-    get_scalar(const std::string &key) {
+    get_scalar(std::string_view key) {
         const auto info = get_item_info(key);
         if (info.metadata().n_dims() != 0) {
             // TODO: Better error type/message here
@@ -219,14 +206,14 @@ class IClient {
 
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, void>::type
-    put_tensor(const std::string &key, const std::vector<detail::MetaInt> &dims,
+    put_tensor(std::string_view key, const std::vector<detail::MetaInt> &dims,
                const std::vector<T> &data) {
         put_tensor<T>(key, dims.data(), dims.size(), data.data(), data.size());
     }
 
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, void>::type
-    put_tensor(const std::string &key, const detail::MetaInt *dims,
+    put_tensor(std::string_view key, const detail::MetaInt *dims,
                detail::MetaInt n_dims, const T *elements,
                detail::MetaInt n_elements) {
         std::string metakey = build_meta_key(key);
@@ -238,7 +225,7 @@ class IClient {
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value,
                             TensorInfo<T>>::type
-    get_tensor(const std::string &key) {
+    get_tensor(std::string_view key) {
         const auto info = get_item_info(key);
         if (info.metadata().n_dims() == 0) {
             // TODO: Better error type/message here
@@ -256,26 +243,12 @@ class IClient {
                 info.metadata().dims_ptr(), info.metadata().n_dims()};
     }
 
-    detail::ItemInfo get_item_info(const std::string &key) {
-        auto buf = get_bytes(key);
-        return {get_meta_data(key), buf.release()};
-    }
-
-    std::unique_ptr<detail::ItemInfo>
-    get_item_info_ptr(const std::string &key) {
-        return std::make_unique<detail::ItemInfo>(get_meta_data(key),
-                                                  get_bytes(key).release());
-    }
+    detail::ItemInfo get_item_info(std::string_view key);
+    std::unique_ptr<detail::ItemInfo> get_item_info_ptr(std::string_view key);
 
   private:
-    std::string build_meta_key(const std::string &s) {
-        return "__metadata::" + s;
-    }
-
-    detail::MetaData get_meta_data(const std::string &key) {
-        auto meta_key = build_meta_key(key);
-        return detail::MetaData::from_buffer(get_bytes(meta_key));
-    }
+    std::string build_meta_key(std::string_view s) const;
+    detail::MetaData get_meta_data(std::string_view key);
 };
 
 } // namespace radex

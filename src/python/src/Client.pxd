@@ -1,5 +1,6 @@
 from libcpp.memory cimport unique_ptr
 from libcpp.string cimport string
+from libcpp.string_view cimport string_view
 
 from Data cimport DType, MetaInt as size_t
 

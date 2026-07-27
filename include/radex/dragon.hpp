@@ -2,11 +2,10 @@
 #define __RADEX_DRAGON_HPP__
 
 #include "radex/client.hpp"
-#include "radex/constants.hpp"
 
 #include <dragon/dictionary.hpp>
 #include <dragon/serializable.hpp>
-#include <string>
+#include <string_view>
 
 namespace radex::drg::ddict {
 
@@ -26,10 +25,10 @@ class Client : public IClient {
     Client &operator=(Client &&other) = default;
     ~Client() = default;
 
-    bool contains(const std::string &key) override;
-    void put_bytes(const std::string &key, const void *bytes,
+    bool contains(std::string_view key) override;
+    void put_bytes(std::string_view key, const void *bytes,
                    detail::MetaInt length) override;
-    radex::detail::BytesBuffer get_bytes(const std::string &key) override;
+    radex::detail::BytesBuffer get_bytes(std::string_view key) override;
 };
 
 } // namespace radex::drg::ddict
