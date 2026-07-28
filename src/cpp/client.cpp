@@ -64,11 +64,14 @@ detail::BytesBuffer IClient::wait_for_bytes(std::string_view key,
             ? std::stoul(poll_interval_s)
             : RADEX_DEFAULT_POLL_INTERVAL_SECONDS;
     const auto end_time = std::chrono::system_clock::now() + timeout;
+
     while (!contains(key)) {
         std::this_thread::sleep_for(std::chrono::seconds(poll_interval));
         if (std::chrono::system_clock::now() > end_time) {
             std::ostringstream msg;
-            msg << "Failed to find key `" << key << "` in time";
+            msg << "Failed to find key `" << key << "` before timeout";
+
+            // TODO: Better error type here
             throw std::runtime_error(msg.str());
         }
     }
