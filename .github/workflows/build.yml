@@ -44,6 +44,8 @@ jobs:
       run: |
             pip install dragonhpc==$_DRAGON_VERSION
 
-    - name: Build Radex library
+    - name: Build radex library
       run: |
-            cd radex && cmake -S . -B build --DCMAKE_INSTALL_PREFIX=install && cmake --build build
+            cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install
+            cmake --build build
+            cmake --install build
