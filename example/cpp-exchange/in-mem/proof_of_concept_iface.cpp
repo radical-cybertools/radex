@@ -18,23 +18,24 @@ class UnorderedMapClient : public radex::IClient {
   public:
     std::unordered_map<std::string, std::vector<uint8_t>> _map{};
 
-    bool contains(const std::string &key) override {
+    bool contains(std::string_view key) override {
         try {
-            _map.at(key);
+            _map.at(std::string{key});
         } catch (std::out_of_range &e) {
             return false;
         }
         return true;
     }
 
-    void put_bytes(const std::string &key, const void *bytes,
+    void put_bytes(std::string_view key, const void *bytes,
                    radex::detail::MetaInt length) override {
-        auto ptr = static_cast<const std::uint8_t*>(bytes);
-        _map.insert({key, std::vector<uint8_t>{ptr, ptr + length}});
+        auto ptr = static_cast<const std::uint8_t *>(bytes);
+        _map.insert(
+            {std::string{key}, std::vector<uint8_t>{ptr, ptr + length}});
     }
 
-    radex::detail::BytesBuffer get_bytes(const std::string &key) override {
-        auto buf = _map.at(key);
+    radex::detail::BytesBuffer get_bytes(std::string_view key) override {
+        auto buf = _map.at(std::string{key});
         auto ptr = std::make_unique<uint8_t[]>(buf.size());
         std::copy(buf.begin(), buf.end(), ptr.get());
         return {std::move(ptr), buf.size()};
