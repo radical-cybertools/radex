@@ -38,7 +38,7 @@ jobs:
       run: |
             git clone -b $_SMARTREDIS_VERSION --single-branch https://github.com/CrayLabs/SmartRedis.git
             cd SmartRedis && make lib redis
-            echo "smartredis_DIR=${{ github.workspace }}/SmartRedis/install/share/cmake/smartredis"
+            echo "smartredis_DIR=SmartRedis/install/share/cmake/smartredis" >> $GITHUB_ENV
 
     - name: Install DragonHPC
       run: |
