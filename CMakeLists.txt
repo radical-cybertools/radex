@@ -9,13 +9,15 @@ include(${CMAKE_CURRENT_LIST_DIR}/cmake/radex-version.cmake)
 project(radex VERSION ${RADEX_VERSION} LANGUAGES CXX)
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/radex-standalone.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/radex-options.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/radex-backends.cmake)
 
-radex_setup_standalone_build(
-    OPTIONS_FUNCTION radex_define_root_options
-    ENABLE_LANGUAGE_SUPPORT
-    FIND_THREADS
-    FIND_BACKENDS
-)
+radex_define_root_options()
+radex_language_support()
+find_package(Threads REQUIRED)
+radex_find_backends()
+
+radex_setup_standalone_build()
 
 # ============================================================================
 # Options

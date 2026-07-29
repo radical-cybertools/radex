@@ -18,7 +18,7 @@ function(radex_find_backends)
                     OUTPUT_VARIABLE DRAGON_LINKER_FLAGS
                     OUTPUT_STRIP_TRAILING_WHITESPACE
                 )
-                string(REGEX MATCH "-L ([^ ]+)" TEMP "${DRAGON_LINKER_FLAGS}")
+                string(REGEX MATCH "-L[ \t]*([^ \t]+)" TEMP "${DRAGON_LINKER_FLAGS}")
                 get_filename_component(dragon_DIR ${CMAKE_MATCH_1} DIRECTORY)
                 message(STATUS "Dragon found via dragon-config: ${dragon_DIR}")
             else()

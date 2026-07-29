@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/radex-standalone.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/radex-options.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/radex-backends.cmake)
+
+radex_define_example_options()
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/radex-version.cmake)
@@ -8,13 +12,14 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     VERSION ${RADEX_VERSION}
     LANGUAGES CXX
   )
+  find_package(radex
+    REQUIRED
+    HINTS ${CMAKE_CURRENT_LIST_DIR}/../../install
+  )
+  radex_find_backends()
 endif()
 
-radex_setup_standalone_build(
-    OPTIONS_FUNCTION radex_define_example_options
-    FIND_INSTALLED_RADEX
-    FIND_BACKENDS
-)
+radex_setup_standalone_build()
 
 # Catch2 =====================================================================
 Include(FetchContent)

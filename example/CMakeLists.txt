@@ -6,6 +6,10 @@ if (POLICY CMP0048)
 endif (POLICY CMP0048)
 
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-standalone.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-options.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-backends.cmake)
+
+radex_define_example_options()
 
 # Standalone build support
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -14,13 +18,11 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         VERSION ${RADEX_VERSION}
         LANGUAGES CXX
     )
+    find_package(radex REQUIRED)
+    radex_find_backends()
 endif()
 
-radex_setup_standalone_build(
-    OPTIONS_FUNCTION radex_define_example_options
-    FIND_INSTALLED_RADEX
-    FIND_BACKENDS
-)
+radex_setup_standalone_build()
 
 # ============================================================================
 # Examples
