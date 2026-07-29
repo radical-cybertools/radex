@@ -147,11 +147,11 @@ if(ENABLE_PYTHON)
           )
       endif()
       set(Python_FIND_VIRTUALENV ONLY)
-      find_package(Python COMPONENTS Interpreter REQUIRED)
       message(STATUS "Python package will be installed")
       message(STATUS "\tFound Python Executable: ${Python_EXECUTABLE}")
       message(STATUS "\tFound Python Version: ${Python_VERSION}")
   endif()
+  find_package(Python COMPONENTS Interpreter REQUIRED)
   add_custom_target(install_python_package ALL
       COMMAND ${CMAKE_COMMAND} -E env
           DRAGON_INCLUDE_DIR=${DRAGON_INCLUDE_DIR}

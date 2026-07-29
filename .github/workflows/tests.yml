@@ -16,19 +16,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Set up Python
       uses: actions/setup-python@v7
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-
-    - name: Create and activate virtual environment
-      run: |
-            python -m venv .venv
-            source .venv/bin/activate &&
-              echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV &&
-              echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
 
     - name: Install builds tools
       run: |
@@ -48,11 +41,11 @@ jobs:
 
     - name: Build radex library
       run: |
-            cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install
+            cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DALLOW_SYSTEM_PYTHON=ON
             cmake --build build -j
             cmake --install build
 
-    - name: Test python dragon
+    - name: Run tests
       run: |
             pip install pytest
             dragon -s -- -m pytest -vvv tests
