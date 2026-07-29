@@ -19,7 +19,7 @@ class UnorderedMapClient : public radex::IClient {
 
     bool contains(std::string_view key) override {
         try {
-            _map.at(key);
+            _map.at(std::string{key});
         } catch (std::out_of_range &e) {
             return false;
         }
@@ -29,11 +29,11 @@ class UnorderedMapClient : public radex::IClient {
     void put_bytes(std::string_view key, const void *bytes,
                    radex::detail::MetaInt length) override {
         auto ptr = static_cast<const std::uint8_t *>(bytes);
-        _map.insert({key, std::vector<uint8_t>{ptr, ptr + length}});
+        _map.insert({std::string{key}, std::vector<uint8_t>{ptr, ptr + length}});
     }
 
     radex::detail::BytesBuffer get_bytes(std::string_view key) override {
-        auto buf = _map.at(key);
+        auto buf = _map.at(std::string{key});
         auto ptr = std::make_unique<uint8_t[]>(buf.size());
         std::copy(buf.begin(), buf.end(), ptr.get());
         return {std::move(ptr), buf.size()};
@@ -59,11 +59,11 @@ TEMPLATE_TEST_CASE("In memory client test cases", "[in-mem]", std::int32_t,
         client.put_scalar("my-scalar", x);
         y = client.get_scalar<TestType>("my-scalar");
 
-//FIXME: @MattToast        if constexpr (std::is_integral<TestType>::value) {
-//FIXME: @MattToast            REQUIRE(x == y);
-//FIXME: @MattToast        } else {
-//FIXME: @MattToast            REQUIRE_THAT(y, Catch::Matchers::WithinRel(x));
-//FIXME: @MattToast        }
+        if constexpr (std::is_integral<TestType>::value) {
+            REQUIRE(x == y);
+        } else {
+            REQUIRE_THAT(y, Catch::Matchers::WithinRel(x));
+        }
     }
 
     SECTION("Client can put and get a 1D tensor value") {
@@ -75,22 +75,22 @@ TEMPLATE_TEST_CASE("In memory client test cases", "[in-mem]", std::int32_t,
         client.put_tensor("my-tensor", x_dims, x_data);
         auto [y_dims, y_data] = client.get_tensor<TestType>("my-tensor");
 
-//FIXME: @MattToast        REQUIRE(y_dims.size() == x_dims.size());
-//FIXME: @MattToast        REQUIRE(y_data.size() == x_data.size());
-//FIXME: @MattToast
-//FIXME: @MattToast        for (int i = 0; i < y_dims.size(); i++) {
-//FIXME: @MattToast            REQUIRE(y_dims[i] == x_dims[i]);
-//FIXME: @MattToast        }
+        REQUIRE(y_dims.size() == x_dims.size());
+        REQUIRE(y_data.size() == x_data.size());
+
+        for (int i = 0; i < y_dims.size(); i++) {
+            REQUIRE(y_dims[i] == x_dims[i]);
+        }
 
         for (int i = 0; i < y_data.size(); i++) {
             TestType x = x_data[i];
             TestType y = y_data[i];
 
-//FIXME: @MattToast            if constexpr (std::is_integral<TestType>::value) {
-//FIXME: @MattToast                REQUIRE(y == x);
-//FIXME: @MattToast            } else {
-//FIXME: @MattToast                REQUIRE_THAT(y, Catch::Matchers::WithinRel(x, 0.001));
-//FIXME: @MattToast            }
+            if constexpr (std::is_integral<TestType>::value) {
+                REQUIRE(y == x);
+            } else {
+                REQUIRE_THAT(y, Catch::Matchers::WithinRel(x, 0.001));
+            }
         }
     }
 }
