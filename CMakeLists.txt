@@ -6,41 +6,20 @@ if (POLICY CMP0048)
 endif (POLICY CMP0048)
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/radex-version.cmake)
-
 project(radex VERSION ${RADEX_VERSION} LANGUAGES CXX)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_VISIBILITY_PRESET default)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/radex-standalone.cmake)
 
-# Default build type
-if(NOT DEFINED CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release")
-endif()
-
-# Set install prefix
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
-endif()
-
-# Include GNU install directories
-include(GNUInstallDirs)
+radex_setup_standalone_build(
+    OPTIONS_FUNCTION radex_define_root_options
+    ENABLE_LANGUAGE_SUPPORT
+    FIND_THREADS
+    FIND_BACKENDS
+)
 
 # ============================================================================
 # Options
 # ============================================================================
-include(${CMAKE_CURRENT_LIST_DIR}/cmake/radex-options.cmake)
-radex_define_root_options()
-radex_language_support()
-
-# ============================================================================
-# Find required packages
-# ============================================================================
-find_package(Threads REQUIRED)
-include(${CMAKE_CURRENT_LIST_DIR}/cmake/radex-backends.cmake)
-radex_find_backends()
-
 if(ENABLE_CXX AND (BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS))
     add_subdirectory(src)
 endif()

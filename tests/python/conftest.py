@@ -19,12 +19,12 @@ _ROOT = _HERE.parent.parent
 
 @pytest.fixture(scope="session")
 def _radex_lib_dir():
-    yield _ROOT / "build"
+    yield _ROOT / "install" / "lib"
 
 
 @pytest.fixture(scope="session")
 def _radex_include_dir():
-    yield _ROOT / "include"
+    yield _ROOT / "install" / "include"
 
 
 @pytest.fixture(scope="session")

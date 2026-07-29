@@ -1,39 +1,20 @@
 cmake_minimum_required(VERSION 3.13)
-project(RaDex-Tests-Cpp)
-enable_language(CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_VISIBILITY_PRESET default)
+include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/radex-standalone.cmake)
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-version.cmake)
-
-    project(RADEX-Tests
-        VERSION ${RADEX_VERSION}
-        LANGUAGES CXX
-    )
-
-    # Default build type
-    if(NOT DEFINED CMAKE_BUILD_TYPE)
-        set(CMAKE_BUILD_TYPE "Release")
-    endif()
-
-    # Set install prefix
-    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-        set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
-    endif()
-
-    # Include GNU install directories
-    include(GNUInstallDirs)
-
-    include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-options.cmake)
-    radex_define_example_options()
-
-    # Assume library was installed somewhere
-    find_package(radex REQUIRED)
-
+  include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/radex-version.cmake)
+  project(RADEX-Tests
+    VERSION ${RADEX_VERSION}
+    LANGUAGES CXX
+  )
 endif()
+
+radex_setup_standalone_build(
+    OPTIONS_FUNCTION radex_define_example_options
+    FIND_INSTALLED_RADEX
+    FIND_BACKENDS
+)
 
 # Catch2 =====================================================================
 Include(FetchContent)
@@ -43,8 +24,19 @@ FetchContent_Declare(
   GIT_TAG        v3.8.1
 )
 FetchContent_MakeAvailable(Catch2)
-# ============================================================================
 
+# Compile test executable
 add_executable(tests test_local_client.cpp)
+radex_set_target_install_rpath(
+  tests
+  smartredis
+  dragon
+  Catch2::Catch2
+  Catch2::Catch2Main
+)
 target_link_libraries(tests PRIVATE radex::radex)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
+install(
+    TARGETS tests
+    DESTINATION ${CMAKE_INSTALL_BINDIR}/tests
+)

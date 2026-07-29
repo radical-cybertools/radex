@@ -5,45 +5,22 @@ if (POLICY CMP0048)
     cmake_policy(SET CMP0048 NEW)
 endif (POLICY CMP0048)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_VISIBILITY_PRESET default)
-
-cmake_minimum_required(VERSION 3.20)
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-standalone.cmake)
 
 # Standalone build support
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-version.cmake)
-
     project(RADEX-Examples
         VERSION ${RADEX_VERSION}
         LANGUAGES CXX
     )
-
-    # Default build type
-    if(NOT DEFINED CMAKE_BUILD_TYPE)
-        set(CMAKE_BUILD_TYPE "Release")
-    endif()
-
-    # Set install prefix
-    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-        set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
-    endif()
-
-    # Include GNU install directories
-    include(GNUInstallDirs)
-
-    include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-options.cmake)
-    radex_define_example_options()
-
-    # Assume library was installed somewhere
-    find_package(radex REQUIRED)
-
-    include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-backends.cmake)
-    radex_find_backends()
-
 endif()
+
+radex_setup_standalone_build(
+    OPTIONS_FUNCTION radex_define_example_options
+    FIND_INSTALLED_RADEX
+    FIND_BACKENDS
+)
 
 # ============================================================================
 # Examples
@@ -110,6 +87,7 @@ if(BUILD_DRAGON)
 endif()
 
 foreach(target IN LISTS EXAMPLES)
+    radex_set_target_install_rpath(${target})
     target_include_directories(${target} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../include
     )

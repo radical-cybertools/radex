@@ -26,7 +26,7 @@ def test_get_cpp_scalar(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_na
         """))
 
     assert not client.contains(key)
-    proc = Popen(executable=os.fspath(bin_), args=[])
+    proc = Popen(executable=os.fspath(bin_), args=[], env=os.environ)
     proc.wait()
     assert proc.returncode == 0
 
@@ -64,7 +64,7 @@ def test_get_cpp_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_na
         """))
 
     assert not any(client.contains(tensor) for tensor in tensors)
-    proc = Popen(executable=os.fspath(bin_), args=[])
+    proc = Popen(executable=os.fspath(bin_), args=[], env=os.environ)
     proc.wait()
     assert proc.returncode == 0
 
@@ -94,7 +94,7 @@ def test_put_py_scalar(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_nam
     client.put_scalar(key, np_dtype(34))
     assert client.contains(key)
 
-    proc = Popen(executable=os.fspath(bin_), args=[])
+    proc = Popen(executable=os.fspath(bin_), args=[], env=os.environ)
     proc.wait()
     assert proc.returncode == 0
 
@@ -149,6 +149,6 @@ def test_put_py_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_nam
         client.put_tensor(key, tensor)
     assert all(client.contains(tensor) for tensor in tensors)
 
-    proc = Popen(executable=os.fspath(bin_), args=[])
+    proc = Popen(executable=os.fspath(bin_), args=[], env=os.environ)
     proc.wait()
     assert proc.returncode == 0

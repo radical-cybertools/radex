@@ -5,41 +5,24 @@ if (POLICY CMP0048)
     cmake_policy(SET CMP0048 NEW)
 endif (POLICY CMP0048)
 
-
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_VISIBILITY_PRESET default)
-
-# Default build type
-if(NOT DEFINED CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release")
-endif()
+include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-standalone.cmake)
 
 # Standalone build support
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-version.cmake)
-    project(radex VERSION ${RADEX_VERSION} LANGUAGES CXX)
-
     project(RADEX-Library
-                VERSION ${RADEX_VERSION}
+        VERSION ${RADEX_VERSION}
         LANGUAGES CXX
     )
-    # Include GNU install directories
-    include(GNUInstallDirs)
-
-    # Assume library was installed somewhere
-    find_package(radex REQUIRED)
-
-    include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-options.cmake)
-    radex_define_library_options()
-    radex_language_support()
-
-    find_package(Threads REQUIRED)
-    include(${CMAKE_CURRENT_LIST_DIR}/../cmake/radex-backends.cmake)
-    radex_find_backends()
-
 endif()
+
+radex_setup_standalone_build(
+    OPTIONS_FUNCTION radex_define_library_options
+    ENABLE_LANGUAGE_SUPPORT
+    FIND_INSTALLED_RADEX
+    FIND_THREADS
+    FIND_BACKENDS
+)
 
 if(ENABLE_CXX)
     # ============================================================================
@@ -93,6 +76,7 @@ if(ENABLE_CXX)
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         )
+        radex_set_target_install_rpath(${target} smartredis dragon)
         set_target_properties(${target} PROPERTIES OUTPUT_NAME radex)
         if(BUILD_SMARTREDIS)
             target_link_libraries(${target} PUBLIC smartredis)
