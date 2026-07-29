@@ -21,6 +21,8 @@ template <typename T> std::string vec_to_str(const std::vector<T> &vec) {
 
 template <typename T>
 void print_scalar_key(radex::IClient &client, const std::string &key) {
+    std::cout << IDENT << "App: Waiting for scalar key `" << key << "`"
+              << std::endl;
     auto val = client.wait_for_scalar<T>(key, 10'000ms);
     std::cout << IDENT << "App: Got key `" << key << "` has value " << val
               << "\n"
@@ -29,6 +31,8 @@ void print_scalar_key(radex::IClient &client, const std::string &key) {
 
 template <typename T>
 void print_vector_key(radex::IClient &client, const std::string &key) {
+    std::cout << IDENT << "App: Waiting for tensor key `" << key << "`"
+              << std::endl;
     auto [dims, data] = client.wait_for_tensor<T>(key, 10'000ms);
     std::cout << IDENT << "App: Got key `" << key << "`\n"
               << IDENT << "      |- Data: " << vec_to_str(data) << "\n"
