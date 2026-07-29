@@ -31,17 +31,17 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 # Compile test executable
-add_executable(tests test_local_client.cpp)
+add_executable(test-local-client test_local_client.cpp)
 radex_set_target_install_rpath(
-  tests
+  test-local-client
   smartredis
   dragon
   Catch2::Catch2
   Catch2::Catch2Main
 )
-target_link_libraries(tests PRIVATE radex::radex)
-target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(test-local-client PRIVATE radex::radex)
+target_link_libraries(test-local-client PRIVATE Catch2::Catch2WithMain)
 install(
-    TARGETS tests
+    TARGETS test-local-client
     DESTINATION ${CMAKE_INSTALL_BINDIR}/tests
 )
