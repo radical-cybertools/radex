@@ -1,60 +1,147 @@
-import dataclasses
 import math
+import os
+import time
 
 import numpy as np
 import pytest
+import radex
+
+_TRIVIAL_WAIT_TIME_LIMIT = 0.1  # seconds
 
 
-def test_put_and_get_scalar(client, np_dtype):
-    rng = np.random.default_rng()
-    if np.issubdtype(np_dtype, np.integer):
-        value = rng.integers(0, 100, dtype=np_dtype)
-    else:
-        value = np_dtype(rng.random(dtype=np_dtype))
-
+def test_put_and_get_scalar(client, np_dtype, random_np_value):
     key = "some-value"
     assert not client.contains(key)
 
-    client.put_scalar(key, value)
+    client.put_scalar(key, random_np_value)
     assert client.contains(key)
 
     ret_val = client.get_scalar(key)
-    assert value.dtype == ret_val.dtype == np_dtype
-    assert value == ret_val
+    assert random_np_value.dtype == ret_val.dtype == np_dtype
+    assert random_np_value == ret_val
 
 
-@pytest.mark.parametrize(
-    "size, shape",
-    [
-        pytest.param(size, shape, id=f"{size=}-{shape=}")
-        for size, shape in [
-            (10, (10,)),
-            (10, (5, 2)),
-            (10, (2, 5)),
-            (24, (24,)),
-            (24, (6, 4)),
-            (24, (3, 8)),
-            (24, (12, 2)),
-            (24, (4, 3, 2)),
-            (24, (2, 4, 3)),
-            (24, (2, 2, 3, 2)),
-            (36, (9, 2, 2)),
-            (36, (3, 2, 2, 3)),
-        ]
-    ],
-)
-def test_put_and_get_tensor(client, size, shape, np_dtype):
-    key = "some-tensor"
-    tensor = np.arange(size, dtype=np_dtype).reshape(shape)
-
+def test_put_and_trivial_wait_for_scalar(client, np_dtype, random_np_value):
+    key = "some-value"
     assert not client.contains(key)
-    client.put_tensor(key, tensor)
+
+    client.put_scalar(key, random_np_value)
+    assert client.contains(key)
+
+    start_t = time.perf_counter()
+    ret_val = client.wait_for_scalar(key, timeout=10)
+    end_t = time.perf_counter()
+    assert end_t - start_t < _TRIVIAL_WAIT_TIME_LIMIT
+    assert random_np_value.dtype == ret_val.dtype == np_dtype
+    assert random_np_value == ret_val
+
+
+def test_put_and_wait_for_value(ddict, client, np_dtype, random_np_value):
+    process = pytest.importorskip("dragon.native.process")
+
+    key = "some-value"
+    delay = 2  # seconds
+    assert not client.contains(key)
+
+    def put_key_after(dd, key, value, delay):
+        start_t = time.perf_counter()
+        client = radex.DragonClient(descriptor=dd, timeout=1)
+        time.sleep(max(delay - (time.perf_counter() - start_t), 0))
+        client.put_scalar(key, value)
+
+    proc = process.Process(
+        target=put_key_after, args=(ddict.serialize(), key, random_np_value, delay)
+    )
+    proc.start()
+    start_t = time.perf_counter()
+    try:
+        ret_val = client.wait_for_scalar(key, timeout=10)
+    finally:
+        end_t = time.perf_counter()
+        proc.join()
+
+    # Check that the read actually was delayed within a poll rate and a trivial
+    # amount of time for process construction overhead. We can make this more
+    # strict as we design a better "wait for key" implementation.
+    # FIXME: We should expose the poll rate through the `radex` namespace rather
+    #        than looking for magic env vars in the tests
+    min_allowed_delay = delay
+    max_allowed_delay = (
+        delay + os.environ.get("RADEX_POLL_INTERVAL", 1) + _TRIVIAL_WAIT_TIME_LIMIT
+    )
+    assert min_allowed_delay < end_t - start_t < max_allowed_delay
+
+    # Check correctness
+    assert random_np_value.dtype == ret_val.dtype == np_dtype
+    assert random_np_value == ret_val
+
+
+def test_put_and_get_tensor(client, random_np_tensor, np_dtype):
+    key = "some-tensor"
+    assert not client.contains(key)
+
+    client.put_tensor(key, random_np_tensor)
     assert client.contains(key)
     ret_tensor = client.get_tensor(key)
 
-    assert tensor.dtype == ret_tensor.dtype == np_dtype
-    assert tensor.shape == ret_tensor.shape == shape
-    assert (tensor == ret_tensor).all()
+    assert random_np_tensor.dtype == ret_tensor.dtype == np_dtype
+    assert random_np_tensor.shape == ret_tensor.shape
+    assert (random_np_tensor == ret_tensor).all()
+
+
+def test_put_and_trivial_wait_for_tensor(client, np_dtype, random_np_tensor):
+    key = "some-tensor"
+    assert not client.contains(key)
+
+    client.put_tensor(key, random_np_tensor)
+    assert client.contains(key)
+
+    start_t = time.perf_counter()
+    ret_val = client.wait_for_tensor(key, timeout=10)
+    end_t = time.perf_counter()
+    assert end_t - start_t < _TRIVIAL_WAIT_TIME_LIMIT
+    assert random_np_tensor.dtype == ret_val.dtype == np_dtype
+    assert (random_np_tensor == ret_val).all()
+
+
+def test_put_and_wait_for_tensor(ddict, client, np_dtype, random_np_tensor):
+    process = pytest.importorskip("dragon.native.process")
+
+    key = "some-value"
+    delay = 1  # seconds
+    assert not client.contains(key)
+
+    def put_key_after(dd, key, value, delay):
+        start_t = time.perf_counter()
+        client = radex.DragonClient(descriptor=dd, timeout=1)
+        time.sleep(max(delay - (time.perf_counter() - start_t), 0))
+        client.put_tensor(key, value)
+
+    proc = process.Process(
+        target=put_key_after, args=(ddict.serialize(), key, random_np_tensor, delay)
+    )
+    proc.start()
+    start_t = time.perf_counter()
+    try:
+        ret_val = client.wait_for_tensor(key, timeout=10)
+    finally:
+        end_t = time.perf_counter()
+        proc.join()
+
+    # Check that the read actually was delayed within a poll rate and a trivial
+    # amount of time for process construction overhead. We can make this more
+    # strict as we design a better "wait for key" implementation.
+    # FIXME: We should expose the poll rate through the `radex` namespace rather
+    #        than looking for magic env vars in the tests
+    min_allowed_delay = delay
+    max_allowed_delay = (
+        delay + os.environ.get("RADEX_POLL_INTERVAL", 1) + _TRIVIAL_WAIT_TIME_LIMIT
+    )
+    assert min_allowed_delay < end_t - start_t < max_allowed_delay
+
+    # Check correctness
+    assert random_np_tensor.dtype == ret_val.dtype == np_dtype
+    assert (random_np_tensor == ret_val).all()
 
 
 @pytest.mark.parametrize("size", [pytest.param(int(1e6), id="size=1MB")])
@@ -104,25 +191,67 @@ def test_put_and_get_native_py_scalars(client, value, expected_dtype):
     assert ret == value
 
 
-@dataclasses.dataclass(frozen=True)
-class MyPickleable:
-    some_str: str
-    some_int: int
-
-
-@pytest.mark.parametrize(
-    "obj",
-    [
-        pytest.param(obj, id=str(obj))
-        for obj in [
-            MyPickleable("spam", 123),
-            MyPickleable("eggs", 0),
-            MyPickleable("ham", -72),
-        ]
-    ],
-)
-def test_put_and_get_pickleable(client, obj):
+def test_put_and_get_pickleable(client, random_picklable):
     key = "some-obj"
     assert not client.contains(key)
-    client.put_picklable(key, obj)
+    client.put_picklable(key, random_picklable)
     assert client.contains(key)
+
+    ret_val = client.get_picklable(key)
+    assert type(random_picklable) == type(ret_val)
+    assert random_picklable == ret_val
+
+
+def test_put_and_trivial_wait_for_picklable(client, random_picklable):
+    key = "some-obj"
+    assert not client.contains(key)
+
+    client.put_picklable(key, random_picklable)
+    assert client.contains(key)
+
+    start_t = time.perf_counter()
+    ret_val = client.wait_for_picklable(key, timeout=10)
+    end_t = time.perf_counter()
+    assert end_t - start_t < _TRIVIAL_WAIT_TIME_LIMIT
+    assert type(random_picklable) == type(ret_val)
+    assert random_picklable == ret_val
+
+
+def test_put_and_wait_for_picklable(ddict, client, random_picklable):
+    process = pytest.importorskip("dragon.native.process")
+
+    key = "some-obj"
+    delay = 2  # seconds
+    assert not client.contains(key)
+
+    def put_key_after(dd, key, value, delay):
+        start_t = time.perf_counter()
+        client = radex.DragonClient(descriptor=dd, timeout=1)
+        time.sleep(max(delay - (time.perf_counter() - start_t), 0))
+        client.put_picklable(key, value)
+
+    proc = process.Process(
+        target=put_key_after, args=(ddict.serialize(), key, random_picklable, delay)
+    )
+    proc.start()
+    start_t = time.perf_counter()
+    try:
+        ret_val = client.wait_for_picklable(key, timeout=10)
+    finally:
+        end_t = time.perf_counter()
+        proc.join()
+
+    # Check that the read actually was delayed within a poll rate and a trivial
+    # amount of time for process construction overhead. We can make this more
+    # strict as we design a better "wait for key" implementation.
+    # FIXME: We should expose the poll rate through the `radex` namespace rather
+    #        than looking for magic env vars in the tests
+    min_allowed_delay = delay
+    max_allowed_delay = (
+        delay + os.environ.get("RADEX_POLL_INTERVAL", 1) + _TRIVIAL_WAIT_TIME_LIMIT
+    )
+    assert min_allowed_delay < end_t - start_t < max_allowed_delay
+
+    # Check correctness
+    assert type(random_picklable) == type(ret_val)
+    assert random_picklable == ret_val

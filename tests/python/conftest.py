@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import pathlib
 import shutil
@@ -45,6 +46,69 @@ def map_np_dtypes_to_cpp_types():
     ],
 )
 def np_dtype(request):
+    yield request.param
+
+
+@pytest.fixture(scope="function")
+def random_np_value(np_dtype):
+    rng = np.random.default_rng()
+    if np.issubdtype(np_dtype, np.integer):
+        value = rng.integers(0, 100, dtype=np_dtype)
+    else:
+        value = np_dtype(rng.random(dtype=np_dtype))
+    yield value
+
+
+@pytest.fixture(
+    scope="function",
+    params=[
+        pytest.param(args, id=f"shape={args[0]}-size={args[1]}")
+        for args in [
+            (10, (10,)),
+            (10, (5, 2)),
+            (10, (2, 5)),
+            (24, (24,)),
+            (24, (6, 4)),
+            (24, (3, 8)),
+            (24, (12, 2)),
+            (24, (4, 3, 2)),
+            (24, (2, 4, 3)),
+            (24, (2, 2, 3, 2)),
+            (36, (9, 2, 2)),
+            (36, (3, 2, 2, 3)),
+        ]
+    ],
+)
+def random_np_tensor(np_dtype, request):
+    size, shape = request.param
+    yield np.arange(size, dtype=np_dtype).reshape(shape)
+
+
+@dataclasses.dataclass(frozen=True)
+class MyPickleable:
+    some_str: str
+    some_int: int
+
+
+@dataclasses.dataclass(frozen=True)
+class MyPickleable2:
+    some_float: float
+
+
+@pytest.fixture(
+    scope="function",
+    params=[
+        pytest.param(picklable, id=f"{picklable=}")
+        for picklable in [
+            MyPickleable("spam", 123),
+            MyPickleable("eggs", 0),
+            MyPickleable("ham", -72),
+            MyPickleable2(1.23),
+            MyPickleable2(-98.7),
+        ]
+    ],
+)
+def random_picklable(request):
     yield request.param
 
 
