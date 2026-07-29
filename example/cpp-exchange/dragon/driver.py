@@ -6,18 +6,18 @@ from dragon.native.process import ProcessTemplate, Process
 
 HERE = pathlib.Path(__file__).parent.absolute()
 ROOT = HERE.parent.parent.parent
-BUILD = ROOT / "build"
+EXAMPLES_BIN_DIR = ROOT / "install" / "bin" / "examples"
 
 
 def main() -> int:
     dd = DDict(managers_per_node=1, n_nodes=1, trace=False)
     serial_dd = dd.serialize()
     producer_tmpl = ProcessTemplate(
-        target=os.fspath(BUILD / "dragon-cpp-producer"),
+        target=os.fspath(EXAMPLES_BIN_DIR / "dragon-cpp-producer"),
         env={"SERIALIZED_DDICT": serial_dd},
     )
     consumer_tmpl = ProcessTemplate(
-        target=os.fspath(BUILD / "dragon-cpp-consumer"),
+        target=os.fspath(EXAMPLES_BIN_DIR / "dragon-cpp-consumer"),
         env={"SERIALIZED_DDICT": serial_dd},
     )
 

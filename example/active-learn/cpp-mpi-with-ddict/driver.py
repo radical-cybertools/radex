@@ -71,7 +71,7 @@ MAX_ITER: int = 10            # hard cap on iterations
 # ── Consts ─────────────────────────────────────────────────────────────────────
 HERE = Path(__file__).parent.absolute()
 ROOT = HERE.parent.parent.parent
-BUILD_DIR = ROOT / "build"
+EXAMPLES_BIN_DIR = ROOT / "install" / examples
 
 
 async def rose_mpi_ddict() -> None:
@@ -111,7 +111,7 @@ async def rose_mpi_ddict() -> None:
             ]
         },
     ):
-        path = BUILD_DIR / "simulation"
+        path = EXAMPLES_BIN_DIR / "simulation"
         if not path.exists():
             raise FileNotFoundError(
                 f"`{os.fspath(path)}` binary does not exist. "
