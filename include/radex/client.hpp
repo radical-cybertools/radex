@@ -190,6 +190,9 @@ class IClient {
 
   public:
     std::unique_ptr<detail::ItemInfo> get_item_info_ptr(std::string_view key);
+    std::unique_ptr<detail::ItemInfo>
+    wait_for_item_info_ptr(std::string_view key,
+                           std::chrono::milliseconds timeout);
 
   public:
     template <typename T>
