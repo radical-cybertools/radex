@@ -37,6 +37,7 @@ def _dragon_lib_dir():
 @pytest.fixture(scope="session")
 def _dragon_compile_args(_dragon_include_dir, _dragon_lib_dir):
     yield [
+        "-fPIC",
         f"-I{os.fspath(_dragon_include_dir)}",
         f"-L{os.fspath(_dragon_lib_dir)}",
         f"-Wl,-rpath={os.fspath(_dragon_lib_dir)}",

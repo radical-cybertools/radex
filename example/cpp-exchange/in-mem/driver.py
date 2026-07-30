@@ -3,11 +3,11 @@ import subprocess
 
 HERE = pathlib.Path(__file__).parent.absolute()
 ROOT = HERE.parent.parent.parent
-BUILD = ROOT / "build"
+EXAMPLES_BIN_DIR = ROOT / "install" / "bin" / "examples"
 
 
 def main() -> int:
-    subprocess.run((BUILD / "in-mem-poc",), check=True)
+    subprocess.run((EXAMPLES_BIN_DIR / "in-mem-poc",), check=True)
     return 0
 
 

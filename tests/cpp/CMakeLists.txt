@@ -1,16 +1,25 @@
 cmake_minimum_required(VERSION 3.13)
-project(RaDex-Tests-Cpp)
-enable_language(CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_VISIBILITY_PRESET default)
+include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/radex-standalone.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/radex-options.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/radex-backends.cmake)
 
+radex_define_example_options()
 
-# RaDex ======================================================================
-# TODO: Leaving this for Andrew to fix
-find_package(RaDex REQUIRED)
-# ============================================================================
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/radex-version.cmake)
+  project(RADEX-Tests
+    VERSION ${RADEX_VERSION}
+    LANGUAGES CXX
+  )
+  find_package(radex
+    REQUIRED
+    HINTS ${CMAKE_CURRENT_LIST_DIR}/../../install
+  )
+  radex_find_backends()
+endif()
+
+radex_setup_standalone_build()
 
 # Catch2 =====================================================================
 Include(FetchContent)
@@ -20,8 +29,19 @@ FetchContent_Declare(
   GIT_TAG        v3.8.1
 )
 FetchContent_MakeAvailable(Catch2)
-# ============================================================================
 
-add_executable(tests test_local_client.cpp)
-target_link_libraries(tests PRIVATE RaDex)
-target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
+# Compile test executable
+add_executable(test-local-client test_local_client.cpp)
+radex_set_target_install_rpath(
+  test-local-client
+  smartredis
+  dragon
+  Catch2::Catch2
+  Catch2::Catch2Main
+)
+target_link_libraries(test-local-client PRIVATE radex::radex)
+target_link_libraries(test-local-client PRIVATE Catch2::Catch2WithMain)
+install(
+    TARGETS test-local-client
+    DESTINATION ${CMAKE_INSTALL_BINDIR}/tests
+)

@@ -73,7 +73,7 @@ int main() {
 
     std::this_thread::sleep_for(3'000ms);
     std::cout << IDENT << "App: Setting Long Tensor" << std::endl;
-    client.put_tensor<long>("cpp-long-tensor", {2, 2, 2},
+    client.put_tensor<int32_t>("cpp-long-tensor", {2, 2, 2},
                             {1, 2, 3, 4, 5, 6, 7, 8});
 
     return 0;
