@@ -21,9 +21,9 @@ int main() {
 
     radex::redis::smartredis::Client client{"example-sr-consumer"};
 
-    auto some_int = client.get_scalar<long>("some-int");
+    auto some_int = client.get_scalar<int32_t>("some-int");
     auto [some_int_tensor_dims, some_int_tensor] =
-        client.get_tensor<long>("some-int-tensor");
+        client.get_tensor<int32_t>("some-int-tensor");
 
     auto some_float = client.get_scalar<double>("some-float");
     auto [some_float_tensor_dims, some_float_tensor] =

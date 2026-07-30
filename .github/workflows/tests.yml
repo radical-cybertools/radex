@@ -1,0 +1,51 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.12'
+  _SMARTREDIS_VERSION: "develop"
+  _DRAGON_VERSION: 0.14.1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install builds tools
+      run: |
+            sudo apt-get update
+            sudo apt-get install -y build-essential gcc g++ make cmake mpich
+
+    - name: Install Redis backend
+      run: |
+            which pip
+            git clone -b $_SMARTREDIS_VERSION --single-branch https://github.com/CrayLabs/SmartRedis.git
+            cd SmartRedis && make lib redis
+            echo "smartredis_DIR=SmartRedis/install/share/cmake/smartredis" >> $GITHUB_ENV
+
+    - name: Install DragonHPC
+      run: |
+            pip install dragonhpc==$_DRAGON_VERSION
+
+    - name: Build radex library
+      run: |
+            cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DALLOW_SYSTEM_PYTHON=ON
+            cmake --build build -j
+            cmake --install build
+
+    - name: Run tests
+      run: |
+            pip install pytest
+            dragon -s -- -m pytest -vvv tests
