@@ -1,0 +1,5 @@
+[tool.isort]
+profile = "black"
+py_version = 312
+src_paths = ["../src/python/src", "../tests", "../example"]
+known_first_party = ["radex"]

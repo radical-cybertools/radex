@@ -1,7 +1,8 @@
-from smartsim import Experiment
 import os
 import pathlib
 import time
+
+from smartsim import Experiment
 
 HERE = pathlib.Path(__file__).parent.absolute()
 ROOT = HERE.parent.parent.parent

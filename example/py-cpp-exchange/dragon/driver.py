@@ -4,11 +4,10 @@ import pathlib
 import textwrap
 import time
 
-import numpy as np
-
 import dragon
+import numpy as np
 from dragon.data.ddict import DDict
-from dragon.native.process import ProcessTemplate, Process
+from dragon.native.process import Process, ProcessTemplate
 
 from radex import DragonClient as Client
 
@@ -21,7 +20,8 @@ def main() -> int:
     dd = DDict(managers_per_node=1, n_nodes=1, trace=False)
     serial_dd = dd.serialize()
     app_tmpl = ProcessTemplate(
-        target=os.fspath(EXAMPLES_BIN_DIR / "dragon-cpp-with-py"), env={"SERIALIZED_DDICT": serial_dd}
+        target=os.fspath(EXAMPLES_BIN_DIR / "dragon-cpp-with-py"),
+        env={"SERIALIZED_DDICT": serial_dd},
     )
     app = Process.from_template(app_tmpl)
 
