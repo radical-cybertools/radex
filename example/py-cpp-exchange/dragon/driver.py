@@ -54,10 +54,10 @@ def main() -> int:
         )
 
         print(f"Driver: Looking for keys")
-        poll_for_scalar_key(client, "cpp-double")
-        poll_for_scalar_key(client, "cpp-int")
-        poll_for_tensor_key(client, "cpp-double-tensor")
-        poll_for_tensor_key(client, "cpp-long-tensor")
+        print_scalar(client, "cpp-double")
+        print_scalar(client, "cpp-int")
+        print_tensor(client, "cpp-double-tensor")
+        print_tensor(client, "cpp-long-tensor")
 
         print("Driver: Setting a py object")
         py_obj_key = "my-py-obj"
@@ -81,25 +81,24 @@ def poll_for_key(client, key, max_attempts=10):
         time.sleep(1)
 
 
-def poll_for_scalar_key(client, key):
-    poll_for_key(client, key)
-    scalar = client.get_scalar(key)
-    print(textwrap.dedent(f"""
+def print_scalar(client, key):
+    print(f"Driver: Waiting for scalar key `{key}`")
+    scalar = client.wait_for_scalar(key, 10)
+    print(textwrap.dedent(f"""\
         Driver: Got scalar:
                 |- Type: {scalar.dtype}
                 \\- Value: {scalar}
         """))
 
 
-def poll_for_tensor_key(client, key):
-    poll_for_key(client, key)
-    tensor = client.get_tensor(key)
+def print_tensor(client, key):
+    print(f"Driver: Waiting for tensor key `{key}`")
+    tensor = client.wait_for_tensor(key, 10)
     print(textwrap.dedent(f"""\
         Driver: Got tensor:
                 |- Type: {tensor.dtype}
                 |- Dims: {tensor.shape}
-                \\- Data:
-        {tensor.ravel()}
+                \\- Data: {tensor.ravel()}
         """))
 
 

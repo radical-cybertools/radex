@@ -19,31 +19,21 @@ template <typename T> std::string vec_to_str(const std::vector<T> &vec) {
     return s;
 }
 
-void poll_for_key(radex::IClient &client, const std::string &key,
-                  int max_attempts = 10) {
-    while (!client.contains(key)) {
-        if (max_attempts-- == 0) {
-            throw std::runtime_error("Too many attempts");
-        }
-        std::cout << IDENT << "App: Waiting for key `" << key << "`"
-                  << std::endl;
-        std::this_thread::sleep_for(1'000ms);
-    }
-}
-
 template <typename T>
-void poll_for_scalar_key(radex::IClient &client, const std::string &key) {
-    poll_for_key(client, key);
-    auto val = client.get_scalar<T>(key);
+void print_scalar_key(radex::IClient &client, const std::string &key) {
+    std::cout << IDENT << "App: Waiting for scalar key `" << key << "`"
+              << std::endl;
+    auto val = client.wait_for_scalar<T>(key, 10'000ms);
     std::cout << IDENT << "App: Got key `" << key << "` has value " << val
               << "\n"
               << std::endl;
 }
 
 template <typename T>
-void poll_for_vector_key(radex::IClient &client, const std::string &key) {
-    poll_for_key(client, key);
-    auto [dims, data] = client.get_tensor<T>(key);
+void print_vector_key(radex::IClient &client, const std::string &key) {
+    std::cout << IDENT << "App: Waiting for tensor key `" << key << "`"
+              << std::endl;
+    auto [dims, data] = client.wait_for_tensor<T>(key, 10'000ms);
     std::cout << IDENT << "App: Got key `" << key << "`\n"
               << IDENT << "      |- Data: " << vec_to_str(data) << "\n"
               << IDENT << "      \\- Dims: " << vec_to_str(dims) << "\n"
@@ -61,11 +51,11 @@ int main() {
     radex::drg::ddict::Client client{serialized_dd, &timeout};
     std::cout << IDENT << "App: Client created" << std::endl;
 
-    poll_for_scalar_key<int>(client, "py-int");
-    poll_for_scalar_key<double>(client, "py-double");
-    poll_for_scalar_key<float>(client, "py-np-float");
-    poll_for_vector_key<int>(client, "py-int-tensor");
-    poll_for_vector_key<double>(client, "py-float-tensor");
+    print_scalar_key<int>(client, "py-int");
+    print_scalar_key<double>(client, "py-double");
+    print_scalar_key<float>(client, "py-np-float");
+    print_vector_key<int>(client, "py-int-tensor");
+    print_vector_key<double>(client, "py-float-tensor");
 
     std::this_thread::sleep_for(3'000ms);
     std::cout << IDENT << "App: Setting Double" << std::endl;

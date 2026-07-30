@@ -1,21 +1,25 @@
 import cython
 
-from libcpp.string cimport string
-from libcpp.memory cimport unique_ptr
-from libc.time cimport timespec
 from libc.stdint cimport uint64_t, int32_t, int64_t
+from libc.time cimport timespec
+from libcpp.memory cimport unique_ptr
+from libcpp.string cimport string
+from libcpp_chrono cimport milliseconds
 
-from Client cimport IClient, ItemInfo, BytesBuffer
+from Client cimport IClient
 from Dragon cimport Client
 from Data cimport (
+    BytesBuffer,
     DType,
+    ItemInfo,
+    MetaInt as size_t,
     SupportedType,
     coerce_py_objects_to_np_numbers,
-    make_ndarray,
-    MetaInt as size_t,
+    construct_scalar,
+    construct_tensor,
 )
 
-import pickle
+import cloudpickle
 
 cimport numpy as np
 import numpy as np
@@ -65,18 +69,18 @@ cdef class PyClient:
     def get_scalar(self, str key):
         cdef EncodedStr key_ = _encode_str(key)
         cdef unique_ptr[ItemInfo] info = self._client.get_item_info_ptr(key_.c_str())
-        cdef ItemInfo* info_ = info.get()
+        return construct_scalar(info.get()[0])
 
-        if info_.metadata().n_dims() != 0:
-            # TODO: Better error type/msg here
-            raise ValueError("Attempted to retrieve scalar at a key with a vector")
-
-        cdef DType type_ = info_.metadata().type()
-        return make_ndarray(type_, info_.data(), 1)[0]
+    def wait_for_scalar(self, str key, float timeout):
+        cdef EncodedStr key_ = _encode_str(key)
+        cdef milliseconds timeout_ = milliseconds(<int64_t>(timeout * 1000))
+        cdef unique_ptr[ItemInfo] info = self._client.wait_for_item_info_ptr(
+                key_.c_str(), timeout_)
+        return construct_scalar(info.get()[0])
 
     def put_tensor(self, str key, np.ndarray tensor not None):
-        cdef np.ndarray[np.uintp_t, ndim=1] dims_arr = np.asarray((<object>tensor).shape,
-                              dtype=np.uintp)
+        cdef np.ndarray[np.uintp_t, ndim=1] dims_arr = np.asarray(
+                (<object>tensor).shape, dtype=np.uintp)
         self._put_tensor(key, dims_arr, tensor.ravel())
 
     def _put_tensor(
@@ -93,25 +97,18 @@ cdef class PyClient:
     def get_tensor(self, str key):
         cdef string key_ = _encode_str(key)
         cdef unique_ptr[ItemInfo] info = self._client.get_item_info_ptr(key_.c_str())
-        cdef ItemInfo* info_ = info.get()
+        return construct_tensor(info.get()[0])
 
-        cdef size_t n_dims = info_.metadata().n_dims()
-        if n_dims == 0:
-            # TODO: Better error type/msg here
-            raise ValueError("Attempted to retrieve vector at a key with a scalar")
-        cdef const size_t[:] dims = (
-            <const size_t[:n_dims]> info_.metadata().dims_ptr()
-        )
-
-        cdef size_t n_elements = info_.metadata().n_elements()
-        cdef DType type_ = info_.metadata().type()
-
-        data = make_ndarray(type_, info_.data(), n_elements)
-        return data.reshape(dims)
+    def wait_for_tensor(self, str key, float timeout):
+        cdef EncodedStr key_ = _encode_str(key)
+        cdef milliseconds timeout_ = milliseconds(<int64_t>(timeout * 1000))
+        cdef unique_ptr[ItemInfo] info = self._client.wait_for_item_info_ptr(
+                key_.c_str(), timeout_)
+        return construct_tensor(info.get()[0])
 
     def put_picklable(self, str key, object picklable):
         cdef string key_ = _encode_str(key)
-        cdef bytes bytes_ = pickle.dumps(picklable)
+        cdef bytes bytes_ = cloudpickle.dumps(picklable)
         cdef void* ptr = <void*><char*>bytes_
         cdef size_t len_ = len(bytes_)
         self._client.put_bytes(key_.c_str(), ptr, len_)
@@ -124,7 +121,18 @@ cdef class PyClient:
         cdef np.uint8_t *ptr = <np.uint8_t*>buf.get_ptr()
 
         cdef bytes bytes_ = <bytes>ptr[:len_]
-        return pickle.loads(bytes_)
+        return cloudpickle.loads(bytes_)
+
+    def wait_for_picklable(self, str key, float timeout):
+        cdef string key_ = _encode_str(key)
+        cdef milliseconds timeout_ = milliseconds(<int64_t>(timeout * 1000))
+        cdef BytesBuffer buf = self._client.wait_for_bytes(key_.c_str(), timeout_)
+
+        cdef size_t len_ = buf.get_length()
+        cdef np.uint8_t *ptr = <np.uint8_t*>buf.get_ptr()
+
+        cdef bytes bytes_ = <bytes>ptr[:len_]
+        return cloudpickle.loads(bytes_)
 
 
 cdef class DragonClient(PyClient):

@@ -1,8 +1,11 @@
 #ifndef __RADEX_CLIENT_HPP__
 #define __RADEX_CLIENT_HPP__
 
+#include <chrono>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <memory>
 #include <numeric>
 #include <stdexcept>
@@ -172,10 +175,26 @@ class IClient {
     virtual void put_bytes(std::string_view key, const void *bytes,
                            detail::MetaInt length) = 0;
     virtual detail::BytesBuffer get_bytes(std::string_view key) = 0;
+    virtual detail::BytesBuffer
+    wait_for_bytes(std::string_view key, std::chrono::milliseconds timeout);
     virtual ~IClient() {}
 
     // <<< End Virtual Methods <<<
 
+  private:
+    detail::ItemInfo get_item_info(
+        std::function<detail::BytesBuffer(std::string_view)> fetch_bytes,
+        std::string_view key);
+    std::string build_meta_key(std::string_view s) const;
+    detail::MetaData get_meta_data(std::string_view key);
+
+  public:
+    std::unique_ptr<detail::ItemInfo> get_item_info_ptr(std::string_view key);
+    std::unique_ptr<detail::ItemInfo>
+    wait_for_item_info_ptr(std::string_view key,
+                           std::chrono::milliseconds timeout);
+
+  public:
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, void>::type
     put_scalar(std::string_view key, const T &value) {
@@ -188,20 +207,19 @@ class IClient {
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, T>::type
     get_scalar(std::string_view key) {
-        const auto info = get_item_info(key);
-        if (info.metadata().n_dims() != 0) {
-            // TODO: Better error type/message here
-            throw std::runtime_error(
-                "Attempted to retrieve scalar at a key with a vector");
-        }
-        if (info.metadata().type() != data::encode_type<T>()) {
-            // TODO: Better error type/message here
-            throw std::runtime_error(
-                "Attempted to retrieve scalar of mismatched type");
-        }
-        T converted;
-        std::memcpy(&converted, info.data(), sizeof(T));
-        return converted;
+        const auto fetch =
+            std::bind(&IClient::get_bytes, this, std::placeholders::_1);
+        const auto info = get_item_info(fetch, key);
+        return assemble_scalar<T>(info);
+    }
+
+    template <typename T>
+    typename std::enable_if<data::is_supported_type<T>::value, T>::type
+    wait_for_scalar(std::string_view key, std::chrono::milliseconds timeout) {
+        const auto fetch = std::bind(&IClient::wait_for_bytes, this,
+                                     std::placeholders::_1, timeout);
+        const auto info = get_item_info(fetch, key);
+        return assemble_scalar<T>(info);
     }
 
     template <typename T>
@@ -226,7 +244,45 @@ class IClient {
     typename std::enable_if<data::is_supported_type<T>::value,
                             TensorInfo<T>>::type
     get_tensor(std::string_view key) {
-        const auto info = get_item_info(key);
+        const auto fetch =
+            std::bind(&IClient::get_bytes, this, std::placeholders::_1);
+        const auto info = get_item_info(fetch, key);
+        return assemble_tensor<T>(info);
+    }
+
+    template <typename T>
+    typename std::enable_if<data::is_supported_type<T>::value,
+                            TensorInfo<T>>::type
+    wait_for_tensor(std::string_view key, std::chrono::milliseconds timeout) {
+        const auto fetch = std::bind(&IClient::wait_for_bytes, this,
+                                     std::placeholders::_1, timeout);
+        const auto info = get_item_info(fetch, key);
+        return assemble_tensor<T>(info);
+    }
+
+  private:
+    template <typename T>
+    typename std::enable_if<data::is_supported_type<T>::value, T>::type
+    assemble_scalar(const detail::ItemInfo &info) {
+        if (info.metadata().n_dims() != 0) {
+            // TODO: Better error type/message here
+            throw std::runtime_error(
+                "Attempted to retrieve scalar at a key with a vector");
+        }
+        if (info.metadata().type() != data::encode_type<T>()) {
+            // TODO: Better error type/message here
+            throw std::runtime_error(
+                "Attempted to retrieve scalar of mismatched type");
+        }
+        T converted;
+        std::memcpy(&converted, info.data(), sizeof(T));
+        return converted;
+    }
+
+    template <typename T>
+    typename std::enable_if<data::is_supported_type<T>::value,
+                            TensorInfo<T>>::type
+    assemble_tensor(const detail::ItemInfo &info) {
         if (info.metadata().n_dims() == 0) {
             // TODO: Better error type/message here
             throw std::runtime_error(
@@ -242,13 +298,6 @@ class IClient {
         return {data_ptr, info.metadata().n_elements(),
                 info.metadata().dims_ptr(), info.metadata().n_dims()};
     }
-
-    detail::ItemInfo get_item_info(std::string_view key);
-    std::unique_ptr<detail::ItemInfo> get_item_info_ptr(std::string_view key);
-
-  private:
-    std::string build_meta_key(std::string_view s) const;
-    detail::MetaData get_meta_data(std::string_view key);
 };
 
 } // namespace radex

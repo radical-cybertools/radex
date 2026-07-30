@@ -1,8 +1,9 @@
-cimport numpy as np
-import numpy as np
 from libc.stddef cimport size_t
 from libc.stdint cimport int32_t, int64_t
+from libcpp.memory cimport unique_ptr
 
+cimport numpy as np
+import numpy as np
 np.import_array()
 
 ctypedef fused SupportedType:
@@ -14,6 +15,21 @@ ctypedef fused SupportedType:
 
 cdef extern from "radex/client.hpp" namespace "radex::detail":
     ctypedef size_t MetaInt
+
+    cdef cppclass BytesBuffer:
+        const void* get_ptr() except +
+        size_t get_length() except +
+        unique_ptr[np.uint8_t[]] release() except +
+
+    cdef cppclass MetaData:
+        size_t n_dims() except +
+        const size_t *dims_ptr() except +
+        size_t n_elements() except +
+        DType type() except +
+
+    cdef cppclass ItemInfo:
+        const MetaData &metadata() except +
+        const void *data() except +
 
 
 cdef extern from "radex/client.hpp" namespace "radex::data":
@@ -50,3 +66,26 @@ cdef inline np.number coerce_py_objects_to_np_numbers(object value):
             f"Could not figure out how to coerce {type(value)} to a numpy.number"
         )
     return value
+
+
+cdef inline construct_scalar(const ItemInfo &info):
+    if info.metadata().n_dims() != 0:
+        # TODO: Better error type/msg here
+        raise ValueError("Attempted to retrieve scalar at a key with a vector")
+
+    cdef DType type_ = info.metadata().type()
+    return make_ndarray(type_, info.data(), 1)[0]
+
+
+cdef inline construct_tensor(const ItemInfo &info):
+    cdef MetaInt n_dims = info.metadata().n_dims()
+    if n_dims == 0:
+        # TODO: Better error type/msg here
+        raise ValueError("Attempted to retrieve vector at a key with a scalar")
+
+    cdef const MetaInt[:] dims = <const MetaInt[:n_dims]> info.metadata().dims_ptr()
+    cdef n_elements = info.metadata().n_elements()
+    cdef DType type_ = info.metadata().type()
+
+    data = make_ndarray(type_, info.data(), n_elements)
+    return data.reshape(dims)

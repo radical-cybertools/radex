@@ -1,4 +1,9 @@
+import dataclasses
+import functools
+import glob
+import operator
 import os
+import os.path
 import pathlib
 import shutil
 import subprocess
@@ -19,7 +24,9 @@ _ROOT = _HERE.parent.parent
 
 @pytest.fixture(scope="session")
 def _radex_lib_dir():
-    yield _ROOT / "install" / "lib"
+    serach = os.path.join(_ROOT, "install/**/libradex.so")
+    lib = next(glob.iglob(serach))
+    yield pathlib.Path(lib).parent
 
 
 @pytest.fixture(scope="session")
@@ -40,11 +47,81 @@ def map_np_dtypes_to_cpp_types():
 @pytest.fixture(
     scope="function",
     params=[
-        pytest.param(dtype, id=f"dtype={dtype.__name__}")
+        pytest.param(dtype, id=f"dtype-{dtype.__name__}")
         for dtype in _SUPPORTED_NP_DTYPES
     ],
 )
 def np_dtype(request):
+    yield request.param
+
+
+@pytest.fixture(scope="function")
+def random_np_value(np_dtype):
+    rng = np.random.default_rng()
+    if np.issubdtype(np_dtype, np.integer):
+        value = rng.integers(0, 100, dtype=np_dtype)
+    else:
+        value = np_dtype(rng.random(dtype=np_dtype))
+    yield value
+
+
+def _fmt_shape(shape):
+    return "x".join(str(dim) for dim in shape)
+
+
+@pytest.fixture(
+    scope="function",
+    params=[
+        pytest.param(shape, id=f"shape-{_fmt_shape(shape)}")
+        for shape in [
+            (10,),
+            (5, 2),
+            (2, 5),
+            (24,),
+            (6, 4),
+            (3, 8),
+            (12, 2),
+            (4, 3, 2),
+            (2, 4, 3),
+            (2, 2, 3, 2),
+            (9, 2, 2),
+            (3, 2, 2, 3),
+        ]
+    ],
+)
+def random_np_tensor(np_dtype, request):
+    shape = request.param
+    size = functools.reduce(operator.mul, shape, 1)
+    yield np.arange(size, dtype=np_dtype).reshape(shape)
+
+
+@dataclasses.dataclass(frozen=True)
+class MyPickleable:
+    some_str: str
+    some_int: int
+
+
+@dataclasses.dataclass(frozen=True)
+class MyPickleable2:
+    some_float: float
+
+
+@pytest.fixture(
+    scope="function",
+    params=[
+        pytest.param(picklable, id=f"picklable-{i}")
+        for i, picklable in enumerate(
+            [
+                MyPickleable("spam", 123),
+                MyPickleable("eggs", 0),
+                MyPickleable("ham", -72),
+                MyPickleable2(1.23),
+                MyPickleable2(-98.7),
+            ]
+        )
+    ],
+)
+def random_picklable(request):
     yield request.param
 
 
@@ -63,7 +140,12 @@ def cpp_type_name(np_dtype, map_np_dtypes_to_cpp_types):
     return type_
 
 
-@pytest.fixture
+# Hacky but effective-ish way to apply a `compiled` mark to any test that uses
+# this fixture
+# For more contex: https://github.com/pytest-dev/pytest/issues/1368
+@pytest.fixture(
+    params=[pytest.param(..., id="compiler-CXX", marks=pytest.mark.compiled)]
+)
 def cpp_compile(
     tmp_path, _cpp_compiler_path, _radex_include_dir, _radex_lib_dir, _radex_lib_name
 ):

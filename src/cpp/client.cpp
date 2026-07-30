@@ -1,11 +1,14 @@
 #include "radex/client.hpp"
+#include "radex/constants.hpp"
 
+#include <chrono>
 #include <cstring>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
 
 namespace radex {
 namespace detail {
@@ -53,20 +56,58 @@ MetaData MetaData::make_buffer(const radex::data::DType dtype,
 
 } // namespace detail
 
-detail::ItemInfo IClient::get_item_info(std::string_view key) {
-    auto buf = get_bytes(key);
+detail::BytesBuffer IClient::wait_for_bytes(std::string_view key,
+                                            std::chrono::milliseconds timeout) {
+    const char *poll_interval_s = nullptr;
+    const auto end_time = std::chrono::steady_clock::now() + timeout;
+    const auto poll_interval = std::chrono::milliseconds(
+        (poll_interval_s = std::getenv(RADEX_POLL_INTERVAL_VAR.c_str()))
+            ? std::stoul(poll_interval_s)
+            : RADEX_DEFAULT_POLL_INTERVAL_MILLISECONDS);
+
+    while (!contains(key)) {
+        const auto curr_time = std::chrono::steady_clock::now();
+        const auto timeout_expired = curr_time > end_time;
+
+        if (timeout_expired) {
+            std::ostringstream msg;
+            msg << "Failed to find key `" << key << "` before timeout";
+
+            // TODO: Better error type here
+            throw std::runtime_error(msg.str());
+        }
+        std::this_thread::sleep_for(poll_interval);
+    }
+    return get_bytes(key);
+}
+
+detail::ItemInfo IClient::get_item_info(
+    std::function<detail::BytesBuffer(std::string_view)> fetch_bytes,
+    std::string_view key) {
+    auto buf = fetch_bytes(key);
     return {get_meta_data(key), buf.release()};
 }
 
 std::unique_ptr<detail::ItemInfo>
 IClient::get_item_info_ptr(std::string_view key) {
-    return std::make_unique<detail::ItemInfo>(get_meta_data(key),
-                                              get_bytes(key).release());
+    const auto fetch_bytes =
+        std::bind(&IClient::get_bytes, this, std::placeholders::_1);
+    return std::make_unique<detail::ItemInfo>(
+        std::move(get_item_info(fetch_bytes, key)));
+}
+
+std::unique_ptr<detail::ItemInfo>
+IClient::wait_for_item_info_ptr(std::string_view key,
+                                std::chrono::milliseconds timeout) {
+    const auto fetch_bytes = std::bind(&IClient::wait_for_bytes, this,
+                                       std::placeholders::_1, timeout);
+    return std::make_unique<detail::ItemInfo>(
+        std::move(get_item_info(fetch_bytes, key)));
 }
 
 std::string IClient::build_meta_key(std::string_view s) const {
     std::ostringstream meta;
-    meta <<  "__metadata::" << s;
+    meta << "__metadata::" << s;
     return meta.str();
 }
 
