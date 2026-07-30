@@ -147,16 +147,16 @@ if(ENABLE_PYTHON)
           )
       endif()
       set(Python_FIND_VIRTUALENV ONLY)
-      message(STATUS "Python package will be installed")
-      message(STATUS "\tFound Python Executable: ${Python_EXECUTABLE}")
-      message(STATUS "\tFound Python Version: ${Python_VERSION}")
   endif()
-  find_package(Python COMPONENTS Interpreter REQUIRED)
+  find_package(Python3 COMPONENTS Interpreter REQUIRED)
+  message(STATUS "Python package will be installed")
+  message(STATUS "\tPython Executable: ${Python3_EXECUTABLE}")
+  message(STATUS "\tPython Version: ${Python3_VERSION}")
   add_custom_target(install_python_package ALL
       COMMAND ${CMAKE_COMMAND} -E env
           DRAGON_INCLUDE_DIR=${DRAGON_INCLUDE_DIR}
           DRAGON_LIB_DIR=${DRAGON_LIB_DIR}
-          ${Python_EXECUTABLE} -m pip install "${CMAKE_CURRENT_SOURCE_DIR}/python"
+          ${Python3_EXECUTABLE} -m pip install "${CMAKE_CURRENT_SOURCE_DIR}/python"
       COMMENT "Building and installing Python package"
   )
 endif()
