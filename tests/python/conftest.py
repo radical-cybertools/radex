@@ -1,5 +1,7 @@
 import dataclasses
+import functools
 import glob
+import operator
 import os
 import os.path
 import pathlib
@@ -63,28 +65,33 @@ def random_np_value(np_dtype):
     yield value
 
 
+def _fmt_shape(shape):
+    return "x".join(str(dim) for dim in shape)
+
+
 @pytest.fixture(
     scope="function",
     params=[
-        pytest.param(args, id=f"shape-{args[0]}-size-{args[1]}")
-        for args in [
-            (10, (10,)),
-            (10, (5, 2)),
-            (10, (2, 5)),
-            (24, (24,)),
-            (24, (6, 4)),
-            (24, (3, 8)),
-            (24, (12, 2)),
-            (24, (4, 3, 2)),
-            (24, (2, 4, 3)),
-            (24, (2, 2, 3, 2)),
-            (36, (9, 2, 2)),
-            (36, (3, 2, 2, 3)),
+        pytest.param(shape, id=f"shape-{_fmt_shape(shape)}")
+        for shape in [
+            (10,),
+            (5, 2),
+            (2, 5),
+            (24,),
+            (6, 4),
+            (3, 8),
+            (12, 2),
+            (4, 3, 2),
+            (2, 4, 3),
+            (2, 2, 3, 2),
+            (9, 2, 2),
+            (3, 2, 2, 3),
         ]
     ],
 )
 def random_np_tensor(np_dtype, request):
-    size, shape = request.param
+    shape = request.param
+    size = functools.reduce(operator.mul, shape, 1)
     yield np.arange(size, dtype=np_dtype).reshape(shape)
 
 
