@@ -41,7 +41,7 @@ def map_np_dtypes_to_cpp_types():
 @pytest.fixture(
     scope="function",
     params=[
-        pytest.param(dtype, id=f"dtype={dtype.__name__}")
+        pytest.param(dtype, id=f"dtype-{dtype.__name__}")
         for dtype in _SUPPORTED_NP_DTYPES
     ],
 )
@@ -62,7 +62,7 @@ def random_np_value(np_dtype):
 @pytest.fixture(
     scope="function",
     params=[
-        pytest.param(args, id=f"shape={args[0]}-size={args[1]}")
+        pytest.param(args, id=f"shape-{args[0]}-size-{args[1]}")
         for args in [
             (10, (10,)),
             (10, (5, 2)),
@@ -98,14 +98,16 @@ class MyPickleable2:
 @pytest.fixture(
     scope="function",
     params=[
-        pytest.param(picklable, id=f"{picklable=}")
-        for picklable in [
-            MyPickleable("spam", 123),
-            MyPickleable("eggs", 0),
-            MyPickleable("ham", -72),
-            MyPickleable2(1.23),
-            MyPickleable2(-98.7),
-        ]
+        pytest.param(picklable, id=f"picklable-{i}")
+        for i, picklable in enumerate(
+            [
+                MyPickleable("spam", 123),
+                MyPickleable("eggs", 0),
+                MyPickleable("ham", -72),
+                MyPickleable2(1.23),
+                MyPickleable2(-98.7),
+            ]
+        )
     ],
 )
 def random_picklable(request):
@@ -131,7 +133,7 @@ def cpp_type_name(np_dtype, map_np_dtypes_to_cpp_types):
 # this fixture
 # For more contex: https://github.com/pytest-dev/pytest/issues/1368
 @pytest.fixture(
-    params=[pytest.param(..., id="compiler=C++", marks=pytest.mark.compiled)]
+    params=[pytest.param(..., id="compiler-CXX", marks=pytest.mark.compiled)]
 )
 def cpp_compile(
     tmp_path, _cpp_compiler_path, _radex_include_dir, _radex_lib_dir, _radex_lib_name

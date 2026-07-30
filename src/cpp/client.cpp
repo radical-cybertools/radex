@@ -59,21 +59,24 @@ MetaData MetaData::make_buffer(const radex::data::DType dtype,
 detail::BytesBuffer IClient::wait_for_bytes(std::string_view key,
                                             std::chrono::milliseconds timeout) {
     const char *poll_interval_s = nullptr;
-    const unsigned int poll_interval =
+    const auto end_time = std::chrono::steady_clock::now() + timeout;
+    const auto poll_interval = std::chrono::milliseconds(
         (poll_interval_s = std::getenv(RADEX_POLL_INTERVAL_VAR.c_str()))
             ? std::stoul(poll_interval_s)
-            : RADEX_DEFAULT_POLL_INTERVAL_SECONDS;
-    const auto end_time = std::chrono::system_clock::now() + timeout;
+            : RADEX_DEFAULT_POLL_INTERVAL_MILLISECONDS);
 
     while (!contains(key)) {
-        std::this_thread::sleep_for(std::chrono::seconds(poll_interval));
-        if (std::chrono::system_clock::now() > end_time) {
+        const auto curr_time = std::chrono::steady_clock::now();
+        const auto timeout_expired = curr_time > end_time;
+
+        if (timeout_expired) {
             std::ostringstream msg;
             msg << "Failed to find key `" << key << "` before timeout";
 
             // TODO: Better error type here
             throw std::runtime_error(msg.str());
         }
+        std::this_thread::sleep_for(poll_interval);
     }
     return get_bytes(key);
 }

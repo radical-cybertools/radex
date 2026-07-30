@@ -1,4 +1,3 @@
-import contextlib
 import os
 import textwrap
 import time
@@ -12,22 +11,6 @@ from dragon.native.process import Popen
 
 def _comma_seperate_ints(ints: Iterable[int]) -> str:
     return ", ".join(str(i) for i in ints)
-
-
-@contextlib.contextmanager
-def _is_in_accptable_time_range(delay):
-    _TRIVIAL_WAIT_TIME_LIMIT = 0.1
-    start_t = time.perf_counter()
-    yield
-    end_t = time.perf_counter()
-
-    # FIXME: We should expose the poll rate through the `radex` namespace
-    #        rather than looking for magic env vars in the tests
-    assert (
-        delay
-        < end_t - start_t
-        < delay + os.environ.get("RADEX_POLL_INTERVAL", 1) + _TRIVIAL_WAIT_TIME_LIMIT
-    )
 
 
 def test_get_cpp_scalar(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_name):
@@ -174,7 +157,13 @@ def test_put_py_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_nam
 
 
 @pytest.mark.slow
-def test_wait_for_scalars(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_name):
+def test_wait_for_scalars(
+    cpp_dragon_compile,
+    ddict,
+    client,
+    np_dtype,
+    cpp_type_name,
+):
     py_key = "some-py-val"
     cpp_key = "some-cpp-val"
 
@@ -202,31 +191,37 @@ def test_wait_for_scalars(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_
     assert not client.contains(cpp_key)
 
     try:
-        with _is_in_accptable_time_range(cpp_put_delay):
-            proc = Popen(executable=os.fspath(bin_), args=[])
-            value = client.wait_for_scalar(cpp_key, 10)
+        proc = Popen(executable=os.fspath(bin_), args=[])
+        start_t = time.perf_counter()
+        value = client.wait_for_scalar(cpp_key, 10)
+        py_wait_time = time.perf_counter() - start_t
 
-        with _is_in_accptable_time_range(py_put_delay):
-            time.sleep(py_put_delay)
-            client.put_scalar(py_key, np_dtype(12))
-            proc.wait()
+        time.sleep(py_put_delay)
+        client.put_scalar(py_key, np_dtype(12))
     except Exception:
         proc.kill()
     finally:
         proc.wait()
 
+    assert cpp_put_delay - 0.5 < py_wait_time < cpp_put_delay + 0.5
     assert value.dtype == np_dtype
     assert value == np_dtype(123)
     assert proc.returncode == 0
 
 
 @pytest.mark.slow
-def test_wait_for_tensors(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_name):
+def test_wait_for_tensors(
+    cpp_dragon_compile,
+    ddict,
+    client,
+    np_dtype,
+    cpp_type_name,
+):
     py_key = "some-py-val"
     cpp_key = "some-cpp-val"
 
-    py_put_delay = 3  # seconds
-    cpp_put_delay = 3  # seconds
+    py_put_delay = 2  # seconds
+    cpp_put_delay = 2  # seconds
 
     cpp_tensor_size = 36
     cpp_tensor_shape = (4, 3, 3)
@@ -276,19 +271,19 @@ def test_wait_for_tensors(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_
     assert not client.contains(cpp_key)
 
     try:
-        with _is_in_accptable_time_range(cpp_put_delay):
-            proc = Popen(executable=os.fspath(bin_), args=[])
-            cpp_tensor = client.wait_for_tensor(cpp_key, 10)
+        proc = Popen(executable=os.fspath(bin_), args=[])
+        start_t = time.perf_counter()
+        cpp_tensor = client.wait_for_tensor(cpp_key, 10)
+        py_wait_time = time.perf_counter() - start_t
 
-        with _is_in_accptable_time_range(py_put_delay):
-            time.sleep(py_put_delay)
-            client.put_tensor(py_key, py_tensor)
-            proc.wait()
+        time.sleep(py_put_delay)
+        client.put_tensor(py_key, py_tensor)
     except Exception:
         proc.kill()
     finally:
         proc.wait()
 
+    assert cpp_put_delay - 0.5 < py_wait_time < cpp_put_delay + 0.5
     assert cpp_tensor.dtype == expected_cpp_tensor.dtype == np_dtype
     assert (cpp_tensor == expected_cpp_tensor).all()
     assert proc.returncode == 0
