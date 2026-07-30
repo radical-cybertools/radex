@@ -15,6 +15,9 @@ venv.bak/
 # Mac
 .DS_Store
 
+# Pyhton Artifacts
+**/__pycache__
+
 # Dragon Artifacts
 **/ddict_orc_*
 

@@ -1,5 +1,7 @@
 import dataclasses
+import glob
 import os
+import os.path
 import pathlib
 import shutil
 import subprocess
@@ -20,7 +22,9 @@ _ROOT = _HERE.parent.parent
 
 @pytest.fixture(scope="session")
 def _radex_lib_dir():
-    yield _ROOT / "install" / "lib"
+    serach = os.path.join(_ROOT, "install/**/libradex.so")
+    lib = next(glob.iglob(serach))
+    yield pathlib.Path(lib).parent
 
 
 @pytest.fixture(scope="session")

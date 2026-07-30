@@ -1,6 +1,6 @@
-import pytest
 import subprocess
 
+import pytest
 
 CPP_TEST_BINARIES = [
     "test-local-client",
