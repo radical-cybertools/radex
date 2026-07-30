@@ -17,6 +17,7 @@ def test_get_cpp_scalar(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_na
     key = "some-scalar"
     bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
         #include "radex/dragon.hpp"
+        #include <cstdint>
 
         int main(void) {{
             timespec timeout {{5, 0}};
@@ -54,6 +55,7 @@ def test_get_cpp_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_na
         #include "radex/dragon.hpp"
         #include <vector>
         #include <numeric>
+        #include <cstdint>
 
         int main(void) {{
             timespec timeout {{5, 0}};
@@ -83,6 +85,7 @@ def test_put_py_scalar(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_nam
     key = "some-scalar"
     bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
         #include "radex/dragon.hpp"
+        #include <cstdint>
 
         int main(void) {{
             timespec timeout {{5, 0}};
@@ -116,6 +119,7 @@ def test_put_py_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_nam
 
     bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
         #include "radex/dragon.hpp"
+        #include <cstdint>
         #include <vector>
         #include <numeric>
         #include <exception>

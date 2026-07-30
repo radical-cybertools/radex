@@ -12,8 +12,8 @@ import numpy as np
 import pytest
 
 _SUPPORTED_NP_DTYPES = {
-    np.int32: "int",
-    np.int64: "long",
+    np.int32: "std::int32_t",
+    np.int64: "std::int64_t",
     np.float32: "float",
     np.float64: "double",
 }
@@ -157,11 +157,12 @@ def cpp_compile(
         subprocess.check_call(
             [
                 os.fspath(_cpp_compiler_path),
+                "--std=c++17",
                 f"-I{os.fspath(_radex_include_dir)}",
                 os.fspath(src_file),
                 *extra_compile_args,
                 f"-L{os.fspath(_radex_lib_dir)}",
-                f"-Wl,-rpath={os.fspath(_radex_lib_dir)}",
+                f"-Wl,-rpath,{os.fspath(_radex_lib_dir)}",
                 f"-l{_radex_lib_name}",
                 "-o",
                 os.fspath(bin_path),
