@@ -1,14 +1,33 @@
+import contextlib
 import os
 import textwrap
+import time
 from collections.abc import Iterable
 
 import dragon
 import numpy as np
+import pytest
 from dragon.native.process import Popen
 
 
 def _comma_seperate_ints(ints: Iterable[int]) -> str:
     return ", ".join(str(i) for i in ints)
+
+
+@contextlib.contextmanager
+def _is_in_accptable_time_range(delay):
+    _TRIVIAL_WAIT_TIME_LIMIT = 0.1
+    start_t = time.perf_counter()
+    yield
+    end_t = time.perf_counter()
+
+    # FIXME: We should expose the poll rate through the `radex` namespace
+    #        rather than looking for magic env vars in the tests
+    assert (
+        delay
+        < end_t - start_t
+        < delay + os.environ.get("RADEX_POLL_INTERVAL", 1) + _TRIVIAL_WAIT_TIME_LIMIT
+    )
 
 
 def test_get_cpp_scalar(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_name):
@@ -151,4 +170,125 @@ def test_put_py_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_nam
 
     proc = Popen(executable=os.fspath(bin_), args=[])
     proc.wait()
+    assert proc.returncode == 0
+
+
+@pytest.mark.slow
+def test_wait_for_scalars(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_name):
+    py_key = "some-py-val"
+    cpp_key = "some-cpp-val"
+
+    py_put_delay = 3  # seconds
+    cpp_put_delay = 3  # seconds
+
+    bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
+        #include "radex/dragon.hpp"
+        #include <chrono>
+        #include <thread>
+
+        int main(void) {{
+            timespec timeout {{5, 0}};
+            radex::drg::ddict::Client client {{"{ddict.serialize()}", &timeout}};
+            {cpp_type_name} value = 123;
+            std::this_thread::sleep_for(std::chrono::seconds({cpp_put_delay}));
+            client.put_scalar("{cpp_key}", value);
+
+            auto x = client.wait_for_scalar<{cpp_type_name}>("{py_key}", 10'000ms);
+            return x == 12 ? 0 : 1;
+        }}
+        """))
+
+    assert not client.contains(py_key)
+    assert not client.contains(cpp_key)
+
+    try:
+        with _is_in_accptable_time_range(cpp_put_delay):
+            proc = Popen(executable=os.fspath(bin_), args=[])
+            value = client.wait_for_scalar(cpp_key, 10)
+
+        with _is_in_accptable_time_range(py_put_delay):
+            time.sleep(py_put_delay)
+            client.put_scalar(py_key, np_dtype(12))
+            proc.wait()
+    except Exception:
+        proc.kill()
+    finally:
+        proc.wait()
+
+    assert value.dtype == np_dtype
+    assert value == np_dtype(123)
+    assert proc.returncode == 0
+
+
+@pytest.mark.slow
+def test_wait_for_tensors(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_name):
+    py_key = "some-py-val"
+    cpp_key = "some-cpp-val"
+
+    py_put_delay = 3  # seconds
+    cpp_put_delay = 3  # seconds
+
+    cpp_tensor_size = 36
+    cpp_tensor_shape = (4, 3, 3)
+    expected_cpp_tensor = np.arange(cpp_tensor_size, dtype=np_dtype).reshape(
+        cpp_tensor_shape
+    )
+
+    py_tensor_data = [12, 34, 56, 78, 90, 0]
+    py_tenosr_shape = (2, 3)
+    py_tensor = np.array(py_tensor_data, dtype=np_dtype).reshape(py_tenosr_shape)
+
+    bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
+        #include "radex/dragon.hpp"
+        #include <chrono>
+        #include <numeric>
+        #include <thread>
+        #include <vector>
+
+        int main(void) {{
+            timespec timeout {{5, 0}};
+            radex::drg::ddict::Client client {{"{ddict.serialize()}", &timeout}};
+
+            std::vector<{cpp_type_name}> cpp_tensor({cpp_tensor_size});
+            std::iota(cpp_tensor.begin(), cpp_tensor.end(), 0);
+
+            std::vector<{cpp_type_name}> expected_py_data
+                {{{_comma_seperate_ints(py_tensor_data)}}};
+            std::vector<radex::detail::MetaInt> expected_py_dims
+                {{{_comma_seperate_ints(py_tenosr_shape)}}};
+
+            std::this_thread::sleep_for(std::chrono::seconds({cpp_put_delay}));
+            client.put_tensor(
+                "{cpp_key}",
+                {{{_comma_seperate_ints(cpp_tensor_shape)}}},
+                cpp_tensor);
+
+            auto [dims, data] = client.wait_for_tensor<{cpp_type_name}>(
+                "{py_key}", 10'000ms);
+            if (dims != expected_py_dims)
+                throw std::logic_error("Dims did not match");
+            if (data != expected_py_data)
+                throw std::logic_error("Data did not match");
+            return 0;
+        }}
+        """))
+    assert not client.contains(py_key)
+    assert not client.contains(cpp_key)
+
+    try:
+        with _is_in_accptable_time_range(cpp_put_delay):
+            proc = Popen(executable=os.fspath(bin_), args=[])
+            cpp_tensor = client.wait_for_tensor(cpp_key, 10)
+
+        with _is_in_accptable_time_range(py_put_delay):
+            time.sleep(py_put_delay)
+            client.put_tensor(py_key, py_tensor)
+            proc.wait()
+    except Exception:
+        proc.kill()
+    finally:
+        proc.wait()
+
+    assert cpp_tensor.dtype == expected_cpp_tensor.dtype == np_dtype
+    assert (cpp_tensor == expected_cpp_tensor).all()
     assert proc.returncode == 0

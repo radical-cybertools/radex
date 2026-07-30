@@ -8,6 +8,14 @@ import radex
 
 _TRIVIAL_WAIT_TIME_LIMIT = 0.1  # seconds
 
+has_time_delay = pytest.mark.parametrize(
+    "delay",
+    [
+        pytest.param(x, id=f"delay={x}", marks=[pytest.mark.slow])
+        for x in [2, 5]  # time in seconds
+    ],
+)
+
 
 def test_put_and_get_scalar(client, np_dtype, random_np_value):
     key = "some-value"
@@ -36,11 +44,11 @@ def test_put_and_trivial_wait_for_scalar(client, np_dtype, random_np_value):
     assert random_np_value == ret_val
 
 
-def test_put_and_wait_for_value(ddict, client, np_dtype, random_np_value):
+@has_time_delay
+def test_put_and_wait_for_value(ddict, client, np_dtype, random_np_value, delay):
     process = pytest.importorskip("dragon.native.process")
 
     key = "some-value"
-    delay = 2  # seconds
     assert not client.contains(key)
 
     def put_key_after(dd, key, value, delay):
@@ -104,11 +112,11 @@ def test_put_and_trivial_wait_for_tensor(client, np_dtype, random_np_tensor):
     assert (random_np_tensor == ret_val).all()
 
 
-def test_put_and_wait_for_tensor(ddict, client, np_dtype, random_np_tensor):
+@has_time_delay
+def test_put_and_wait_for_tensor(ddict, client, np_dtype, random_np_tensor, delay):
     process = pytest.importorskip("dragon.native.process")
 
     key = "some-value"
-    delay = 1  # seconds
     assert not client.contains(key)
 
     def put_key_after(dd, key, value, delay):
@@ -217,11 +225,11 @@ def test_put_and_trivial_wait_for_picklable(client, random_picklable):
     assert random_picklable == ret_val
 
 
-def test_put_and_wait_for_picklable(ddict, client, random_picklable):
+@has_time_delay
+def test_put_and_wait_for_picklable(ddict, client, random_picklable, delay):
     process = pytest.importorskip("dragon.native.process")
 
     key = "some-obj"
-    delay = 2  # seconds
     assert not client.contains(key)
 
     def put_key_after(dd, key, value, delay):

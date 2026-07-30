@@ -127,7 +127,12 @@ def cpp_type_name(np_dtype, map_np_dtypes_to_cpp_types):
     return type_
 
 
-@pytest.fixture
+# Hacky but effective-ish way to apply a `compiled` mark to any test that uses
+# this fixture
+# For more contex: https://github.com/pytest-dev/pytest/issues/1368
+@pytest.fixture(
+    params=[pytest.param(..., id="compiler=C++", marks=pytest.mark.compiled)]
+)
 def cpp_compile(
     tmp_path, _cpp_compiler_path, _radex_include_dir, _radex_lib_dir, _radex_lib_name
 ):
