@@ -1,0 +1,8 @@
+{
+  "name": "sst",
+  "type": "float",
+  "dimensions": ["time", "lat", "lon"],
+  "long_name": "Monthly Anomalies of SST",
+  "units": "degC",
+  "record_dimension": "time"
+}
