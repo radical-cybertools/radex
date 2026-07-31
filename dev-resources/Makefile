@@ -12,16 +12,16 @@ VERBOSE ?= 0
 VERBOSE_FLAG := $(if $(VERBOSE),-v,)
 
 black:
-	black $(VERBOSE_FLAG) --config $(ROOT)/style/black.toml $(DIRS)
+	black $(VERBOSE_FLAG) --config $(ROOT)/radex-config.toml $(DIRS)
 
 black-check:
-	black $(VERBOSE_FLAG) --config $(ROOT)/style/black.toml --check $(DIRS)
+	black $(VERBOSE_FLAG) --config $(ROOT)/radex-config.toml --check $(DIRS)
 
 isort:
-	isort $(VERBOSE_FLAG) --settings-file $(ROOT)/style/isort.toml $(DIRS)
+	isort $(VERBOSE_FLAG) --settings-file $(ROOT)/radex-config.toml $(DIRS)
 
 isort-check:
-	isort $(VERBOSE_FLAG) --settings-file $(ROOT)/style/isort.toml --check $(DIRS)
+	isort $(VERBOSE_FLAG) --settings-file $(ROOT)/radex-config.toml --check $(DIRS)
 
 test:
 	dragon -s -- -m pytest $(PYTEST_ARGS) -c $(ROOT)/radex-config.toml $(ROOT)/../tests

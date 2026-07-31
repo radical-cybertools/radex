@@ -4,14 +4,15 @@ import sys
 import time
 
 import pytest
+
 import radex
 
 # >>> Test Utils >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # FIXME: For some reason these tests fail in the Github Actions MacOS runner via
 # a timeout. These do pass on local MacOS environments.
-skip_macos_on_github_actions = (
-    (sys.platform == "darwin") and (os.environ.get("GITHUB_ACTIONS", "false") == "true")
+skip_macos_on_github_actions = (sys.platform == "darwin") and (
+    os.environ.get("GITHUB_ACTIONS", "false") == "true"
 )
 pytestmark = pytest.mark.skipif(
     skip_macos_on_github_actions,

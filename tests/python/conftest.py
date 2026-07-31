@@ -25,10 +25,7 @@ _ROOT = _HERE.parent.parent
 
 @pytest.fixture(scope="session")
 def _radex_lib_dir():
-    os_to_libname = {
-        "linux": "libradex.so",
-        "darwin": "libradex.dylib"
-    }
+    os_to_libname = {"linux": "libradex.so", "darwin": "libradex.dylib"}
     libname = os_to_libname[sys.platform]
 
     search = os.path.join(_ROOT, f"install/**/{libname}")
