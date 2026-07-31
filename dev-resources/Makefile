@@ -1,7 +1,9 @@
 ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 DIRS := $(ROOT)/../example $(ROOT)/../tests
 
-.PHONY: format lint black black-check isort isort-check
+PYTEST_ARGS ?=
+
+.PHONY: format lint black black-check isort isort-check test
 
 format: black isort
 
@@ -20,3 +22,6 @@ isort:
 
 isort-check:
 	isort $(VERBOSE_FLAG) --settings-file $(ROOT)/style/isort.toml --check $(DIRS)
+
+test:
+	dragon -s -- -m pytest $(PYTEST_ARGS) -c $(ROOT)/radex-config.toml $(ROOT)/../tests

@@ -32,7 +32,7 @@ def _radex_lib_dir():
     libname = os_to_libname[sys.platform]
 
     search = os.path.join(_ROOT, f"install/**/{libname}")
-    lib = next(glob.iglob(search))
+    lib = next(glob.iglob(search), None)
     if lib is None:
         raise FileNotFoundError(f"Cannot find radex library at: {_ROOT}/install")
     yield pathlib.Path(lib).parent

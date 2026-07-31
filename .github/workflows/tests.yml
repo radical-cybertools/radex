@@ -25,7 +25,7 @@ jobs:
 
     - name: Install dev dependencies
       run: |
-            pip install -r requirements-dev.txt
+            pip install -r dev-resources/requirements-dev.txt
 
     - name: Check style
       run: |
@@ -82,5 +82,5 @@ jobs:
 
     - name: Run tests
       run: |
-            pip install pytest
-            dragon -s -- -m pytest -s -c ./src/python/pyproject.toml -vvv tests/
+            pip install -r dev-resources/requirements-dev.txt
+            make -f dev-resources/Makefile test PYTEST_ARGS="-vvv -s"
