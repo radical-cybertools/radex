@@ -12,8 +12,13 @@ env:
   _DRAGON_VERSION: 0.14.1
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  tests:
+    name: Tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-24.04, macos-26]
 
     steps:
     - uses: actions/checkout@v7
@@ -23,14 +28,20 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install builds tools
+    - name: Linux dependencies
+      if: ${{ startsWith(matrix.os, 'ubuntu') }}
       run: |
             sudo apt-get update
             sudo apt-get install -y build-essential gcc g++ make cmake mpich
 
+    - name: MacOS dependencies
+      if: ${{ startsWith(matrix.os, 'macos') }}
+      run: |
+            brew update
+            brew install cmake mpich
+
     - name: Install Redis backend
       run: |
-            which pip
             git clone -b $_SMARTREDIS_VERSION --single-branch https://github.com/CrayLabs/SmartRedis.git
             cd SmartRedis && make lib redis
             echo "smartredis_DIR=SmartRedis/install/share/cmake/smartredis" >> $GITHUB_ENV
@@ -41,11 +52,15 @@ jobs:
 
     - name: Build radex library
       run: |
-            cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DALLOW_SYSTEM_PYTHON=ON
+            cmake -S . -B build \
+              -DCMAKE_INSTALL_PREFIX=install \
+              -DALLOW_SYSTEM_PYTHON=ON \
+              -DPython3_FIND_STRATEGY=LOCATION \
+              -DPython3_ROOT_DIR="${pythonLocation}"
             cmake --build build -j
             cmake --install build
 
     - name: Run tests
       run: |
             pip install pytest
-            dragon -s -- -m pytest -c ./src/python/pyproject.toml -vvv tests
+            dragon -s -- -m pytest -s -c ./src/python/pyproject.toml -vvv tests/

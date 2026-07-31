@@ -29,16 +29,16 @@ function(radex_setup_standalone_build)
         return()
     endif()
 
-    set(CMAKE_CXX_STANDARD 17)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_VISIBILITY_PRESET default)
+    set(CMAKE_CXX_STANDARD 17 PARENT_SCOPE)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON PARENT_SCOPE)
+    set(CMAKE_CXX_VISIBILITY_PRESET default PARENT_SCOPE)
 
     if(NOT DEFINED CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Release")
     endif()
 
     if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-        set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install)
+        set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install PARENT_SCOPE)
     endif()
 
     include(GNUInstallDirs)
