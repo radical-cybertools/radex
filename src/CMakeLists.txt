@@ -146,7 +146,7 @@ if(ENABLE_PYTHON)
               "Python virtual environment not detected. To force installation in the system Python set the ALLOW_SYSTEM_PYTHON option"
           )
       endif()
-      set(Python_FIND_VIRTUALENV ONLY)
+      set(Python3_FIND_VIRTUALENV ONLY)
   endif()
   find_package(Python3 COMPONENTS Interpreter REQUIRED)
   message(STATUS "Python package will be installed")

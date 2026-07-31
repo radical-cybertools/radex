@@ -63,4 +63,4 @@ jobs:
     - name: Run tests
       run: |
             pip install pytest
-            dragon -s -- -m pytest -c ./src/python/pyproject.toml -vvv tests
+            dragon -s -- -m pytest -s -c ./src/python/pyproject.toml -vvv tests/
