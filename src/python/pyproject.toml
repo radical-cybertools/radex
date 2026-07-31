@@ -13,19 +13,3 @@ dependencies = [
     "cloudpickle",
     "numpy",
 ]
-
-[dependency-groups]
-test = ["pytest"]
-dev = [{include-group = "test"}]
-
-
-[tool.pytest]
-addopts = [
-    "--report-chars=a",
-]
-strict_config = true
-strict_markers = true
-markers = [
-    "slow: Test may be slow to run",
-    "compiled: Test has a component comiled at run time"
-]

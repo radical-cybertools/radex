@@ -39,34 +39,29 @@ import os
 import sys
 from pathlib import Path
 
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, WhiteKernel
-from sklearn.metrics import mean_squared_error
-import numpy as np
-
 import dragon  # noqa: F401  – must precede dragon.data imports
-from dragon.data.ddict import DDict
-
-from radical.asyncflow import WorkflowEngine
-
+import numpy as np
 import rhapsody
+from dragon.data.ddict import DDict
+from radical.asyncflow import WorkflowEngine
 from rhapsody.backends import DragonExecutionBackend
-
 from rose.al.active_learner import SequentialActiveLearner
 from rose.learner import LearnerConfig, TaskConfig
 from rose.metrics import MEAN_SQUARED_ERROR_MSE
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, WhiteKernel
+from sklearn.metrics import mean_squared_error
 
 from radex import DragonClient as Client
-
 
 rhapsody.enable_logging()
 
 # ── Configuration ──────────────────────────────────────────────────────────────
-N_MPI_RANKS: int = 4          # MPI ranks per simulation launch
+N_MPI_RANKS: int = 4  # MPI ranks per simulation launch
 N_SAMPLES_PER_RANK: int = 16  # few pts per rank → sparse start, AL drives exploration
-N_QUERY: int = 8              # query points selected per AL step
-MSE_THRESHOLD: float = 0.1    # convergence target
-MAX_ITER: int = 10            # hard cap on iterations
+N_QUERY: int = 8  # query points selected per AL step
+MSE_THRESHOLD: float = 0.1  # convergence target
+MAX_ITER: int = 10  # hard cap on iterations
 
 # ── Consts ─────────────────────────────────────────────────────────────────────
 HERE = Path(__file__).parent.absolute()

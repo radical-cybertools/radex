@@ -1,8 +1,9 @@
-import pathlib
 import os
+import pathlib
+
 import dragon
 from dragon.data.ddict import DDict
-from dragon.native.process import ProcessTemplate, Process
+from dragon.native.process import Process, ProcessTemplate
 
 HERE = pathlib.Path(__file__).parent.absolute()
 ROOT = HERE.parent.parent.parent
