@@ -7,6 +7,7 @@ import os.path
 import pathlib
 import shutil
 import subprocess
+import sys
 
 import numpy as np
 import pytest
@@ -24,8 +25,16 @@ _ROOT = _HERE.parent.parent
 
 @pytest.fixture(scope="session")
 def _radex_lib_dir():
-    serach = os.path.join(_ROOT, "install/**/libradex.so")
-    lib = next(glob.iglob(serach))
+    os_to_libname = {
+        "linux": "libradex.so",
+        "darwin": "libradex.dylib"
+    }
+    libname = os_to_libname[sys.platform]
+
+    search = os.path.join(_ROOT, f"install/**/{libname}")
+    lib = next(glob.iglob(search))
+    if lib is None:
+        raise FileNotFoundError(f"Cannot find radex library at: {_ROOT}/install")
     yield pathlib.Path(lib).parent
 
 
