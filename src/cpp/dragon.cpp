@@ -15,13 +15,13 @@ using DDict = dragon::DDict<dragon::Serializable, dragon::Serializable>;
 
 void _validate_ddict(DDict &ddict_ref) {
 
-    if (!ddict_ref.wait_for_keys()) {
-        throw std::runtime_error(
-            "The DDict was not created with `wait_for_keys` enabled. "
-            "Check that the correct serialized DDict was passed to this "
-            "application."
-        );
-    }
+    // if (!ddict_ref.wait_for_keys()) {
+    //     throw std::runtime_error(
+    //         "The DDict was not created with `wait_for_keys` enabled. "
+    //         "Check that the correct serialized DDict was passed to this "
+    //         "application."
+    //     );
+    // }
 }
 
 DDict _ddict_from_radex_env() {
@@ -56,10 +56,11 @@ namespace radex::drg::ddict {
 Client::Client() : Client(_ddict_from_radex_env()) {}
 
 Client::Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict)
-    : ddict{(_validate_ddict(ddict), std::move(ddict))} {}
+    : ddict{std::move(ddict)} {}
 
 Client::Client(const char *descriptor, const timespec_t *timeout)
-    : Client(_ddict_from_descriptor(descriptor, timeout)) {}
+    : ddict{descriptor, timeout} {}
+    // : Client(_ddict_from_descriptor(descriptor, timeout)) {}
 
 bool Client::contains(std::string_view key) {
     dragon::SerializableString key_(std::string{key});
