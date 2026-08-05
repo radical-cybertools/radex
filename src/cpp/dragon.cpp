@@ -13,16 +13,15 @@ namespace {
 
 using DDict = dragon::DDict<dragon::Serializable, dragon::Serializable>;
 
-DDict _validate_ddict(DDict ddict) {
+void _validate_ddict(DDict &ddict_ref) {
 
-    if (!ddict.wait_for_keys()) {
+    if (!ddict_ref.wait_for_keys()) {
         throw std::runtime_error(
             "The DDict was not created with `wait_for_keys` enabled. "
             "Check that the correct serialized DDict was passed to this "
             "application."
         );
     }
-    return ddict;
 }
 
 DDict _ddict_from_radex_env() {
@@ -57,7 +56,7 @@ namespace radex::drg::ddict {
 Client::Client() : Client(_ddict_from_radex_env()) {}
 
 Client::Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict)
-    : ddict{_validate_ddict(std::move(ddict))} {}
+    : ddict{(_validate_ddict(ddict), std::move(ddict))} {}
 
 Client::Client(const char *descriptor, const timespec_t *timeout)
     : Client(_ddict_from_descriptor(descriptor, timeout)) {}
@@ -89,10 +88,6 @@ detail::BytesBuffer Client::wait_for_bytes(std::string_view key,
 
         dormant_timeout_warning_triggered = true;
     }
-    return get_bytes(key);
-}
-
-radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
     SerializableString key_{std::string{key}};
     SerializableByteBuffer buf = ddict[key_];
 
@@ -103,4 +98,12 @@ radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
     return {std::move(uniq), len};
 }
 
+radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
+    const std::chrono::milliseconds fast_timeout{1};
+    // TODO: Check if/when Dragon can support bypassing wait for keys
+    if (!contains(key)) {
+        std::runtime_error("Key does not exist in the DDict: " + std::string(key));
+    }
+    return wait_for_bytes(key, fast_timeout);
+}
 } // namespace radex::drg::ddict
