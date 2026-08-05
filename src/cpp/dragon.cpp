@@ -15,13 +15,13 @@ using DDict = dragon::DDict<dragon::Serializable, dragon::Serializable>;
 
 void _validate_ddict(DDict &ddict_ref) {
 
-    // if (!ddict_ref.wait_for_keys()) {
-    //     throw std::runtime_error(
-    //         "The DDict was not created with `wait_for_keys` enabled. "
-    //         "Check that the correct serialized DDict was passed to this "
-    //         "application."
-    //     );
-    // }
+    if (!ddict_ref.wait_for_keys()) {
+        throw std::runtime_error(
+            "The DDict was not created with `wait_for_keys` enabled. "
+            "Check that the correct serialized DDict was passed to this "
+            "application."
+        );
+    }
 }
 
 DDict _ddict_from_radex_env() {
@@ -41,13 +41,6 @@ DDict _ddict_from_radex_env() {
     return DDict{serialized_ddict, &timeout};
 }
 
-DDict _ddict_from_descriptor(const char *descriptor, const timespec_t *timeout) {
-    if (!descriptor) {
-        throw std::invalid_argument("DDict descriptor must be specified.");
-    }
-
-    return DDict{descriptor, timeout};
-}
 
 } // namespace
 
