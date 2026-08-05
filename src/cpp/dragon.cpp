@@ -53,14 +53,21 @@ DDict _ddict_from_descriptor(const char *descriptor, const timespec_t *timeout) 
 
 namespace radex::drg::ddict {
 
-Client::Client() : Client(_ddict_from_radex_env()) {}
+// For now, the validation happens after teh ddict because of a weird problem
+// which seems to originate from copy/move semantics with Dragon DDict.
+Client::Client() : ddict{_ddict_from_radex_env()} {
+    _validate_ddict(ddict);
+}
 
 Client::Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict)
-    : ddict{std::move(ddict)} {}
+    : ddict{ddict} {
+    _validate_ddict(this->ddict);
+}
 
 Client::Client(const char *descriptor, const timespec_t *timeout)
-    : ddict{descriptor, timeout} {}
-    // : Client(_ddict_from_descriptor(descriptor, timeout)) {}
+    : ddict{descriptor, timeout} {
+    _validate_ddict(ddict);
+}
 
 bool Client::contains(std::string_view key) {
     dragon::SerializableString key_(std::string{key});
