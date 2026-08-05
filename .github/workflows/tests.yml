@@ -9,7 +9,7 @@ on:
 env:
   PYTHON_VERSION: '3.12'
   _SMARTREDIS_VERSION: "develop"
-  _DRAGON_VERSION: 0.14.1
+  _DRAGON_VERSION: "85280d2"
 
 jobs:
 
@@ -68,7 +68,9 @@ jobs:
 
     - name: Install DragonHPC
       run: |
-            pip install dragonhpc==$_DRAGON_VERSION
+            git clone --single-branch -b _DRAGON_VERSION https://github.com/DragonHPC/dragon.git
+            cd dragon/devtools && source VARIABLES
+            cd dragon && pip install src
 
     - name: Build radex library
       run: |
