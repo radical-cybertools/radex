@@ -15,6 +15,8 @@ class Client : public IClient {
 
     Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict);
 
+    bool dormant_timeout_warning_triggered = false;
+
   public:
     Client();
     Client(const char *descriptor, const timespec_t *timeout);
@@ -26,6 +28,8 @@ class Client : public IClient {
     ~Client() = default;
 
     bool contains(std::string_view key) override;
+    detail::BytesBuffer wait_for_bytes(std::string_view key,
+                                       std::chrono::milliseconds timeout) override;
     void put_bytes(std::string_view key, const void *bytes,
                    detail::MetaInt length) override;
     radex::detail::BytesBuffer get_bytes(std::string_view key) override;
