@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "radex/client.hpp"
+#include "radex/handles.hpp"
 
 namespace pkg {
 
@@ -60,26 +61,30 @@ int main() {
     double d = 1.23;
 
     pkg::localkv::UnorderedMapClient client{};
-    client.put_scalar("some-int", i);
-    client.put_scalar("some-double", d);
+    client.put_scalar(radex::data::OutgoingHandle{"some-int"}, i);
+    client.put_scalar(radex::data::OutgoingHandle{"some-double"}, d);
 
     std::cout << "=============\n"
               << "Hello World!!\n"
               << "=============\n";
 
-    auto some_int = client.get_scalar<int>("some-int");
-    auto some_double = client.get_scalar<double>("some-double");
+    auto some_int =
+        client.get_scalar<int>(radex::data::IncomingHandle{"some-int"});
+    auto some_double =
+        client.get_scalar<double>(radex::data::IncomingHandle{"some-double"});
 
     std::vector<int> itensor{0, 1, 2, 3};
     std::vector<double> dtensor{0.1, 2.3, 4.5, 6.7};
 
-    client.put_tensor("int-tensor", {2, 2}, itensor);
-    client.put_tensor("double-tensor", {4}, dtensor);
+    client.put_tensor(radex::data::OutgoingHandle{"int-tensor"}, {2, 2},
+                      itensor);
+    client.put_tensor(radex::data::OutgoingHandle{"double-tensor"}, {4},
+                      dtensor);
 
     auto [some_itensor_dims, some_itensor] =
-        client.get_tensor<int>("int-tensor");
+        client.get_tensor<int>(radex::data::IncomingHandle{"int-tensor"});
     auto [some_dtensor_dims, some_dtensor] =
-        client.get_tensor<double>("double-tensor");
+        client.get_tensor<double>(radex::data::IncomingHandle{"double-tensor"});
 
     std::cout << ""
               << "Some Int:           " << some_int << "\n"

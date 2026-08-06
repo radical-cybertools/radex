@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "radex/handles.hpp"
 #include "radex/smartredis.hpp"
 
 template <typename T> std::string vec_to_str(const std::vector<T> &vec) {
@@ -21,13 +22,16 @@ int main() {
 
     radex::redis::smartredis::Client client{"example-sr-consumer"};
 
-    auto some_int = client.get_scalar<int32_t>("some-int");
-    auto [some_int_tensor_dims, some_int_tensor] =
-        client.get_tensor<int32_t>("some-int-tensor");
+    auto some_int =
+        client.get_scalar<int32_t>(radex::data::IncomingHandle{"some-int"});
+    auto [some_int_tensor_dims, some_int_tensor] = client.get_tensor<int32_t>(
+        radex::data::IncomingHandle{"some-int-tensor"});
 
-    auto some_float = client.get_scalar<double>("some-float");
+    auto some_float =
+        client.get_scalar<double>(radex::data::IncomingHandle{"some-float"});
     auto [some_float_tensor_dims, some_float_tensor] =
-        client.get_tensor<double>("some-float-tensor");
+        client.get_tensor<double>(
+            radex::data::IncomingHandle{"some-float-tensor"});
 
     std::cout << ""
               << "Some Int:          " << some_int << "\n"
