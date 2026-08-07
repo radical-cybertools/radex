@@ -9,9 +9,7 @@
 
 #if RADEX_HAS_DRAGON
 #include "dragon/serializable.hpp"
-#endif
 
-#if RADEX_HAS_DRAGON
 namespace {
 
 using DDict = dragon::DDict<dragon::Serializable, dragon::Serializable>;
@@ -44,7 +42,6 @@ DDict _ddict_from_radex_env() {
     return DDict{serialized_ddict, &timeout};
 }
 
-
 } // namespace
 
 namespace radex::drg::ddict {
@@ -72,7 +69,7 @@ bool Client::contains(std::string_view key) {
 
 void Client::put_bytes(std::string_view key, const void *bytes,
                        detail::MetaInt length) {
-    // FIXME: Gross const cast needed -- check with Kent!!
+    // FIXME: Gross const cast needed -- check with Kent\!\!
     auto ptr = static_cast<std::uint8_t *>(const_cast<void *>(bytes));
 
     SerializableString key_{std::string{key}};
@@ -110,52 +107,21 @@ radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
     }
     return wait_for_bytes(key, fast_timeout);
 }
+
 } // namespace radex::drg::ddict
 #else
-namespace {
-
- void _dragon_disabled() {
-    throw std::runtime_error(
-        "radex was built without Dragon backend support. "
-        "Rebuild with -DBUILD_DRAGON=ON to enable radex::drg::ddict::Client."
-    );
-}
-
-} // namespace
-
 namespace radex::drg::ddict {
 
-Client::Client() { _dragon_disabled(); }
+Client::Client()
+    : detail::UnsupportedBackendClient("Dragon", "BUILD_DRAGON") {
+    throw_backend_unavailable();
+}
 
-Client::Client(const char *descriptor, const timespec_t *timeout) {
+Client::Client(const char *descriptor, const timespec_t *timeout)
+    : detail::UnsupportedBackendClient("Dragon", "BUILD_DRAGON") {
     (void)descriptor;
     (void)timeout;
-    _dragon_disabled();
-}
-
-bool Client::contains(std::string_view key) {
-    (void)key;
-    _dragon_disabled();
-}
-
-void Client::put_bytes(std::string_view key, const void *bytes,
-                       detail::MetaInt length) {
-    (void)key;
-    (void)bytes;
-    (void)length;
-    _dragon_disabled();
-}
-
-detail::BytesBuffer Client::wait_for_bytes(std::string_view key,
-                                           std::chrono::milliseconds timeout) {
-    (void)key;
-    (void)timeout;
-    _dragon_disabled();
-}
-
-radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
-    (void)key;
-    _dragon_disabled();
+    throw_backend_unavailable();
 }
 
 } // namespace radex::drg::ddict

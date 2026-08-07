@@ -18,13 +18,12 @@ using timespec_t = struct timespec;
 
 namespace radex::drg::ddict {
 
+#if RADEX_HAS_DRAGON
 class Client : public IClient {
   private:
-#if RADEX_HAS_DRAGON
     dragon::DDict<dragon::Serializable, dragon::Serializable> ddict;
 
     Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict);
-#endif
 
     bool dormant_timeout_warning_triggered = false;
 
@@ -45,6 +44,13 @@ class Client : public IClient {
                    detail::MetaInt length) override;
     radex::detail::BytesBuffer get_bytes(std::string_view key) override;
 };
+#else
+class Client : public detail::UnsupportedBackendClient {
+  public:
+    Client();
+    Client(const char *descriptor, const timespec_t *timeout);
+};
+#endif
 
 } // namespace radex::drg::ddict
 

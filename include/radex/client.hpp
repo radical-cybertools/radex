@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace radex {
@@ -304,6 +305,52 @@ class IClient {
                 info.metadata().dims_ptr(), info.metadata().n_dims()};
     }
 };
+
+namespace detail {
+
+class UnsupportedBackendClient : public IClient {
+    private:
+        std::string backend_name;
+        std::string enable_option;
+
+    protected:
+        [[noreturn]] void throw_backend_unavailable() const {
+                throw std::runtime_error(
+                        "RaDex was built without " + backend_name + " backend support. "
+                        "Rebuild with -D" + enable_option + "=ON to enable this client."
+                );
+        }
+
+    public:
+        UnsupportedBackendClient(std::string backend_name, std::string enable_option)
+                : backend_name{std::move(backend_name)},
+                    enable_option{std::move(enable_option)} {}
+
+        bool contains(std::string_view key) override {
+                (void)key;
+                throw_backend_unavailable();
+        }
+
+        void put_bytes(std::string_view key, const void *bytes, detail::MetaInt length) override {
+                (void)key;
+                (void)bytes;
+                (void)length;
+                throw_backend_unavailable();
+        }
+
+        detail::BytesBuffer get_bytes(std::string_view key) override {
+                (void)key;
+                throw_backend_unavailable();
+        }
+
+        detail::BytesBuffer wait_for_bytes(std::string_view key, std::chrono::milliseconds timeout) override {
+                (void)key;
+                (void)timeout;
+                throw_backend_unavailable();
+        }
+};
+
+} // namespace detail
 
 } // namespace radex
 

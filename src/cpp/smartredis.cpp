@@ -8,9 +8,7 @@
 
 #if RADEX_HAS_SMARTREDIS
 #include <configoptions.h>
-#endif
 
-#if RADEX_HAS_SMARTREDIS
 namespace {
 
 std::unique_ptr<SmartRedis::ConfigOptions> _configOptions_from_radex_env() {
@@ -46,6 +44,7 @@ std::string _logger_name_from_env() {
     const char *logger = getenv("SMARTREDIS_LOGGER_NAME");
     return logger ? logger : "radex-client";
 }
+
 } // namespace
 
 namespace radex::redis::smartredis {
@@ -80,43 +79,17 @@ radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
 
 } // namespace radex::redis::smartredis
 #else
-namespace {
-
-void _smartredis_disabled() {
-    throw std::runtime_error(
-        "radex was built without SmartRedis backend support. "
-        "Rebuild with -DBUILD_SMARTREDIS=ON to enable "
-        "radex::redis::smartredis::Client."
-    );
-}
-
-} // namespace
-
 namespace radex::redis::smartredis {
 
-Client::Client() { _smartredis_disabled(); }
+Client::Client()
+    : detail::UnsupportedBackendClient("SmartRedis", "BUILD_SMARTREDIS") {
+    throw_backend_unavailable();
+}
 
-Client::Client(std::string_view logger_name) {
+Client::Client(std::string_view logger_name)
+    : detail::UnsupportedBackendClient("SmartRedis", "BUILD_SMARTREDIS") {
     (void)logger_name;
-    _smartredis_disabled();
-}
-
-bool Client::contains(std::string_view key) {
-    (void)key;
-    _smartredis_disabled();
-}
-
-void Client::put_bytes(std::string_view key, const void *bytes,
-                       detail::MetaInt length) {
-    (void)key;
-    (void)bytes;
-    (void)length;
-    _smartredis_disabled();
-}
-
-radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
-    (void)key;
-    _smartredis_disabled();
+    throw_backend_unavailable();
 }
 
 } // namespace radex::redis::smartredis
