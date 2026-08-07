@@ -3,10 +3,6 @@
 
 #include "radex/client.hpp"
 
-#ifndef RADEX_HAS_DRAGON
-#define RADEX_HAS_DRAGON 0
-#endif
-
 #if RADEX_HAS_DRAGON
 #include <dragon/dictionary.hpp>
 #include <dragon/serializable.hpp>

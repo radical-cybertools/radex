@@ -29,6 +29,24 @@ if(ENABLE_CXX)
     # ============================================================================
     # RaDex Library
     # ============================================================================
+    set(RADEX_BUILD_HAS_DRAGON 0)
+    if(BUILD_DRAGON)
+        set(RADEX_BUILD_HAS_DRAGON 1)
+    endif()
+
+    set(RADEX_BUILD_HAS_SMARTREDIS 0)
+    if(BUILD_SMARTREDIS)
+        set(RADEX_BUILD_HAS_SMARTREDIS 1)
+    endif()
+
+    set(RADEX_GENERATED_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/include)
+    file(MAKE_DIRECTORY ${RADEX_GENERATED_INCLUDE_DIR}/radex)
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/radex-build-config.hpp.in
+        ${RADEX_GENERATED_INCLUDE_DIR}/radex/build_config.hpp
+        @ONLY
+    )
+
     set(RADEX_SOURCES)
     list(APPEND RADEX_SOURCES cpp/client.cpp)
     list(APPEND RADEX_SOURCES cpp/smartredis.cpp)
@@ -66,6 +84,7 @@ if(ENABLE_CXX)
     )
     target_include_directories(radex INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+        $<BUILD_INTERFACE:${RADEX_GENERATED_INCLUDE_DIR}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
@@ -73,6 +92,7 @@ if(ENABLE_CXX)
     foreach(target IN LISTS LIBRARY_TARGETS)
         target_include_directories(${target} PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+            $<BUILD_INTERFACE:${RADEX_GENERATED_INCLUDE_DIR}>
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         )
         target_compile_definitions(${target} PUBLIC
@@ -110,6 +130,11 @@ if(ENABLE_CXX)
 
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+
+    install(
+        FILES ${RADEX_GENERATED_INCLUDE_DIR}/radex/build_config.hpp
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/radex
     )
 
     install(EXPORT radex-targets

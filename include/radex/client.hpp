@@ -16,6 +16,20 @@
 #include <utility>
 #include <vector>
 
+// Below is needed to allow applications to get the build config options while also not
+// interfering in the radex build
+#if defined(__has_include)
+#if __has_include("radex/build_config.hpp")
+#include "radex/build_config.hpp"
+#endif
+#else
+#error "RaDex requires __has_include support. This typically means that a newer compiler is needed"
+#endif
+
+#if !defined(RADEX_HAS_DRAGON) || !defined(RADEX_HAS_SMARTREDIS)
+#error "RaDex backend configuration missing. Include radex/build_config.hpp or define RADEX_HAS_DRAGON and RADEX_HAS_SMARTREDIS before including RaDex headers."
+#endif
+
 namespace radex {
 
 namespace detail {
