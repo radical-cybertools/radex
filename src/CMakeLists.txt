@@ -31,15 +31,8 @@ if(ENABLE_CXX)
     # ============================================================================
     set(RADEX_SOURCES)
     list(APPEND RADEX_SOURCES cpp/client.cpp)
-    list(APPEND RADEX_SOURCES cpp/handles.cpp)
-
-    if(BUILD_SMARTREDIS)
-        list(APPEND RADEX_SOURCES cpp/smartredis.cpp)
-    endif()
-
-    if(BUILD_DRAGON)
-        list(APPEND RADEX_SOURCES cpp/dragon.cpp)
-    endif()
+    list(APPEND RADEX_SOURCES cpp/smartredis.cpp)
+    list(APPEND RADEX_SOURCES cpp/dragon.cpp)
 
     add_library(objlib OBJECT ${RADEX_SOURCES})
 
@@ -67,6 +60,10 @@ if(ENABLE_CXX)
     add_library(radex INTERFACE)
     add_library(radex::radex ALIAS radex)
     target_link_libraries(radex INTERFACE ${RADEX_PRIMARY_TARGET})
+    target_compile_definitions(radex INTERFACE
+        RADEX_HAS_SMARTREDIS=$<BOOL:${BUILD_SMARTREDIS}>
+        RADEX_HAS_DRAGON=$<BOOL:${BUILD_DRAGON}>
+    )
     target_include_directories(radex INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
@@ -77,6 +74,10 @@ if(ENABLE_CXX)
         target_include_directories(${target} PUBLIC
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        )
+        target_compile_definitions(${target} PUBLIC
+            RADEX_HAS_SMARTREDIS=$<BOOL:${BUILD_SMARTREDIS}>
+            RADEX_HAS_DRAGON=$<BOOL:${BUILD_DRAGON}>
         )
         radex_set_target_install_rpath(${target} smartredis dragon)
         set_target_properties(${target} PROPERTIES OUTPUT_NAME radex)

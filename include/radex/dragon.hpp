@@ -3,17 +3,28 @@
 
 #include "radex/client.hpp"
 
+#ifndef RADEX_HAS_DRAGON
+#define RADEX_HAS_DRAGON 0
+#endif
+
+#if RADEX_HAS_DRAGON
 #include <dragon/dictionary.hpp>
 #include <dragon/serializable.hpp>
+#else
+#include <ctime>
+using timespec_t = struct timespec;
+#endif
 #include <string_view>
 
 namespace radex::drg::ddict {
 
 class Client : public IClient {
   private:
+#if RADEX_HAS_DRAGON
     dragon::DDict<dragon::Serializable, dragon::Serializable> ddict;
 
     Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict);
+#endif
 
     bool dormant_timeout_warning_triggered = false;
 

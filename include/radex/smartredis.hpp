@@ -3,7 +3,13 @@
 
 #include "radex/client.hpp"
 
+#ifndef RADEX_HAS_SMARTREDIS
+#define RADEX_HAS_SMARTREDIS 0
+#endif
+
+#if RADEX_HAS_SMARTREDIS
 #include <client.h>
+#endif
 
 #include <string_view>
 
@@ -11,9 +17,11 @@ namespace radex::redis::smartredis {
 
 class Client : public IClient {
   private:
+#if RADEX_HAS_SMARTREDIS
     SmartRedis::Client client;
     Client(std::unique_ptr<SmartRedis::ConfigOptions> options,
            std::string_view logger_name);
+#endif
 
   public:
     Client();
