@@ -6,7 +6,7 @@ from dragon.data.ddict import DDict
 from dragon.globalservices.api_setup import get_gs_ret_cuid
 from dragon.infrastructure.facts import DRAGON_BASE_DIR
 
-from radex import DragonClient as Client
+from radex.clients.core import DragonClient as Client
 
 
 @pytest.fixture(scope="session")

@@ -8,6 +8,8 @@ import numpy as np
 import pytest
 from dragon.native.process import Popen
 
+from radex.handles.handles import PyIncomingHandle, PyOutgoingHandle
+
 
 def _comma_seperate_ints(ints: Iterable[int]) -> str:
     return ", ".join(str(i) for i in ints)
@@ -17,13 +19,14 @@ def test_get_cpp_scalar(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_na
     key = "some-scalar"
     bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
         #include "radex/dragon.hpp"
+        #include "radex/handles.hpp"
         #include <cstdint>
 
         int main(void) {{
             timespec timeout {{5, 0}};
             radex::drg::ddict::Client client {{"{ddict.serialize()}", &timeout}};
             {cpp_type_name} value = 123;
-            client.put_scalar("{key}", value);
+            client.put_scalar(radex::data::OutgoingHandle("{key}"), value);
             return 0;
         }}
         """))
@@ -34,7 +37,7 @@ def test_get_cpp_scalar(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_na
     assert proc.returncode == 0
 
     assert client.contains(key)
-    value = client.get_scalar(key)
+    value = client.get_scalar(PyIncomingHandle(key))
     assert value.dtype == np_dtype
     assert value == np_dtype(123)
 
@@ -48,11 +51,15 @@ def test_get_cpp_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_na
     }
 
     put_tensors = "\n".join(
-        f'client.put_tensor("{key}", {{{_comma_seperate_ints(shape)}}}, tensor);'
+        textwrap.dedent(f'''\
+            client.put_tensor(radex::data::OutgoingHandle("{key}"),
+                              {{{_comma_seperate_ints(shape)}}},
+                              tensor);''')
         for key, shape in tensors.items()
     )
     bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
         #include "radex/dragon.hpp"
+        #include "radex/handles.hpp"
         #include <vector>
         #include <numeric>
         #include <cstdint>
@@ -75,7 +82,7 @@ def test_get_cpp_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_na
     expected = np.arange(n_elements, dtype=np_dtype)
     for key, shape in tensors.items():
         assert client.contains(key)
-        ret = client.get_tensor(key)
+        ret = client.get_tensor(PyIncomingHandle(key))
         assert ret.dtype == np_dtype
         assert ret.shape == shape
         assert (ret == expected.reshape(shape)).all()
@@ -85,18 +92,20 @@ def test_put_py_scalar(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_nam
     key = "some-scalar"
     bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
         #include "radex/dragon.hpp"
+        #include "radex/handles.hpp"
         #include <cstdint>
 
         int main(void) {{
             timespec timeout {{5, 0}};
             radex::drg::ddict::Client client {{"{ddict.serialize()}", &timeout}};
-            auto x = client.get_scalar<{cpp_type_name}>("{key}");
+            auto x = client.get_scalar<{cpp_type_name}>(
+                radex::data::IncomingHandle("{key}"));
             return x == 34 ? 0 : 1;
         }}
         """))
 
     assert not client.contains(key)
-    client.put_scalar(key, np_dtype(34))
+    client.put_scalar(PyOutgoingHandle(key), np_dtype(34))
     assert client.contains(key)
 
     proc = Popen(executable=os.fspath(bin_), args=[], env=os.environ)
@@ -119,6 +128,7 @@ def test_put_py_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_nam
 
     bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
         #include "radex/dragon.hpp"
+        #include "radex/handles.hpp"
         #include <cstdint>
         #include <vector>
         #include <numeric>
@@ -129,7 +139,7 @@ def test_put_py_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_nam
                          const std::string& key,
                          const std::vector<radex::detail::MetaInt>& expected_dims,
                          const std::vector<T>& expected_data) {{
-            auto [dims, data] = client.get_tensor<T>(key);
+            auto [dims, data] = client.get_tensor<T>(radex::data::IncomingHandle(key));
             if (expected_dims != dims)
                 throw std::logic_error(key + ": Dims do not match");
             if (expected_data != data)
@@ -152,7 +162,7 @@ def test_put_py_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_nam
     assert not any(client.contains(tensor) for tensor in tensors)
     for key, shape in tensors.items():
         tensor = np.arange(n_elements, dtype=np_dtype).reshape(shape)
-        client.put_tensor(key, tensor)
+        client.put_tensor(PyOutgoingHandle(key), tensor)
     assert all(client.contains(tensor) for tensor in tensors)
 
     proc = Popen(executable=os.fspath(bin_), args=[], env=os.environ)
@@ -176,6 +186,7 @@ def test_wait_for_scalars(
 
     bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
         #include "radex/dragon.hpp"
+        #include "radex/handles.hpp"
         #include <chrono>
         #include <thread>
 
@@ -184,9 +195,10 @@ def test_wait_for_scalars(
             radex::drg::ddict::Client client {{"{ddict.serialize()}", &timeout}};
             {cpp_type_name} value = 123;
             std::this_thread::sleep_for(std::chrono::seconds({cpp_put_delay}));
-            client.put_scalar("{cpp_key}", value);
+            client.put_scalar(radex::data::OutgoingHandle("{cpp_key}"), value);
 
-            auto x = client.wait_for_scalar<{cpp_type_name}>("{py_key}", 10'000ms);
+            auto x = client.wait_for_scalar<{cpp_type_name}>(
+                radex::data::IncomingHandle("{py_key}"), 10'000ms);
             return x == 12 ? 0 : 1;
         }}
         """))
@@ -197,11 +209,11 @@ def test_wait_for_scalars(
     try:
         proc = Popen(executable=os.fspath(bin_), args=[])
         start_t = time.perf_counter()
-        value = client.wait_for_scalar(cpp_key, 10)
+        value = client.wait_for_scalar(PyIncomingHandle(cpp_key), 10)
         py_wait_time = time.perf_counter() - start_t
 
         time.sleep(py_put_delay)
-        client.put_scalar(py_key, np_dtype(12))
+        client.put_scalar(PyOutgoingHandle(py_key), np_dtype(12))
     except Exception:
         proc.kill()
     finally:
@@ -239,6 +251,7 @@ def test_wait_for_tensors(
 
     bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
         #include "radex/dragon.hpp"
+        #include "radex/handles.hpp"
         #include <chrono>
         #include <numeric>
         #include <thread>
@@ -258,12 +271,12 @@ def test_wait_for_tensors(
 
             std::this_thread::sleep_for(std::chrono::seconds({cpp_put_delay}));
             client.put_tensor(
-                "{cpp_key}",
+                radex::data::OutgoingHandle("{cpp_key}"),
                 {{{_comma_seperate_ints(cpp_tensor_shape)}}},
                 cpp_tensor);
 
             auto [dims, data] = client.wait_for_tensor<{cpp_type_name}>(
-                "{py_key}", 10'000ms);
+                radex::data::IncomingHandle("{py_key}"), 10'000ms);
             if (dims != expected_py_dims)
                 throw std::logic_error("Dims did not match");
             if (data != expected_py_data)
@@ -277,11 +290,11 @@ def test_wait_for_tensors(
     try:
         proc = Popen(executable=os.fspath(bin_), args=[])
         start_t = time.perf_counter()
-        cpp_tensor = client.wait_for_tensor(cpp_key, 10)
+        cpp_tensor = client.wait_for_tensor(PyIncomingHandle(cpp_key), 10)
         py_wait_time = time.perf_counter() - start_t
 
         time.sleep(py_put_delay)
-        client.put_tensor(py_key, py_tensor)
+        client.put_tensor(PyOutgoingHandle(py_key), py_tensor)
     except Exception:
         proc.kill()
     finally:
