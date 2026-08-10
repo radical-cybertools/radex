@@ -1,20 +1,27 @@
 from setuptools import setup, Extension
-from Cython.Build import build_ext
+from Cython.Build import cythonize, build_ext
 import pathlib
 import os
 import numpy
 
-HERE = pathlib.Path(__file__).parent
-ROOT = HERE.parent.parent
+# HERE = pathlib.Path(__file__).parent
+# ROOT = HERE.parent.parent
+
+HERE = pathlib.Path(".")
+ROOT = pathlib.Path("../..")
 PY_SRC = HERE / "src"
 CPP_SRC = ROOT / "src/cpp"
 
-core = Extension(
-    "radex",
+radex_client_core = Extension(
+    "radex.clients.core",
+    language="c++",
     sources=[
-        os.fspath(PY_SRC / "Client.pyx"),
-        os.fspath(CPP_SRC / "client.cpp"),
-        os.fspath(CPP_SRC / "dragon.cpp"),
+        os.fspath(path)
+        for path in (
+            PY_SRC / "radex/clients/core.pyx",
+            CPP_SRC / "client.cpp",
+            CPP_SRC / "dragon.cpp",
+        )
     ],
     include_dirs=[
         os.fspath(ROOT / "include"),
@@ -24,10 +31,23 @@ core = Extension(
     library_dirs=[
         os.environ["DRAGON_LIB_DIR"],
     ],
-    libraries=[
-        "dragon"
-    ],
+    libraries=["dragon"],
+    extra_compile_args=["-std=c++17"],
+)
+
+radex_handles_handles = Extension(
+    "radex.handles.handles",
     language="c++",
+    sources=[
+        os.fspath(path)
+        for path in (
+            PY_SRC / "radex/handles/handles.pyx",
+            CPP_SRC / "handles.cpp",
+        )
+    ],
+    include_dirs=[
+        os.fspath(ROOT / "include"),
+    ],
     extra_compile_args=["-std=c++17"],
 )
 
@@ -36,5 +56,9 @@ if __name__ == "__main__":
         cmdclass={
             "build_ext": build_ext,
         },
-        ext_modules=[core]
+        ext_modules=cythonize([
+            radex_client_core, 
+            radex_handles_handles,
+        ]),
+        package_dir={"": "src"},
     )
