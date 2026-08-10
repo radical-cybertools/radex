@@ -1,7 +1,7 @@
 #ifndef __RADEX_DRAGON_HPP__
 #define __RADEX_DRAGON_HPP__
 
-#include "radex/client.hpp"
+#include "radex/client_base.hpp"
 
 #if RADEX_HAS_DRAGON
 #include <dragon/dictionary.hpp>
@@ -41,7 +41,7 @@ class Client : public IClient {
     radex::detail::BytesBuffer get_bytes(std::string_view key) override;
 };
 #else
-class Client : public detail::UnsupportedBackendClient {
+class Client : public detail::unsupported_backend::Client {
   public:
     Client();
     Client(const char *descriptor, const timespec_t *timeout);

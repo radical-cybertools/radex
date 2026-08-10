@@ -1,7 +1,7 @@
 #ifndef __RADEX_SMARTREDIS_HPP__
 #define __RADEX_SMARTREDIS_HPP__
 
-#include "radex/client.hpp"
+#include "radex/client_base.hpp"
 
 #if RADEX_HAS_SMARTREDIS
 #include <client.h>
@@ -34,7 +34,7 @@ class Client : public IClient {
     radex::detail::BytesBuffer get_bytes(std::string_view key) override;
 };
 #else
-class Client : public detail::UnsupportedBackendClient {
+class Client : public detail::unsupported_backend::Client {
   public:
     Client();
     Client(std::string_view logger_name);

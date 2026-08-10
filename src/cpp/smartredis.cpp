@@ -82,12 +82,12 @@ radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
 namespace radex::redis::smartredis {
 
 Client::Client()
-    : detail::UnsupportedBackendClient("SmartRedis", "BUILD_SMARTREDIS") {
+    : detail::unsupported_backend::Client("SmartRedis", "BUILD_SMARTREDIS") {
     throw_backend_unavailable();
 }
 
 Client::Client(std::string_view logger_name)
-    : detail::UnsupportedBackendClient("SmartRedis", "BUILD_SMARTREDIS") {
+    : detail::unsupported_backend::Client("SmartRedis", "BUILD_SMARTREDIS") {
     (void)logger_name;
     throw_backend_unavailable();
 }

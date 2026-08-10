@@ -113,12 +113,12 @@ radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
 namespace radex::drg::ddict {
 
 Client::Client()
-    : detail::UnsupportedBackendClient("Dragon", "BUILD_DRAGON") {
+    : detail::unsupported_backend::Client("Dragon", "BUILD_DRAGON") {
     throw_backend_unavailable();
 }
 
 Client::Client(const char *descriptor, const timespec_t *timeout)
-    : detail::UnsupportedBackendClient("Dragon", "BUILD_DRAGON") {
+    : detail::unsupported_backend::Client("Dragon", "BUILD_DRAGON") {
     (void)descriptor;
     (void)timeout;
     throw_backend_unavailable();
