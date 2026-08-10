@@ -314,7 +314,7 @@ class Client : public IClient {
         std::string enable_option;
 
     protected:
-        void throw_backend_unavailable() const {
+        [[noreturn]] void throw_backend_unavailable() const {
                 throw std::runtime_error(
                         "RaDex was built without " + backend_name + " backend support. "
                         "Rebuild with -D" + enable_option + "=ON to enable this client."
