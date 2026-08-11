@@ -50,13 +50,10 @@ def test_get_cpp_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_na
         "tensor-3d": (2, 3, 2),
     }
 
-    put_tensors = "\n".join(
-        textwrap.dedent(f'''\
+    put_tensors = "\n".join(textwrap.dedent(f"""\
             client.put_tensor(radex::data::OutgoingHandle("{key}"),
                               {{{_comma_seperate_ints(shape)}}},
-                              tensor);''')
-        for key, shape in tensors.items()
-    )
+                              tensor);""") for key, shape in tensors.items())
     bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
         #include "radex/dragon.hpp"
         #include "radex/handles.hpp"

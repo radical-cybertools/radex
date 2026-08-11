@@ -56,9 +56,11 @@ if __name__ == "__main__":
         cmdclass={
             "build_ext": build_ext,
         },
-        ext_modules=cythonize([
-            radex_client_core, 
-            radex_handles_handles,
-        ]),
+        ext_modules=cythonize(
+            [
+                radex_client_core,
+                radex_handles_handles,
+            ]
+        ),
         package_dir={"": "src"},
     )
