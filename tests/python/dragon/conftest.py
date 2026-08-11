@@ -63,7 +63,9 @@ def cpp_dragon_compile(cpp_compile, _dragon_compile_args):
 
 @pytest.fixture(scope="session")
 def _persistent_ddict_client(_requires_dragon_runtime):
-    ddict = DDict(managers_per_node=1, n_nodes=1)
+    ddict = DDict(
+        managers_per_node=1, n_nodes=1, wait_for_keys=True, working_set_size=2
+    )
     yield ddict
 
 

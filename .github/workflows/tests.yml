@@ -9,7 +9,7 @@ on:
 env:
   PYTHON_VERSION: '3.12'
   _SMARTREDIS_VERSION: "develop"
-  _DRAGON_VERSION: 0.14.1
+  _DRAGON_VERSION: "main"
 
 jobs:
 
@@ -52,23 +52,24 @@ jobs:
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
       run: |
             sudo apt-get update
-            sudo apt-get install -y build-essential gcc g++ make cmake mpich
+            sudo apt-get install -y build-essential gcc g++ make cmake mpich libnuma-dev
 
     - name: MacOS dependencies
       if: ${{ startsWith(matrix.os, 'macos') }}
       run: |
             brew update
-            brew install cmake mpich
+            brew install cmake mpich autoconf automake libtool
+
+    - name: Install DragonHPC
+      run: |
+            git clone https://github.com/DragonHPC/dragon.git
+            pushd dragon && git checkout $_DRAGON_VERSION && pushd devtools && source VARIABLES && popd && pip install -e src/
 
     - name: Install Redis backend
       run: |
             git clone -b $_SMARTREDIS_VERSION --single-branch https://github.com/CrayLabs/SmartRedis.git
-            cd SmartRedis && make lib redis
+            cd SmartRedis && make lib
             echo "smartredis_DIR=SmartRedis/install/share/cmake/smartredis" >> $GITHUB_ENV
-
-    - name: Install DragonHPC
-      run: |
-            pip install dragonhpc==$_DRAGON_VERSION
 
     - name: Build radex library
       run: |
