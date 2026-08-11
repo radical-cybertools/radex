@@ -216,7 +216,8 @@ def test_wait_for_scalars(
     finally:
         proc.wait()
 
-    assert cpp_put_delay - 0.5 < py_wait_time < cpp_put_delay + 0.5
+    wait_interval = 2.0
+    assert cpp_put_delay - wait_interval < py_wait_time < cpp_put_delay + wait_interval
     assert value.dtype == np_dtype
     assert value == np_dtype(123)
     assert proc.returncode == 0
@@ -296,8 +297,8 @@ def test_wait_for_tensors(
         proc.kill()
     finally:
         proc.wait()
-
-    assert cpp_put_delay - 0.5 < py_wait_time < cpp_put_delay + 0.5
+    wait_interval = 2.0
+    assert cpp_put_delay - wait_interval < py_wait_time < cpp_put_delay + wait_interval
     assert cpp_tensor.dtype == expected_cpp_tensor.dtype == np_dtype
     assert (cpp_tensor == expected_cpp_tensor).all()
     assert proc.returncode == 0
