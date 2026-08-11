@@ -3,22 +3,22 @@ import cython
 from libcpp.memory cimport unique_ptr, make_unique
 
 from radex.utils.utils cimport encode_str, EncodedStr
-from radex.handles.handles cimport IncomingHandle, OutgoingHandle
+from radex.handles.handles cimport CXXIncomingHandle, CXXOutgoingHandle
 
 
-cdef class PyIncomingHandle:
+cdef class IncomingHandle:
     def __cinit__(self, str handle_id):
         cdef EncodedStr id_ = encode_str(handle_id)
-        self._handle = make_unique[IncomingHandle](id_.c_str())
+        self._handle = make_unique[CXXIncomingHandle](id_.c_str())
 
-    cdef IncomingHandle* unwrap(self):
+    cdef CXXIncomingHandle* unwrap(self):
         return self._handle.get()
 
 
-cdef class PyOutgoingHandle:
+cdef class OutgoingHandle:
     def __cinit__(self, str handle_id):
         cdef EncodedStr id_ = encode_str(handle_id)
-        self._handle = make_unique[OutgoingHandle](id_.c_str())
+        self._handle = make_unique[CXXOutgoingHandle](id_.c_str())
 
-    cdef OutgoingHandle* unwrap(self):
+    cdef CXXOutgoingHandle* unwrap(self):
         return self._handle.get()

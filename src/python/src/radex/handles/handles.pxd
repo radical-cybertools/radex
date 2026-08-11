@@ -7,18 +7,18 @@ cdef extern from "radex/handles.hpp" namespace "radex::data":
         string key() except +
         string metadata_key() except +
 
-    cdef cppclass IncomingHandle(IHandle):
-        IncomingHandle(string_view)
+    cdef cppclass CXXIncomingHandle "radex::data::IncomingHandle"(IHandle):
+        CXXIncomingHandle(string_view)
 
-    cdef cppclass OutgoingHandle(IHandle):
-        OutgoingHandle(string_view)
-
-
-cdef class PyIncomingHandle:
-    cdef unique_ptr[IncomingHandle] _handle
-    cdef IncomingHandle* unwrap(self)
+    cdef cppclass CXXOutgoingHandle "radex::data::OutgoingHandle"(IHandle):
+        CXXOutgoingHandle(string_view)
 
 
-cdef class PyOutgoingHandle:
-    cdef unique_ptr[OutgoingHandle] _handle
-    cdef OutgoingHandle* unwrap(self)
+cdef class IncomingHandle:
+    cdef unique_ptr[CXXIncomingHandle] _handle
+    cdef CXXIncomingHandle* unwrap(self)
+
+
+cdef class OutgoingHandle:
+    cdef unique_ptr[CXXOutgoingHandle] _handle
+    cdef CXXOutgoingHandle* unwrap(self)

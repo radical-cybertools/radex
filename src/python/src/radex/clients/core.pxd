@@ -9,7 +9,10 @@ from radex.utils.data cimport (
     ItemInfo,
     MetaInt as size_t,
 )
-from radex.handles.handles cimport IncomingHandle, OutgoingHandle
+from radex.handles.handles cimport (
+    CXXIncomingHandle as IncomingHandle,
+    CXXOutgoingHandle as OutgoingHandle,
+)
 
 cimport numpy as np
 np.import_array()

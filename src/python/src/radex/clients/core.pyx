@@ -19,7 +19,7 @@ from radex.utils.data cimport (
 )
 from radex.utils.utils cimport EncodedStr, encode_str
 from radex.utils.libcpp_chrono cimport milliseconds
-from radex.handles.handles cimport PyIncomingHandle, PyOutgoingHandle
+from radex.handles.handles cimport IncomingHandle, OutgoingHandle
 
 import cloudpickle
 
@@ -40,11 +40,11 @@ cdef class PyClient:
     def contains(self, str key):
         return self._client.contains(encode_str(key).c_str())
 
-    def put_scalar(self, PyOutgoingHandle handle, object value not None):
+    def put_scalar(self, OutgoingHandle handle, object value not None):
         cdef np.number val = coerce_py_objects_to_np_numbers(value)
         return self._put_scalar(handle, val)
 
-    def _put_scalar(self, PyOutgoingHandle handle, np.number value not None):
+    def _put_scalar(self, OutgoingHandle handle, np.number value not None):
         # FIXME: Get rid of this ugly swith statment. Ideally we could used the
         #        fused `SupportedType` type, but there seems to be a known
         #        issue with how it dispatches
@@ -59,25 +59,25 @@ cdef class PyClient:
             return self._client.put_scalar[np.float64_t](handle.unwrap()[0], value)
         raise TypeError(f"Unsupported data type: {type(value)}")
 
-    def get_scalar(self, PyIncomingHandle handle):
+    def get_scalar(self, IncomingHandle handle):
         cdef unique_ptr[ItemInfo] info = self._client.get_item_info_ptr(
                 handle.unwrap()[0])
         return construct_scalar(info.get()[0])
 
-    def wait_for_scalar(self, PyIncomingHandle handle, float timeout):
+    def wait_for_scalar(self, IncomingHandle handle, float timeout):
         cdef milliseconds timeout_ = milliseconds(<int64_t>(timeout * 1000))
         cdef unique_ptr[ItemInfo] info = self._client.wait_for_item_info_ptr(
                 handle.unwrap()[0], timeout_)
         return construct_scalar(info.get()[0])
 
-    def put_tensor(self, PyOutgoingHandle handle, np.ndarray tensor not None):
+    def put_tensor(self, OutgoingHandle handle, np.ndarray tensor not None):
         cdef np.ndarray[np.uintp_t, ndim=1] dims_arr = np.asarray(
                 (<object>tensor).shape, dtype=np.uintp)
         self._put_tensor(handle, dims_arr, tensor.ravel())
 
     def _put_tensor(
         self,
-        PyOutgoingHandle handle,
+        OutgoingHandle handle,
         const size_t[:] dims not None,
         const SupportedType[:] data not None,
     ):
@@ -85,12 +85,12 @@ cdef class PyClient:
                                        &dims[0], dims.size,
                                        &data[0], data.size)
 
-    def get_tensor(self, PyIncomingHandle handle):
+    def get_tensor(self, IncomingHandle handle):
         cdef unique_ptr[ItemInfo] info = self._client.get_item_info_ptr(
                 handle.unwrap()[0])
         return construct_tensor(info.get()[0])
 
-    def wait_for_tensor(self, PyIncomingHandle handle, float timeout):
+    def wait_for_tensor(self, IncomingHandle handle, float timeout):
         cdef milliseconds timeout_ = milliseconds(<int64_t>(timeout * 1000))
         cdef unique_ptr[ItemInfo] info = self._client.wait_for_item_info_ptr(
                 handle.unwrap()[0], timeout_)

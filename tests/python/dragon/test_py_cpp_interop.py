@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from dragon.native.process import Popen
 
-from radex.handles.handles import PyIncomingHandle, PyOutgoingHandle
+from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 
 def _comma_seperate_ints(ints: Iterable[int]) -> str:
@@ -37,7 +37,7 @@ def test_get_cpp_scalar(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_na
     assert proc.returncode == 0
 
     assert client.contains(key)
-    value = client.get_scalar(PyIncomingHandle(key))
+    value = client.get_scalar(IncomingHandle(key))
     assert value.dtype == np_dtype
     assert value == np_dtype(123)
 
@@ -79,7 +79,7 @@ def test_get_cpp_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_na
     expected = np.arange(n_elements, dtype=np_dtype)
     for key, shape in tensors.items():
         assert client.contains(key)
-        ret = client.get_tensor(PyIncomingHandle(key))
+        ret = client.get_tensor(IncomingHandle(key))
         assert ret.dtype == np_dtype
         assert ret.shape == shape
         assert (ret == expected.reshape(shape)).all()
@@ -102,7 +102,7 @@ def test_put_py_scalar(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_nam
         """))
 
     assert not client.contains(key)
-    client.put_scalar(PyOutgoingHandle(key), np_dtype(34))
+    client.put_scalar(OutgoingHandle(key), np_dtype(34))
     assert client.contains(key)
 
     proc = Popen(executable=os.fspath(bin_), args=[], env=os.environ)
@@ -159,7 +159,7 @@ def test_put_py_tensor(cpp_dragon_compile, ddict, client, np_dtype, cpp_type_nam
     assert not any(client.contains(tensor) for tensor in tensors)
     for key, shape in tensors.items():
         tensor = np.arange(n_elements, dtype=np_dtype).reshape(shape)
-        client.put_tensor(PyOutgoingHandle(key), tensor)
+        client.put_tensor(OutgoingHandle(key), tensor)
     assert all(client.contains(tensor) for tensor in tensors)
 
     proc = Popen(executable=os.fspath(bin_), args=[], env=os.environ)
@@ -206,11 +206,11 @@ def test_wait_for_scalars(
     try:
         proc = Popen(executable=os.fspath(bin_), args=[])
         start_t = time.perf_counter()
-        value = client.wait_for_scalar(PyIncomingHandle(cpp_key), 10)
+        value = client.wait_for_scalar(IncomingHandle(cpp_key), 10)
         py_wait_time = time.perf_counter() - start_t
 
         time.sleep(py_put_delay)
-        client.put_scalar(PyOutgoingHandle(py_key), np_dtype(12))
+        client.put_scalar(OutgoingHandle(py_key), np_dtype(12))
     except Exception:
         proc.kill()
     finally:
@@ -287,11 +287,11 @@ def test_wait_for_tensors(
     try:
         proc = Popen(executable=os.fspath(bin_), args=[])
         start_t = time.perf_counter()
-        cpp_tensor = client.wait_for_tensor(PyIncomingHandle(cpp_key), 10)
+        cpp_tensor = client.wait_for_tensor(IncomingHandle(cpp_key), 10)
         py_wait_time = time.perf_counter() - start_t
 
         time.sleep(py_put_delay)
-        client.put_tensor(PyOutgoingHandle(py_key), py_tensor)
+        client.put_tensor(OutgoingHandle(py_key), py_tensor)
     except Exception:
         proc.kill()
     finally:

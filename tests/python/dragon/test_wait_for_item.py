@@ -6,7 +6,7 @@ import time
 import pytest
 
 from radex.clients.core import DragonClient
-from radex.handles.handles import PyIncomingHandle, PyOutgoingHandle
+from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 # >>> Test Utils >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -74,11 +74,11 @@ def test_wait_for_present_scalar(client, np_dtype, random_np_value):
     key = "some-value"
     assert not client.contains(key)
 
-    client.put_scalar(PyOutgoingHandle(key), random_np_value)
+    client.put_scalar(OutgoingHandle(key), random_np_value)
     assert client.contains(key)
 
     start_t = time.perf_counter()
-    ret_val = client.wait_for_scalar(PyIncomingHandle(key), timeout=10)
+    ret_val = client.wait_for_scalar(IncomingHandle(key), timeout=10)
     end_t = time.perf_counter()
     assert end_t - start_t < _TRIVIAL_WAIT_TIME_LIMIT
     assert random_np_value.dtype == ret_val.dtype == np_dtype
@@ -89,11 +89,11 @@ def test_wait_for_present_tensor(client, np_dtype, random_np_tensor):
     key = "some-tensor"
     assert not client.contains(key)
 
-    client.put_tensor(PyOutgoingHandle(key), random_np_tensor)
+    client.put_tensor(OutgoingHandle(key), random_np_tensor)
     assert client.contains(key)
 
     start_t = time.perf_counter()
-    ret_val = client.wait_for_tensor(PyIncomingHandle(key), timeout=10)
+    ret_val = client.wait_for_tensor(IncomingHandle(key), timeout=10)
     end_t = time.perf_counter()
     assert end_t - start_t < _TRIVIAL_WAIT_TIME_LIMIT
     assert random_np_tensor.dtype == ret_val.dtype == np_dtype
@@ -132,7 +132,7 @@ def test_put_and_wait_for_scalar(
         start_t = time.perf_counter()
         client = DragonClient(descriptor=dd, timeout=1)
         time.sleep(max(delay - (time.perf_counter() - start_t), 0))
-        client.put_scalar(PyOutgoingHandle(key), value)
+        client.put_scalar(OutgoingHandle(key), value)
 
     proc = process.Process(
         target=put_key_after,
@@ -141,7 +141,7 @@ def test_put_and_wait_for_scalar(
     try:
         with is_acceptable_wait_for_item_time(wait_time_delay):
             proc.start()
-            ret_val = client.wait_for_scalar(PyIncomingHandle(key), timeout=10)
+            ret_val = client.wait_for_scalar(IncomingHandle(key), timeout=10)
     finally:
         proc.join()
 
@@ -166,7 +166,7 @@ def test_put_and_wait_for_tensor(
         start_t = time.perf_counter()
         client = DragonClient(descriptor=dd, timeout=1)
         time.sleep(max(delay - (time.perf_counter() - start_t), 0))
-        client.put_tensor(PyOutgoingHandle(key), value)
+        client.put_tensor(OutgoingHandle(key), value)
 
     proc = process.Process(
         target=put_key_after,
@@ -175,7 +175,7 @@ def test_put_and_wait_for_tensor(
     try:
         with is_acceptable_wait_for_item_time(wait_time_delay):
             proc.start()
-            ret_val = client.wait_for_tensor(PyIncomingHandle(key), timeout=10)
+            ret_val = client.wait_for_tensor(IncomingHandle(key), timeout=10)
     finally:
         proc.join()
 

@@ -3,17 +3,17 @@ import math
 import numpy as np
 import pytest
 
-from radex.handles.handles import PyIncomingHandle, PyOutgoingHandle
+from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 
 def test_put_and_get_scalar(client, np_dtype, random_np_value):
     key = "some-value"
     assert not client.contains(key)
 
-    client.put_scalar(PyOutgoingHandle(key), random_np_value)
+    client.put_scalar(OutgoingHandle(key), random_np_value)
     assert client.contains(key)
 
-    ret_val = client.get_scalar(PyIncomingHandle(key))
+    ret_val = client.get_scalar(IncomingHandle(key))
     assert random_np_value.dtype == ret_val.dtype == np_dtype
     assert random_np_value == ret_val
 
@@ -22,9 +22,9 @@ def test_put_and_get_tensor(client, random_np_tensor, np_dtype):
     key = "some-tensor"
     assert not client.contains(key)
 
-    client.put_tensor(PyOutgoingHandle(key), random_np_tensor)
+    client.put_tensor(OutgoingHandle(key), random_np_tensor)
     assert client.contains(key)
-    ret_tensor = client.get_tensor(PyIncomingHandle(key))
+    ret_tensor = client.get_tensor(IncomingHandle(key))
 
     assert random_np_tensor.dtype == ret_tensor.dtype == np_dtype
     assert random_np_tensor.shape == ret_tensor.shape
@@ -46,9 +46,9 @@ def test_put_and_get_tensor_of_size(client, np_dtype, size, n_dims):
     key = "spam-eggs"
     tensor = np.arange(n_elements, dtype=np_dtype).reshape(shape)
 
-    client.put_tensor(PyOutgoingHandle(key), tensor)
+    client.put_tensor(OutgoingHandle(key), tensor)
     assert client.contains(key)
-    ret_tensor = client.get_tensor(PyIncomingHandle(key))
+    ret_tensor = client.get_tensor(IncomingHandle(key))
 
     assert tensor.dtype == ret_tensor.dtype == np_dtype
     assert tensor.shape == ret_tensor.shape == shape
@@ -72,8 +72,8 @@ def test_put_and_get_tensor_of_size(client, np_dtype, size, n_dims):
 )
 def test_put_and_get_native_py_scalars(client, value, expected_dtype):
     key = "some-value"
-    client.put_scalar(PyOutgoingHandle(key), value)
-    ret = client.get_scalar(PyIncomingHandle(key))
+    client.put_scalar(OutgoingHandle(key), value)
+    ret = client.get_scalar(IncomingHandle(key))
     assert ret.dtype == expected_dtype
     assert ret == value
 

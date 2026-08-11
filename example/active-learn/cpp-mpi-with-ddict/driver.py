@@ -53,7 +53,7 @@ from sklearn.gaussian_process.kernels import RBF, WhiteKernel
 from sklearn.metrics import mean_squared_error
 
 from radex.clients.core import DragonClient as Client
-from radex.handles.handles import PyIncomingHandle, PyOutgoingHandle
+from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 rhapsody.enable_logging()
 
@@ -127,7 +127,7 @@ async def rose_mpi_ddict() -> None:
         client = Client(ddict_descriptor, 5)
 
         iteration = (
-            client.get_scalar(PyIncomingHandle("sim_meta_iter_count"))
+            client.get_scalar(IncomingHandle("sim_meta_iter_count"))
             if client.contains("sim_meta_iter_count")
             else 0
         )
@@ -137,14 +137,10 @@ async def rose_mpi_ddict() -> None:
 
         for rank in range(N_MPI_RANKS):
             X_parts.append(
-                client.get_tensor(
-                    PyIncomingHandle(f"sim_rank_{rank}_iter_{iteration}_X")
-                )
+                client.get_tensor(IncomingHandle(f"sim_rank_{rank}_iter_{iteration}_X"))
             )
             y_parts.append(
-                client.get_tensor(
-                    PyIncomingHandle(f"sim_rank_{rank}_iter_{iteration}_y")
-                )
+                client.get_tensor(IncomingHandle(f"sim_rank_{rank}_iter_{iteration}_y"))
             )
 
         X_train = np.vstack(X_parts).ravel().reshape(-1, 1)
@@ -163,9 +159,9 @@ async def rose_mpi_ddict() -> None:
         y_true = (np.sin(X_test) * np.sin(5 * X_test)).ravel()
         mse = float(mean_squared_error(y_true, y_pred))
 
-        client.put_scalar(PyOutgoingHandle("model_iter_count"), iteration + 1)
+        client.put_scalar(OutgoingHandle("model_iter_count"), iteration + 1)
         client.put_picklable(f"model_iter_{iteration}", gp)
-        client.put_scalar(PyOutgoingHandle(f"mse_iter_{iteration}"), mse)
+        client.put_scalar(OutgoingHandle(f"mse_iter_{iteration}"), mse)
 
         print(
             f"[train]    iter={iteration} | n_train={len(X_train)} | MSE={mse:.6f}",
@@ -183,7 +179,7 @@ async def rose_mpi_ddict() -> None:
         client = Client(ddict_descriptor, 5)
 
         iteration = (
-            client.get_scalar(PyIncomingHandle("model_iter_count"))
+            client.get_scalar(IncomingHandle("model_iter_count"))
             if client.contains("model_iter_count")
             else 0
         )
@@ -197,7 +193,7 @@ async def rose_mpi_ddict() -> None:
         top_idx = np.argsort(std)[-N_QUERY:]
 
         client.put_tensor(
-            PyOutgoingHandle(f"query_points_iter_{iteration}"),
+            OutgoingHandle(f"query_points_iter_{iteration}"),
             X_candidates[top_idx].ravel(),
         )
 
@@ -208,7 +204,7 @@ async def rose_mpi_ddict() -> None:
             f"max_unc={max_unc:.4f} | n_query={N_QUERY}",
             flush=True,
         )
-        client.put_scalar(PyOutgoingHandle("model_iter_count"), iteration + 1)
+        client.put_scalar(OutgoingHandle("model_iter_count"), iteration + 1)
 
         mean_unc = max_unc = 0
         return {"mean_uncertainty": mean_unc, "max_uncertainty": max_unc}
@@ -224,18 +220,18 @@ async def rose_mpi_ddict() -> None:
         client = Client(ddict_descriptor, 5)
 
         iteration = (
-            client.get_scalar(PyIncomingHandle("model_iter_count"))
+            client.get_scalar(IncomingHandle("model_iter_count"))
             if client.contains("model_iter_count")
             else 0
         )
         iteration -= 1  # latest computed MSE
 
-        mse = client.get_scalar(PyIncomingHandle(f"mse_iter_{iteration}"))
+        mse = client.get_scalar(IncomingHandle(f"mse_iter_{iteration}"))
         print(
             f"[check]    iter={iteration} | MSE={mse:.6f} (threshold < {MSE_THRESHOLD})",
             flush=True,
         )
-        client.put_scalar(PyOutgoingHandle("mse_iter_count"), iteration + 1)
+        client.put_scalar(OutgoingHandle("mse_iter_count"), iteration + 1)
         return mse
 
     # ── 4. Run the active-learning loop ───────────────────────────────────────
@@ -270,7 +266,7 @@ async def rose_mpi_ddict() -> None:
         if client.contains(key):
             print(
                 f"  iter {i:2d} "
-                f"│ MSE = {client.get_scalar(PyIncomingHandle(key)):.6f}"
+                f"│ MSE = {client.get_scalar(IncomingHandle(key)):.6f}"
             )
 
     # ── 6. Cleanup ────────────────────────────────────────────────────────────

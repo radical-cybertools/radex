@@ -10,7 +10,7 @@ from dragon.data.ddict import DDict
 from dragon.native.process import Process, ProcessTemplate
 
 from radex.clients.core import DragonClient as Client
-from radex.handles.handles import PyIncomingHandle, PyOutgoingHandle
+from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 HERE = pathlib.Path(__file__).parent.absolute()
 ROOT = HERE.parent.parent.parent
@@ -34,26 +34,24 @@ def main() -> int:
     try:
         time.sleep(3)
         print("Driver: Setting Int")
-        client.put_scalar(PyOutgoingHandle("py-int"), 123)
+        client.put_scalar(OutgoingHandle("py-int"), 123)
 
         time.sleep(3)
         print("Driver: Setting Double")
-        client.put_scalar(PyOutgoingHandle("py-double"), 9.87)
+        client.put_scalar(OutgoingHandle("py-double"), 9.87)
 
         time.sleep(3)
         print("Driver: Setting Numpy Int")
-        client.put_scalar(PyOutgoingHandle("py-np-float"), np.float32(45.6))
+        client.put_scalar(OutgoingHandle("py-np-float"), np.float32(45.6))
 
         time.sleep(3)
         print("Driver: Setting Int Tensor")
-        client.put_tensor(
-            PyOutgoingHandle("py-int-tensor"), np.arange(4, dtype=np.int32)
-        )
+        client.put_tensor(OutgoingHandle("py-int-tensor"), np.arange(4, dtype=np.int32))
 
         time.sleep(3)
         print("Driver: Setting Float Tensor")
         client.put_tensor(
-            PyOutgoingHandle("py-float-tensor"),
+            OutgoingHandle("py-float-tensor"),
             np.arange(12, dtype=np.float64).reshape((6, 2)),
         )
 
@@ -78,7 +76,7 @@ def main() -> int:
 
 def print_scalar(client, key):
     print(f"Driver: Waiting for scalar key `{key}`")
-    scalar = client.wait_for_scalar(PyIncomingHandle(key), 10)
+    scalar = client.wait_for_scalar(IncomingHandle(key), 10)
     print(textwrap.dedent(f"""\
         Driver: Got scalar:
                 |- Type: {scalar.dtype}
@@ -88,7 +86,7 @@ def print_scalar(client, key):
 
 def print_tensor(client, key):
     print(f"Driver: Waiting for tensor key `{key}`")
-    tensor = client.wait_for_tensor(PyIncomingHandle(key), 10)
+    tensor = client.wait_for_tensor(IncomingHandle(key), 10)
     print(textwrap.dedent(f"""\
         Driver: Got tensor:
                 |- Type: {tensor.dtype}
