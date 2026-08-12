@@ -8,5 +8,5 @@ clean: clean-cpp
 
 .PHONY: clobber
 clobber: clean
-	rm -rf ./build/./src/radex.egg-info/
+	rm -rf ./build/ ./src/radex.egg-info/
 	pip uninstall -y radex

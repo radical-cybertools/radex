@@ -52,15 +52,20 @@ radex_handles_handles = Extension(
 )
 
 if __name__ == "__main__":
-    setup(
-        cmdclass={
-            "build_ext": build_ext,
-        },
-        ext_modules=cythonize(
-            [
-                radex_client_core,
-                radex_handles_handles,
-            ]
-        ),
-        package_dir={"": "src"},
-    )
+    ORIGINAL_DIR = pathlib.Path(os.getcwd())
+    os.chdir(pathlib.Path(__file__).parent)
+    try:
+        setup(
+            cmdclass={
+                "build_ext": build_ext,
+            },
+            ext_modules=cythonize(
+                [
+                    radex_client_core,
+                    radex_handles_handles,
+                ]
+            ),
+            package_dir={"": "src"},
+        )
+    finally:
+        os.chdir(ORIGINAL_DIR)
