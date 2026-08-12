@@ -4,9 +4,6 @@ import pathlib
 import os
 import numpy
 
-# HERE = pathlib.Path(__file__).parent
-# ROOT = HERE.parent.parent
-
 HERE = pathlib.Path(".")
 ROOT = pathlib.Path("../..")
 PY_SRC = HERE / "src"
