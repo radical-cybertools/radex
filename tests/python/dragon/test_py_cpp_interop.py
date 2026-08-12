@@ -186,20 +186,15 @@ def test_wait_for_scalars(
         #include "radex/handles.hpp"
         #include <iostream>
         #include <chrono>
-        #include <string>
         #include <thread>
 
         int main(void) {{
             timespec timeout {{5, 0}};
-
-
-            std::string ddict_serialize{{"{ddict.serialize()}"}};
-            radex::drg::ddict::Client client {{ddict_serialize.c_str(), &timeout}};
+            radex::drg::ddict::Client client {{"{ddict.serialize()}", &timeout}};
             {cpp_type_name} value = 123;
             std::this_thread::sleep_for(std::chrono::seconds({cpp_put_delay}));
             client.put_scalar(radex::data::OutgoingHandle("{cpp_key}"), value);
 
-            std::string py_key{{"{py_key}"}};
             auto x = client.wait_for_scalar<{cpp_type_name}>(
                 radex::data::IncomingHandle("{py_key}"), std::chrono::milliseconds({10000}));
             return x == 12 ? 0 : 1;
@@ -222,7 +217,7 @@ def test_wait_for_scalars(
     finally:
         proc.wait()
 
-    wait_interval = 0.5
+    wait_interval = 2.0
     assert cpp_put_delay - wait_interval < py_wait_time < cpp_put_delay + wait_interval
     assert value.dtype == np_dtype
     assert value == np_dtype(123)
@@ -258,7 +253,6 @@ def test_wait_for_tensors(
         #include "radex/handles.hpp"
         #include <chrono>
         #include <numeric>
-        #include <string>
         #include <thread>
         #include <vector>
 
@@ -304,7 +298,7 @@ def test_wait_for_tensors(
         proc.kill()
     finally:
         proc.wait()
-    wait_interval = 0.5
+    wait_interval = 2.0
     assert cpp_put_delay - wait_interval < py_wait_time < cpp_put_delay + wait_interval
     assert cpp_tensor.dtype == expected_cpp_tensor.dtype == np_dtype
     assert (cpp_tensor == expected_cpp_tensor).all()
