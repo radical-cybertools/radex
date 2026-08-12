@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <string>
 
-#if RADEX_HAS_SMARTREDIS
+#ifdef RADEX_HAS_SMARTREDIS
 #include <configoptions.h>
 
 namespace {

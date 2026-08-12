@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <utility>
 
-#if RADEX_HAS_DRAGON
+#ifdef RADEX_HAS_DRAGON
 #include "dragon/serializable.hpp"
 
 namespace {

@@ -3,7 +3,7 @@
 
 #include "radex/client_base.hpp"
 
-#if RADEX_HAS_SMARTREDIS
+#ifdef RADEX_HAS_SMARTREDIS
 #include <client.h>
 #endif
 
@@ -11,7 +11,7 @@
 
 namespace radex::redis::smartredis {
 
-#if RADEX_HAS_SMARTREDIS
+#ifdef RADEX_HAS_SMARTREDIS
 class Client : public IClient {
   private:
     SmartRedis::Client client;

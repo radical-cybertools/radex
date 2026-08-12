@@ -3,7 +3,7 @@
 
 #include "radex/client_base.hpp"
 
-#if RADEX_HAS_DRAGON
+#ifdef RADEX_HAS_DRAGON
 #include <dragon/dictionary.hpp>
 #include <dragon/serializable.hpp>
 #else
@@ -14,7 +14,7 @@ using timespec_t = struct timespec;
 
 namespace radex::drg::ddict {
 
-#if RADEX_HAS_DRAGON
+#ifdef RADEX_HAS_DRAGON
 class Client : public IClient {
   private:
     dragon::DDict<dragon::Serializable, dragon::Serializable> ddict;

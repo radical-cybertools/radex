@@ -53,6 +53,7 @@ if(ENABLE_CXX)
     list(APPEND RADEX_SOURCES cpp/dragon.cpp)
 
     add_library(objlib OBJECT ${RADEX_SOURCES})
+    target_compile_options(objlib PRIVATE -Wpedantic -Wall -Werror)
 
     set(LIBRARY_TARGETS objlib)
     if(BUILD_SHARED_LIBS)
@@ -78,26 +79,18 @@ if(ENABLE_CXX)
     add_library(radex INTERFACE)
     add_library(radex::radex ALIAS radex)
     target_link_libraries(radex INTERFACE ${RADEX_PRIMARY_TARGET})
-    target_compile_definitions(radex INTERFACE
-        RADEX_HAS_SMARTREDIS=$<BOOL:${BUILD_SMARTREDIS}>
-        RADEX_HAS_DRAGON=$<BOOL:${BUILD_DRAGON}>
-    )
     target_include_directories(radex INTERFACE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
         $<BUILD_INTERFACE:${RADEX_GENERATED_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
     # Apply include and properties to each library being built
     foreach(target IN LISTS LIBRARY_TARGETS)
         target_include_directories(${target} PUBLIC
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
             $<BUILD_INTERFACE:${RADEX_GENERATED_INCLUDE_DIR}>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-        )
-        target_compile_definitions(${target} PUBLIC
-            RADEX_HAS_SMARTREDIS=$<BOOL:${BUILD_SMARTREDIS}>
-            RADEX_HAS_DRAGON=$<BOOL:${BUILD_DRAGON}>
         )
         radex_set_target_install_rpath(${target} smartredis dragon)
         set_target_properties(${target} PROPERTIES OUTPUT_NAME radex)
