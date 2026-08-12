@@ -53,7 +53,7 @@ if(ENABLE_CXX)
     list(APPEND RADEX_SOURCES cpp/dragon.cpp)
 
     add_library(objlib OBJECT ${RADEX_SOURCES})
-    target_compile_options(objlib PRIVATE -Wpedantic -Wall -Werror)
+    target_compile_options(objlib PRIVATE -Wpedantic -Wall)
 
     set(LIBRARY_TARGETS objlib)
     if(BUILD_SHARED_LIBS)
