@@ -172,11 +172,19 @@ if(ENABLE_PYTHON)
   message(STATUS "Python package will be installed")
   message(STATUS "\tPython Executable: ${Python3_EXECUTABLE}")
   message(STATUS "\tPython Version: ${Python3_VERSION}")
-  add_custom_target(install_python_package ALL
-      COMMAND ${CMAKE_COMMAND} -E env
-          DRAGON_INCLUDE_DIR=${DRAGON_INCLUDE_DIR}
-          DRAGON_LIB_DIR=${DRAGON_LIB_DIR}
-          ${Python3_EXECUTABLE} -m pip install "${CMAKE_CURRENT_SOURCE_DIR}/python"
-      COMMENT "Building and installing Python package"
-  )
+
+  #
+  install(CODE "
+      message(STATUS \"Building and installing Python package\")
+      execute_process(
+          COMMAND ${CMAKE_COMMAND} -E env
+              RADEX_INSTALL_DIR=${CMAKE_INSTALL_PREFIX}
+              DRAGON_INCLUDE_DIR=${DRAGON_INCLUDE_DIR}
+              DRAGON_LIB_DIR=${DRAGON_LIB_DIR}
+              SMARTREDIS_INCLUDE_DIR=${SMARTREDIS_INCLUDE_DIR}
+              SMARTREDIS_LIB_DIR=${SMARTREDIS_LIB_DIR}
+              ${Python3_EXECUTABLE} -m pip install \"${CMAKE_CURRENT_SOURCE_DIR}/python\"
+          COMMAND_ERROR_IS_FATAL ANY
+      )
+  ")
 endif()

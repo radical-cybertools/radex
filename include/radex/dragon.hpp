@@ -2,6 +2,7 @@
 #define __RADEX_DRAGON_HPP__
 
 #include "radex/client_base.hpp"
+#include "radex/build_config.hpp"
 
 #ifdef RADEX_HAS_DRAGON
 #include <dragon/dictionary.hpp>

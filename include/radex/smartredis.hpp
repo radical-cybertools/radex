@@ -2,6 +2,7 @@
 #define __RADEX_SMARTREDIS_HPP__
 
 #include "radex/client_base.hpp"
+#include "radex/build_config.hpp"
 
 #ifdef RADEX_HAS_SMARTREDIS
 #include <client.h>
