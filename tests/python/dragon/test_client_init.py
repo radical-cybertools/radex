@@ -14,7 +14,7 @@ def test_init_raises_if_wait_for_keys_is_disabled(_requires_dragon_runtime):
 
 def test_init_from_env(ddict, monkeypatch):
     monkeypatch.setenv("RADEX_STORE", ddict.serialize())
-    client = radex.DragonClient()
+    client = radex.clients.core.DragonClient()
     key = "some-value"
     some_value = 0.1
     client.put_scalar(key, some_value)
