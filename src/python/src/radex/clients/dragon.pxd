@@ -1,6 +1,6 @@
 from libc.time cimport timespec
 
-from Client cimport IClient
+from radex.clients.core cimport IClient
 
 
 cdef extern from "radex/dragon.hpp" namespace "radex::drg::ddict":

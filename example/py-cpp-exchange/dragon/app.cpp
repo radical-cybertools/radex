@@ -23,7 +23,8 @@ template <typename T>
 void print_scalar_key(radex::IClient &client, const std::string &key) {
     std::cout << IDENT << "App: Waiting for scalar key `" << key << "`"
               << std::endl;
-    auto val = client.wait_for_scalar<T>(key, 10'000ms);
+    auto val =
+        client.wait_for_scalar<T>(radex::data::IncomingHandle{key}, 10'000ms);
     std::cout << IDENT << "App: Got key `" << key << "` has value " << val
               << "\n"
               << std::endl;
@@ -33,7 +34,8 @@ template <typename T>
 void print_vector_key(radex::IClient &client, const std::string &key) {
     std::cout << IDENT << "App: Waiting for tensor key `" << key << "`"
               << std::endl;
-    auto [dims, data] = client.wait_for_tensor<T>(key, 10'000ms);
+    auto [dims, data] =
+        client.wait_for_tensor<T>(radex::data::IncomingHandle{key}, 10'000ms);
     std::cout << IDENT << "App: Got key `" << key << "`\n"
               << IDENT << "      |- Data: " << vec_to_str(data) << "\n"
               << IDENT << "      \\- Dims: " << vec_to_str(dims) << "\n"
@@ -59,22 +61,23 @@ int main() {
 
     std::this_thread::sleep_for(3'000ms);
     std::cout << IDENT << "App: Setting Double" << std::endl;
-    client.put_scalar<double>("cpp-double", 1.23);
+    client.put_scalar<double>(radex::data::OutgoingHandle{"cpp-double"}, 1.23);
 
     std::this_thread::sleep_for(3'000ms);
     std::cout << IDENT << "App: Setting Int" << std::endl;
-    client.put_scalar<int>("cpp-int", 987);
+    client.put_scalar<int>(radex::data::OutgoingHandle{"cpp-int"}, 987);
 
     std::this_thread::sleep_for(3'000ms);
     std::cout << IDENT << "App: Setting Double Tensor" << std::endl;
     std::vector<double> v(12);
     std::iota(v.begin(), v.end(), 0);
-    client.put_tensor("cpp-double-tensor", {4, 3}, v);
+    client.put_tensor(radex::data::OutgoingHandle{"cpp-double-tensor"}, {4, 3},
+                      v);
 
     std::this_thread::sleep_for(3'000ms);
     std::cout << IDENT << "App: Setting Long Tensor" << std::endl;
-    client.put_tensor<int32_t>("cpp-long-tensor", {2, 2, 2},
-                            {1, 2, 3, 4, 5, 6, 7, 8});
+    client.put_tensor<int32_t>(radex::data::OutgoingHandle{"cpp-long-tensor"},
+                               {2, 2, 2}, {1, 2, 3, 4, 5, 6, 7, 8});
 
     return 0;
 }

@@ -1,5 +1,6 @@
 #include "radex/client.hpp"
 #include "radex/constants.hpp"
+#include "radex/handles.hpp"
 
 #include <chrono>
 #include <cstring>
@@ -83,37 +84,30 @@ detail::BytesBuffer IClient::wait_for_bytes(std::string_view key,
 
 detail::ItemInfo IClient::get_item_info(
     std::function<detail::BytesBuffer(std::string_view)> fetch_bytes,
-    std::string_view key) {
-    auto buf = fetch_bytes(key);
-    return {get_meta_data(key), buf.release()};
+    const data::IncomingHandle &handle) {
+    auto buf = fetch_bytes(handle.key());
+    return {get_meta_data(handle), buf.release()};
 }
 
 std::unique_ptr<detail::ItemInfo>
-IClient::get_item_info_ptr(std::string_view key) {
+IClient::get_item_info_ptr(const data::IncomingHandle &handle) {
     const auto fetch_bytes =
         std::bind(&IClient::get_bytes, this, std::placeholders::_1);
     return std::make_unique<detail::ItemInfo>(
-        std::move(get_item_info(fetch_bytes, key)));
+        std::move(get_item_info(fetch_bytes, handle)));
 }
 
 std::unique_ptr<detail::ItemInfo>
-IClient::wait_for_item_info_ptr(std::string_view key,
+IClient::wait_for_item_info_ptr(const data::IncomingHandle &handle,
                                 std::chrono::milliseconds timeout) {
     const auto fetch_bytes = std::bind(&IClient::wait_for_bytes, this,
                                        std::placeholders::_1, timeout);
     return std::make_unique<detail::ItemInfo>(
-        std::move(get_item_info(fetch_bytes, key)));
+        std::move(get_item_info(fetch_bytes, handle)));
 }
 
-std::string IClient::build_meta_key(std::string_view s) const {
-    std::ostringstream meta;
-    meta << "__metadata::" << s;
-    return meta.str();
-}
-
-detail::MetaData IClient::get_meta_data(std::string_view key) {
-    auto meta_key = build_meta_key(key);
-    return detail::MetaData::from_buffer(get_bytes(meta_key));
+detail::MetaData IClient::get_meta_data(const data::IncomingHandle &handle) {
+    return detail::MetaData::from_buffer(get_bytes(handle.metadata_key()));
 }
 
 } // namespace radex

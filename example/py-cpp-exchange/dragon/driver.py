@@ -9,7 +9,8 @@ import numpy as np
 from dragon.data.ddict import DDict
 from dragon.native.process import Process, ProcessTemplate
 
-from radex import DragonClient as Client
+from radex.clients.core import DragonClient as Client
+from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 HERE = pathlib.Path(__file__).parent.absolute()
 ROOT = HERE.parent.parent.parent
@@ -33,24 +34,25 @@ def main() -> int:
     try:
         time.sleep(3)
         print("Driver: Setting Int")
-        client.put_scalar("py-int", 123)
+        client.put_scalar(OutgoingHandle("py-int"), 123)
 
         time.sleep(3)
         print("Driver: Setting Double")
-        client.put_scalar("py-double", 9.87)
+        client.put_scalar(OutgoingHandle("py-double"), 9.87)
 
         time.sleep(3)
         print("Driver: Setting Numpy Int")
-        client.put_scalar("py-np-float", np.float32(45.6))
+        client.put_scalar(OutgoingHandle("py-np-float"), np.float32(45.6))
 
         time.sleep(3)
         print("Driver: Setting Int Tensor")
-        client.put_tensor("py-int-tensor", np.arange(4, dtype=np.int32))
+        client.put_tensor(OutgoingHandle("py-int-tensor"), np.arange(4, dtype=np.int32))
 
         time.sleep(3)
         print("Driver: Setting Float Tensor")
         client.put_tensor(
-            "py-float-tensor", np.arange(12, dtype=np.float64).reshape((6, 2))
+            OutgoingHandle("py-float-tensor"),
+            np.arange(12, dtype=np.float64).reshape((6, 2)),
         )
 
         print(f"Driver: Looking for keys")
@@ -72,18 +74,9 @@ def main() -> int:
     return 0
 
 
-def poll_for_key(client, key, max_attempts=10):
-    while not client.contains(key):
-        print(f"Driver: Waiting for key `{key}`")
-        if max_attempts == 0:
-            raise RuntimeError(f"Too many attempts polling for `{key}`")
-        max_attempts -= 1
-        time.sleep(1)
-
-
 def print_scalar(client, key):
     print(f"Driver: Waiting for scalar key `{key}`")
-    scalar = client.wait_for_scalar(key, 10)
+    scalar = client.wait_for_scalar(IncomingHandle(key), 10)
     print(textwrap.dedent(f"""\
         Driver: Got scalar:
                 |- Type: {scalar.dtype}
@@ -93,7 +86,7 @@ def print_scalar(client, key):
 
 def print_tensor(client, key):
     print(f"Driver: Waiting for tensor key `{key}`")
-    tensor = client.wait_for_tensor(key, 10)
+    tensor = client.wait_for_tensor(IncomingHandle(key), 10)
     print(textwrap.dedent(f"""\
         Driver: Got tensor:
                 |- Type: {tensor.dtype}

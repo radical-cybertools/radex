@@ -1,6 +1,8 @@
 #ifndef __RADEX_CLIENT_HPP__
 #define __RADEX_CLIENT_HPP__
 
+#include "radex/handles.hpp"
+
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -9,7 +11,6 @@
 #include <memory>
 #include <numeric>
 #include <stdexcept>
-#include <string>
 #include <string_view>
 #include <type_traits>
 #include <vector>
@@ -184,79 +185,83 @@ class IClient {
   private:
     detail::ItemInfo get_item_info(
         std::function<detail::BytesBuffer(std::string_view)> fetch_bytes,
-        std::string_view key);
-    std::string build_meta_key(std::string_view s) const;
-    detail::MetaData get_meta_data(std::string_view key);
+        const data::IncomingHandle &handle);
+    detail::MetaData get_meta_data(const data::IncomingHandle &handle);
 
   public:
-    std::unique_ptr<detail::ItemInfo> get_item_info_ptr(std::string_view key);
+    // TODO: Strictly public for python, we should probably try to find a way
+    //       to change this as C++ devs probably also shouldn't be using
     std::unique_ptr<detail::ItemInfo>
-    wait_for_item_info_ptr(std::string_view key,
+    get_item_info_ptr(const data::IncomingHandle &handle);
+    std::unique_ptr<detail::ItemInfo>
+    wait_for_item_info_ptr(const data::IncomingHandle &handle,
                            std::chrono::milliseconds timeout);
 
   public:
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, void>::type
-    put_scalar(std::string_view key, const T &value) {
-        std::string metakey = build_meta_key(key);
+    put_scalar(const data::OutgoingHandle &handle, const T &value) {
         auto meta = detail::MetaData::make_scalar<T>();
-        put_bytes(metakey, meta.get_buffer(), meta.size());
-        put_bytes(key, &value, sizeof(T));
+        put_bytes(handle.metadata_key(), meta.get_buffer(), meta.size());
+        put_bytes(handle.key(), &value, sizeof(T));
     }
 
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, T>::type
-    get_scalar(std::string_view key) {
+    get_scalar(const data::IncomingHandle handle) {
         const auto fetch =
             std::bind(&IClient::get_bytes, this, std::placeholders::_1);
-        const auto info = get_item_info(fetch, key);
+        const auto info = get_item_info(fetch, handle);
         return assemble_scalar<T>(info);
     }
 
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, T>::type
-    wait_for_scalar(std::string_view key, std::chrono::milliseconds timeout) {
+    wait_for_scalar(const data::IncomingHandle handle,
+                    std::chrono::milliseconds timeout) {
         const auto fetch = std::bind(&IClient::wait_for_bytes, this,
                                      std::placeholders::_1, timeout);
-        const auto info = get_item_info(fetch, key);
+        const auto info = get_item_info(fetch, handle);
         return assemble_scalar<T>(info);
     }
 
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, void>::type
-    put_tensor(std::string_view key, const std::vector<detail::MetaInt> &dims,
+    put_tensor(const data::OutgoingHandle &handle,
+               const std::vector<detail::MetaInt> &dims,
                const std::vector<T> &data) {
-        put_tensor<T>(key, dims.data(), dims.size(), data.data(), data.size());
+        put_tensor<T>(handle, dims.data(), dims.size(), data.data(),
+                      data.size());
     }
 
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, void>::type
-    put_tensor(std::string_view key, const detail::MetaInt *dims,
+    put_tensor(const data::OutgoingHandle &handle, const detail::MetaInt *dims,
                detail::MetaInt n_dims, const T *elements,
                detail::MetaInt n_elements) {
-        std::string metakey = build_meta_key(key);
         auto meta = detail::MetaData::make_tensor<T>(dims, n_dims);
-        put_bytes(metakey, meta.get_buffer(), meta.size());
-        put_bytes(key, elements, n_elements * sizeof(T));
+        put_bytes(handle.metadata_key(), meta.get_buffer(), meta.size());
+        put_bytes(handle.key(), elements, n_elements * sizeof(T));
     }
 
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value,
                             TensorInfo<T>>::type
-    get_tensor(std::string_view key) {
+    get_tensor(const data::IncomingHandle &handle) {
         const auto fetch =
             std::bind(&IClient::get_bytes, this, std::placeholders::_1);
-        const auto info = get_item_info(fetch, key);
+        const auto info = get_item_info(fetch, handle);
         return assemble_tensor<T>(info);
     }
 
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value,
                             TensorInfo<T>>::type
-    wait_for_tensor(std::string_view key, std::chrono::milliseconds timeout) {
+    wait_for_tensor(const data::IncomingHandle &handle,
+                    std::chrono::milliseconds timeout) {
         const auto fetch = std::bind(&IClient::wait_for_bytes, this,
                                      std::placeholders::_1, timeout);
-        const auto info = get_item_info(fetch, key);
+        const auto info = get_item_info(fetch, handle);
         return assemble_tensor<T>(info);
     }
 

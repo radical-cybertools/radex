@@ -1,4 +1,6 @@
 #include "radex/dragon.hpp"
+#include "radex/handles.hpp"
+
 #include <cstdlib>
 #include <mpi.h>
 #include <random>
@@ -35,7 +37,8 @@ int main(int argc, char **argv) {
     const std::string iter_key("sim_meta_iter_count");
     int iteration = 0;
     if (client.contains(iter_key)) {
-        iteration = client.get_scalar<int>(iter_key);
+        iteration =
+            client.get_scalar<int>(radex::data::IncomingHandle{iter_key});
     }
     int previous_iteration = iteration - 1;
 
@@ -52,7 +55,8 @@ int main(int argc, char **argv) {
         std::string query_key("query_points_iter_" +
                               std::to_string(previous_iteration));
         if (client.contains(query_key)) {
-            auto [dims, data] = client.get_tensor<double>(query_key);
+            auto [dims, data] = client.get_tensor<double>(
+                radex::data::IncomingHandle{query_key});
             X_local = data;
         } else {
             throw std::runtime_error("Query points not found in DDict.");
@@ -75,14 +79,16 @@ int main(int argc, char **argv) {
     std::string result_key_y("sim_rank_" + std::to_string(world_rank) +
                              "_iter_" + std::to_string(iteration) + "_y");
 
-    client.put_tensor(result_key_X, {X_local.size()}, X_local);
-    client.put_tensor(result_key_y, {y_local.size()}, y_local);
+    client.put_tensor(radex::data::OutgoingHandle{result_key_X},
+                      {X_local.size()}, X_local);
+    client.put_tensor(radex::data::OutgoingHandle{result_key_y},
+                      {y_local.size()}, y_local);
 
     // Increase the loop counter for the number of times the simulation has been
     // called
     MPI_Barrier(MPI_COMM_WORLD);
     if (world_rank == 0) {
-        client.put_scalar(iter_key, iteration + 1);
+        client.put_scalar(radex::data::OutgoingHandle{iter_key}, iteration + 1);
     }
     MPI_Finalize();
 }

@@ -1,4 +1,5 @@
 #include "radex/client.hpp"
+#include "radex/handles.hpp"
 
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
@@ -29,7 +30,8 @@ class UnorderedMapClient : public radex::IClient {
     void put_bytes(std::string_view key, const void *bytes,
                    radex::detail::MetaInt length) override {
         auto ptr = static_cast<const std::uint8_t *>(bytes);
-        _map.insert({std::string{key}, std::vector<uint8_t>{ptr, ptr + length}});
+        _map.insert(
+            {std::string{key}, std::vector<uint8_t>{ptr, ptr + length}});
     }
 
     radex::detail::BytesBuffer get_bytes(std::string_view key) override {
@@ -56,8 +58,9 @@ TEMPLATE_TEST_CASE("In memory client test cases", "[in-mem]", std::int32_t,
         }
 
         TestType y = 0;
-        client.put_scalar("my-scalar", x);
-        y = client.get_scalar<TestType>("my-scalar");
+        client.put_scalar(radex::data::OutgoingHandle{"my-scalar"}, x);
+        y = client.get_scalar<TestType>(
+            radex::data::IncomingHandle{"my-scalar"});
 
         if constexpr (std::is_integral<TestType>::value) {
             REQUIRE(x == y);
@@ -72,8 +75,10 @@ TEMPLATE_TEST_CASE("In memory client test cases", "[in-mem]", std::int32_t,
         std::iota(x_data.begin(), x_data.end(), 0);
         std::vector<radex::detail::MetaInt> x_dims{size};
 
-        client.put_tensor("my-tensor", x_dims, x_data);
-        auto [y_dims, y_data] = client.get_tensor<TestType>("my-tensor");
+        client.put_tensor(radex::data::OutgoingHandle{"my-tensor"}, x_dims,
+                          x_data);
+        auto [y_dims, y_data] = client.get_tensor<TestType>(
+            radex::data::IncomingHandle{"my-tensor"});
 
         REQUIRE(y_dims.size() == x_dims.size());
         REQUIRE(y_data.size() == x_data.size());
