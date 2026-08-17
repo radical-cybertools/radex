@@ -4,6 +4,7 @@ import pytest
 from dragon.data.ddict import DDict
 
 import radex.clients.core
+from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 
 def test_init_raises_if_wait_for_keys_is_disabled(_requires_dragon_runtime):
@@ -17,6 +18,6 @@ def test_init_from_env(ddict, monkeypatch):
     client = radex.clients.core.DragonClient()
     key = "some-value"
     some_value = 0.1
-    client.put_scalar(key, some_value)
-    ret_val = client.get_scalar(key)
+    client.put_scalar(OutgoingHandle(key), some_value)
+    ret_val = client.get_scalar(IncomingHandle(key))
     assert some_value == ret_val
