@@ -93,7 +93,10 @@ class Store(abc.ABC):
             return False
         return await self._do_ready()
 
-    async def start(self, wait: bool = True) -> None:
+    async def start(self, wait: bool = True) -> "Store":
+        """Start the backend and return self, so both
+        `await store.start()` and `store = await RedisStore(...).start()`
+        work."""
         async with self._lock:
             if self._state in _TERMINAL_STATES:
                 raise StoreTerminatedError(
@@ -102,7 +105,7 @@ class Store(abc.ABC):
                     "construct a new Store instance instead."
                 )
             if self._state is StoreState.READY:
-                return
+                return self
             self._state = StoreState.STARTING
             try:
                 endpoints = await self._do_start(wait=wait)
@@ -119,16 +122,20 @@ class Store(abc.ABC):
             else:
                 self._endpoints = list(endpoints)
                 self._state = StoreState.READY
+                return self
 
-    async def shutdown(self) -> None:
+    async def shutdown(self) -> "Store":
+        """Tear down the backend and return self, for the same fluent
+        usage as start()."""
         async with self._lock:
             if self._state is StoreState.SHUTDOWN:
-                return
+                return self
             try:
                 await self._do_shutdown()
             finally:
                 self._state = StoreState.SHUTDOWN
                 self._endpoints = []
+            return self
 
     def client(self, index: int = 0, **kwargs: Any) -> Any:
         return self.endpoints[index].client(**kwargs)

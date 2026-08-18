@@ -52,6 +52,18 @@ async def test_endpoints_before_start_raises():
         _ = store.endpoints
 
 
+async def test_start_and_shutdown_return_self_for_fluent_usage():
+    # Guards against `store = await RedisStore(...).start()` silently
+    # assigning None -- start()/shutdown() must return the Store instance.
+    store = await _FakeStore().start()
+    assert isinstance(store, _FakeStore)
+    assert store.state is StoreState.READY
+
+    returned = await store.shutdown()
+    assert returned is store
+    assert store.state is StoreState.SHUTDOWN
+
+
 async def test_start_then_endpoints():
     store = _FakeStore()
     await store.start()

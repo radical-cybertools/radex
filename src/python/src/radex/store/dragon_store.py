@@ -53,6 +53,11 @@ class DragonStore(Store):
     in `src/cpp/dragon.cpp`) refuses to attach to a DDict created with
     `wait_for_keys=False`, so any other value would guarantee every
     downstream C++/Cython client fails to construct.
+
+    Client lifetime note: drop/`del` any client from `.client()` before
+    calling `shutdown()`. Destroying the DDict first and letting a client
+    outlive it is harmless but prints a DRAGON_OBJECT_DESTROYED message from
+    the compiled client's destructor when it later tries to detach.
     """
 
     def __init__(
