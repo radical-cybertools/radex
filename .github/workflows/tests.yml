@@ -74,7 +74,7 @@ jobs:
       run: |
             echo "smartredis_DIR=SmartRedis/install/share/cmake/smartredis" >> $GITHUB_ENV
             echo "SMARTREDIS_INCLUDE_DIR=SmartRedis/install/include" >> $GITHUB_ENV
-            echo "SMARTREDIS_LIB_DIR=$(cd SmartRedis/install | grep lib | awk '{print $1}' | xargs realpath)" >> $GITHUB_ENV
+            echo "SMARTREDIS_LIB_DIR=$(find SmartRedis/install -maxdepth 1 -name 'lib*' -type d)" >> $GITHUB_ENV
 
     - name: Build radex library
       run: |
