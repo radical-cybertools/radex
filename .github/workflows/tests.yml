@@ -70,11 +70,13 @@ jobs:
             git clone -b $_SMARTREDIS_VERSION --single-branch https://github.com/CrayLabs/SmartRedis.git
             cd SmartRedis && make lib
 
-    - name: Set up SmartRedis build paths
+    - name: Set Radex SmartRedis Environment Variables
       run: |
+            SR_LIB_DIR=$(find ${PWD}/SmartRedis/install -maxdepth 1 -name 'lib*' -type d)
             echo "smartredis_DIR=SmartRedis/install/share/cmake/smartredis" >> $GITHUB_ENV
             echo "SMARTREDIS_INCLUDE_DIR=${PWD}/SmartRedis/install/include" >> $GITHUB_ENV
-            echo "SMARTREDIS_LIB_DIR=$(find ${PWD}/SmartRedis/install -maxdepth 1 -name 'lib*' -type d)" >> $GITHUB_ENV
+            echo "SMARTREDIS_LIB_DIR=${SR_LIB_DIR}" >> $GITHUB_ENV
+            echo "LD_LIBRARY_PATH=${SR_LIB_DIR}:${LD_LIBRARY_PATH}" >> $GITHUB_ENV
 
     - name: Build radex library
       run: |
