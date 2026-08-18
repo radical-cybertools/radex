@@ -18,17 +18,23 @@ radex_client_core = Extension(
             PY_SRC / "radex/clients/core.pyx",
             CPP_SRC / "client.cpp",
             CPP_SRC / "dragon.cpp",
+            CPP_SRC / "smartredis.cpp",
         )
     ],
     include_dirs=[
         os.fspath(ROOT / "include"),
         os.environ["DRAGON_INCLUDE_DIR"],
+        os.environ["SMARTREDIS_INCLUDE_DIR"],
         numpy.get_include(),
     ],
     library_dirs=[
         os.environ["DRAGON_LIB_DIR"],
+        os.environ["SMARTREDIS_LIB_DIR"],
     ],
-    libraries=["dragon"],
+    libraries=[
+        "dragon",
+        "smartredis",
+    ],
     extra_compile_args=["-std=c++17"],
 )
 
