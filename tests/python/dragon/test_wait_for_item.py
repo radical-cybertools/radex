@@ -4,7 +4,6 @@ import sys
 import time
 
 import pytest
-
 from radex.clients.core import DragonClient
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 

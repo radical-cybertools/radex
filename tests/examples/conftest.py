@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import abc
 import dataclasses
+import importlib.metadata
 import os
 import pathlib
 import re
 import subprocess as sp
 import sys
-import importlib.metadata
 
 import pytest
 

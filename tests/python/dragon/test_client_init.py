@@ -1,9 +1,8 @@
 import os
 
 import pytest
-from dragon.data.ddict import DDict
-
 import radex.clients.core
+from dragon.data.ddict import DDict
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 

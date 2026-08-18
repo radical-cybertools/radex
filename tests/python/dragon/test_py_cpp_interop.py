@@ -7,7 +7,6 @@ import dragon
 import numpy as np
 import pytest
 from dragon.native.process import Popen
-
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 
