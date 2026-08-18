@@ -8,6 +8,7 @@ import dragon
 import numpy as np
 from dragon.data.ddict import DDict
 from dragon.native.process import Process, ProcessTemplate
+
 from radex.clients.core import DragonClient as Client
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 
