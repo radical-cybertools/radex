@@ -1,4 +1,4 @@
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 from Cython.Build import cythonize, build_ext
 import pathlib
 import os
@@ -63,6 +63,7 @@ if __name__ == "__main__":
                 ]
             ),
             package_dir={"": "src"},
+            packages=find_packages(where="src"),
         )
     finally:
         os.chdir(ORIGINAL_DIR)

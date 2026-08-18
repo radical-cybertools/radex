@@ -4,9 +4,11 @@ addopts = [
 ]
 strict_config = true
 strict_markers = true
+asyncio_mode = "auto"
 markers = [
     "slow: Test may be slow to run",
-    "compiled: Test has a component compiled at run time"
+    "compiled: Test has a component compiled at run time",
+    "redis: Test requires a real redis-server binary on PATH"
 ]
 
 [tool.black]
