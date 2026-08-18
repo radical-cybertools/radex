@@ -12,6 +12,11 @@ def test_run_example(example, tmp_path):
     with open(out, "r", encoding="utf-8") as f:
         print(f.read())
 
+    print("\nError:")
+    print("------")
+    with open(err, "r", encoding="utf-8") as f:
+        print(f.read())
+
     with (
         open(out, "r", encoding="utf-8") as fh,
         open(example.expected_stdout, "r", encoding="utf-8") as xfh,
