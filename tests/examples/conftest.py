@@ -23,6 +23,9 @@ class Example(abc.ABC):
         default_factory=list, kw_only=True
     )
 
+    def __post_init__(self):
+        self.marks.append(pytest.mark.example)
+
     @abc.abstractmethod
     def _run(self, cwd, out, err) -> int: ...
 
