@@ -81,6 +81,10 @@ jobs:
             cmake --build build -j
             cmake --install build
 
+    - name: Wat??
+      run: |
+            ldd install/bin/examples/dragon-cpp-producer
+
     - name: Run tests
       run: |
             pip install -r dev-resources/requirements-dev.txt
