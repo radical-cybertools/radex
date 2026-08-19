@@ -7,10 +7,8 @@
 #ifdef RADEX_HAS_DRAGON
 #include <dragon/dictionary.hpp>
 #include <dragon/serializable.hpp>
-#else
-#include <ctime>
-using timespec_t = struct timespec;
 #endif
+#include <ctime>
 #include <string_view>
 
 namespace radex::drg::ddict {
@@ -26,7 +24,7 @@ class Client : public IClient {
 
   public:
     Client();
-    Client(const char *descriptor, const timespec_t *timeout);
+    Client(const char *descriptor, const timespec *timeout);
 
     Client(const Client &other) = delete;
     Client(Client &&other) = default;
@@ -42,10 +40,10 @@ class Client : public IClient {
     radex::detail::BytesBuffer get_bytes(std::string_view key) override;
 };
 #else
-class Client : public detail::unsupported_backend::Client {
+class Client : public radex::unsupported_backend::Client {
   public:
     Client();
-    Client(const char *descriptor, const timespec_t *timeout);
+    Client(const char *descriptor, const timespec *timeout);
 };
 #endif
 

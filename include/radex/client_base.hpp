@@ -179,7 +179,8 @@ class IClient {
                            detail::MetaInt length) = 0;
     virtual detail::BytesBuffer get_bytes(std::string_view key) = 0;
     virtual detail::BytesBuffer
-    wait_for_bytes(std::string_view key, std::chrono::milliseconds timeout);
+    wait_for_bytes(std::string_view key,
+                   std::chrono::milliseconds timeout) = 0;
     virtual ~IClient() {}
 
     // <<< End Virtual Methods <<<
@@ -304,8 +305,6 @@ class IClient {
     }
 };
 
-namespace detail {
-
 namespace unsupported_backend {
 
 class Client : public IClient {
@@ -324,7 +323,9 @@ class Client : public IClient {
     public:
         Client(std::string backend_name, std::string enable_option)
                 : backend_name{std::move(backend_name)},
-                    enable_option{std::move(enable_option)} {}
+                    enable_option{std::move(enable_option)} {
+            throw_backend_unavailable();
+        }
 
         bool contains(std::string_view key) override {
                 (void)key;
@@ -351,8 +352,6 @@ class Client : public IClient {
 };
 
 } // namespace unsupported_backend
-
-} // namespace detail
 
 } // namespace radex
 

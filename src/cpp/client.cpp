@@ -94,7 +94,7 @@ IClient::get_item_info_ptr(const data::IncomingHandle &handle) {
     const auto fetch_bytes =
         std::bind(&IClient::get_bytes, this, std::placeholders::_1);
     return std::make_unique<detail::ItemInfo>(
-        std::move(get_item_info(fetch_bytes, handle)));
+        get_item_info(fetch_bytes, key));
 }
 
 std::unique_ptr<detail::ItemInfo>
@@ -103,7 +103,7 @@ IClient::wait_for_item_info_ptr(const data::IncomingHandle &handle,
     const auto fetch_bytes = std::bind(&IClient::wait_for_bytes, this,
                                        std::placeholders::_1, timeout);
     return std::make_unique<detail::ItemInfo>(
-        std::move(get_item_info(fetch_bytes, handle)));
+        get_item_info(fetch_bytes, key));
 }
 
 detail::MetaData IClient::get_meta_data(const data::IncomingHandle &handle) {

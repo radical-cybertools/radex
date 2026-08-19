@@ -33,9 +33,12 @@ class Client : public IClient {
     void put_bytes(std::string_view key, const void *bytes,
                    detail::MetaInt length) override;
     radex::detail::BytesBuffer get_bytes(std::string_view key) override;
+    radex::detail::BytesBuffer
+    wait_for_bytes(std::string_view key,
+             std::chrono::milliseconds timeout) override;
 };
 #else
-class Client : public detail::unsupported_backend::Client {
+class Client : public radex::unsupported_backend::Client {
   public:
     Client();
     Client(std::string_view logger_name);

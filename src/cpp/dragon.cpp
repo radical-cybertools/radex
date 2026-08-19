@@ -37,7 +37,7 @@ DDict _ddict_from_radex_env() {
     if (timeout_str) {
         timeout_seconds = (unsigned int)std::stoul(timeout_str);
     }
-    timespec_t timeout{timeout_seconds, 0};
+    timespec timeout{timeout_seconds, 0};
 
     return DDict{serialized_ddict, &timeout};
 }
@@ -57,7 +57,7 @@ Client::Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict)
     _validate_ddict(this->ddict);
 }
 
-Client::Client(const char *descriptor, const timespec_t *timeout)
+Client::Client(const char *descriptor, const timespec *timeout)
     : ddict{descriptor, timeout} {
     _validate_ddict(ddict);
 }
@@ -113,15 +113,10 @@ radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
 namespace radex::drg::ddict {
 
 Client::Client()
-    : detail::unsupported_backend::Client("Dragon", "BUILD_DRAGON") {
-    throw_backend_unavailable();
-}
+    : radex::unsupported_backend::Client("Dragon", "BUILD_DRAGON") {}
 
-Client::Client(const char *descriptor, const timespec_t *timeout)
-    : detail::unsupported_backend::Client("Dragon", "BUILD_DRAGON") {
-    (void)descriptor;
-    (void)timeout;
-    throw_backend_unavailable();
+Client::Client(const char *descriptor, const timespec *timeout)
+    : radex::unsupported_backend::Client("Dragon", "BUILD_DRAGON") {
 }
 
 } // namespace radex::drg::ddict
