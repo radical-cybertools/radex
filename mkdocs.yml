@@ -1,5 +1,5 @@
-site_name: RaDex
-site_url: https://radical-cybertools.github.io/RaDex
+site_name: RADICAL Data Exchanger (radex)
+site_url: https://radical-cybertools.github.io/radex
 site_author: RADICAL Cybertools
 site_description: Data Exchange Layer for RADICAL Cybertools (RCT).
 
@@ -129,6 +129,14 @@ plugins:
             FILE_PATTERNS: "*.hpp *.h"
             RECURSIVE: True
             PROJECT_NAME: "RaDex C++ API"
+            # build_config.hpp leaves these `#undef`-ed unless CMake defines
+            # them; since docs are built without running CMake, predefine
+            # them so the Dragon/SmartRedis client classes they gate aren't
+            # skipped by Doxygen's preprocessor.
+            ENABLE_PREPROCESSING: True
+            MACRO_EXPANSION: True
+            EXPAND_ONLY_PREDEF: True
+            PREDEFINED: "RADEX_HAS_DRAGON=1 RADEX_HAS_SMARTREDIS=1"
   - gen-files:
       scripts:
         - docs/gen_ref_pages.py

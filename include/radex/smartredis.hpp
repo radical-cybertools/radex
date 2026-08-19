@@ -13,6 +13,7 @@
 namespace radex::redis::smartredis {
 
 #ifdef RADEX_HAS_SMARTREDIS
+/// RaDex client backed by a SmartRedis (Redis) connection.
 class Client : public IClient {
   private:
     SmartRedis::Client client;
@@ -20,7 +21,9 @@ class Client : public IClient {
            std::string_view logger_name);
 
   public:
+    /// Connect using configuration read from the environment.
     Client();
+    /// @param logger_name Name used to tag log messages from this client.
     Client(std::string_view logger_name);
 
     Client(const Client &other) = delete;
@@ -38,6 +41,7 @@ class Client : public IClient {
              std::chrono::milliseconds timeout) override;
 };
 #else
+/// Placeholder used when RaDex was built without SmartRedis support (`BUILD_SMARTREDIS=OFF`).
 class Client : public radex::unsupported_backend::Client {
   public:
     Client();
