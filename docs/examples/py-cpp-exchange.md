@@ -1,16 +1,16 @@
 # Python/C++ Data Exchange
 
-**Location:** [`example/py-cpp-exchange/dragon`](https://github.com/radical-cybertools/RaDex/tree/main/example/py-cpp-exchange/dragon)
+**Location:** [`example/py-cpp-exchange/dragon`](https://github.com/radical-cybertools/radex/tree/main/example/py-cpp-exchange/dragon)
 
-This example shows a Python driver launching a compiled C++ application and exchanging data with it through a shared Dragon `DDict`, using the RaDex Python client on one side and the C++ client on the other.
+This example shows a Python driver launching a compiled C++ application and exchanging data with it through a shared Dragon `DDict`, using the radex Python client on one side and the C++ client on the other.
 
 ## How It Works
 
-[`driver.py`](https://github.com/radical-cybertools/RaDex/blob/main/example/py-cpp-exchange/dragon/driver.py):
+[`driver.py`](https://github.com/radical-cybertools/radex/blob/main/example/py-cpp-exchange/dragon/driver.py):
 
 1. Creates a Dragon `DDict` and serializes it.
 2. Launches the compiled example binary (`dragon-cpp-with-py`, from `install/bin/examples`) as a Dragon `Process`, passing the serialized `DDict` through the `SERIALIZED_DDICT` environment variable.
-3. Creates a RaDex `DragonClient` attached to the same `DDict`.
+3. Creates a radex `DragonClient` attached to the same `DDict`.
 4. Writes values from Python that the C++ application reads, and vice versa.
 
 ```python

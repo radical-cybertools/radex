@@ -1,6 +1,6 @@
 # Installation
 
-RaDex is currently distributed as source only: a C++ core library and an optional Cython-based Python client that binds to it. There is no published binary package yet, so installation means building from source (see [Building From Source](building-from-source.md) for full details).
+radex is currently distributed as source only: a C++ core library and an optional Cython-based Python client that binds to it. There is no published binary package yet, so installation means building from source (see [Building From Source](building-from-source.md) for full details).
 
 ## Prerequisites
 
@@ -9,19 +9,15 @@ RaDex is currently distributed as source only: a C++ core library and an optiona
 - A backend library, matching what you enable at configure time:
     - [Dragon](https://dragonhpc.github.io/dragon/doc/_build/html/index.html) (`BUILD_DRAGON`, on by default)
     - [SmartRedis](https://github.com/CrayLabs/SmartRedis) (`BUILD_SMARTREDIS`, on by default)
-- **Python** 3.9+, `Cython`, and `numpy` if building the Python client (`ENABLE_PYTHON`, on by default)
+- **Python** 3.12, `Cython`, and `numpy` if building the Python client (`ENABLE_PYTHON`, on by default)
 
 ## Summary
 
 ```bash
-git clone https://github.com/radical-cybertools/RaDex.git
-cd RaDex
+git clone https://github.com/radical-cybertools/radex.git
+cd radex
 cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install
 cmake --build build --target install
-
-# Optional: build and install the Python client against the installed C++ library
-export RADEX_INSTALL_DIR="$(pwd)/install"
-python3 -m pip install ./src/python
 ```
 
 ## Verification

@@ -1,6 +1,6 @@
 # Get Started
 
-This section covers everything you need to install RaDex, build it from source with the backend(s) you need, and run your first data exchange.
+This section covers everything you need to install radex, build it from source with the backend(s) you need, and run your first data exchange.
 
 - [Installation](installation.md) — installing pre-built packages and prerequisites.
 - [Building From Source](building-from-source.md) — CMake options, backend selection (Dragon / SmartRedis), and building the Python client.

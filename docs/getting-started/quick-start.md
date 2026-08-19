@@ -1,6 +1,6 @@
 # Quick Start
 
-This guide walks through exchanging a value between two processes using RaDex's Dragon DDict backend.
+This guide walks through exchanging a value between two processes using radex's Dragon DDict backend.
 
 ## 1. Start a DDict and a client (Python)
 

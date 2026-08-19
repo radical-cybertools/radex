@@ -1,10 +1,10 @@
 # Building From Source
 
-RaDex uses CMake for the C++ core and examples, and a standard `setuptools` + `Cython` build for the Python client.
+radex uses CMake for the C++ core and examples, and a standard `setuptools` + `Cython` build for the Python client.
 
 ## CMake Options
 
-Defined in [`cmake/radex-options.cmake`](https://github.com/radical-cybertools/RaDex/blob/main/cmake/radex-options.cmake):
+Defined in [`cmake/radex-options.cmake`](https://github.com/radical-cybertools/radex/blob/main/cmake/radex-options.cmake):
 
 | Option | Default | Description |
 | --- | --- | --- |
@@ -19,6 +19,8 @@ Defined in [`cmake/radex-options.cmake`](https://github.com/radical-cybertools/R
 | `ALLOW_SYSTEM_PYTHON` | `OFF` | Allow the Python client to be installed system-wide. |
 
 ## Configuring Backends
+
+Both backends below must already be built/installed before configuring radex — see [Fetching the Dragon and SmartRedis Backends](fetching-backends.md) for step-by-step instructions.
 
 ### Dragon
 
@@ -64,7 +66,7 @@ python3 -m pip install ./src/python
 
 ## Running the Tests
 
-All tests use `pytest` as the testing harness which itself is configured in [`dev-resources/radex-config.toml`](https://github.com/radical-cybertools/RaDex/blob/main/dev-resources/radex-config.toml):
+All tests use `pytest` as the testing harness which itself is configured in [`dev-resources/radex-config.toml`](https://github.com/radical-cybertools/radex/blob/main/dev-resources/radex-config.toml):
 
 ```bash
 pip install -r dev-resources/requirements-dev.txt
