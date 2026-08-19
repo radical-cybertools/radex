@@ -38,9 +38,29 @@ cdef class PyClient:
             self._client = NULL
 
     def contains(self, str key):
+        """Check whether a key is present in the backing store.
+
+        Args:
+            key (str): The key name to look up.
+
+        Returns:
+            bool: True if the key exists, False otherwise.
+        """
         return self._client.contains(encode_str(key).c_str())
 
     def put_scalar(self, OutgoingHandle handle, object value not None):
+        """Store a scalar value under the given handle.
+
+        Args:
+            handle (OutgoingHandle): The handle naming the key to write to.
+            value (int | float | numpy.int32 | numpy.int64 | numpy.float32 |
+                numpy.float64): A scalar value coercible to `numpy.int32`,
+                `numpy.int64`, `numpy.float32`, or `numpy.float64`.
+
+        Raises:
+            TypeError: If `value` cannot be coerced to a supported numpy
+                scalar type.
+        """
         cdef np.number val = coerce_py_objects_to_np_numbers(value)
         return self._put_scalar(handle, val)
 
@@ -60,17 +80,44 @@ cdef class PyClient:
         raise TypeError(f"Unsupported data type: {type(value)}")
 
     def get_scalar(self, IncomingHandle handle):
+        """Read a scalar value previously written under the given handle.
+
+        Args:
+            handle (IncomingHandle): The handle naming the key to read.
+
+        Returns:
+            numpy.int32 | numpy.int64 | numpy.float32 | numpy.float64: The
+                scalar value.
+        """
         cdef unique_ptr[ItemInfo] info = self._client.get_item_info_ptr(
                 handle.unwrap()[0])
         return construct_scalar(info.get()[0])
 
     def wait_for_scalar(self, IncomingHandle handle, float timeout):
+        """Block until a scalar value is available under the given handle.
+
+        Args:
+            handle (IncomingHandle): The handle naming the key to read.
+            timeout (float): Maximum time to wait, in seconds.
+
+        Returns:
+            numpy.int32 | numpy.int64 | numpy.float32 | numpy.float64: The
+                scalar value, once it becomes available.
+        """
         cdef milliseconds timeout_ = milliseconds(<int64_t>(timeout * 1000))
         cdef unique_ptr[ItemInfo] info = self._client.wait_for_item_info_ptr(
                 handle.unwrap()[0], timeout_)
         return construct_scalar(info.get()[0])
 
     def put_tensor(self, OutgoingHandle handle, np.ndarray tensor not None):
+        """Store an n-dimensional tensor under the given handle.
+
+        Args:
+            handle (OutgoingHandle): The handle naming the key to write to.
+            tensor (numpy.ndarray): An array with a supported dtype
+                (`int32`, `int64`, `float32`, or `float64`). Its shape is
+                preserved.
+        """
         cdef np.ndarray[np.uintp_t, ndim=1] dims_arr = np.asarray(
                 (<object>tensor).shape, dtype=np.uintp)
         self._put_tensor(handle, dims_arr, tensor.ravel())
@@ -86,11 +133,30 @@ cdef class PyClient:
                                        &data[0], data.size)
 
     def get_tensor(self, IncomingHandle handle):
+        """Read a tensor previously written under the given handle.
+
+        Args:
+            handle (IncomingHandle): The handle naming the key to read.
+
+        Returns:
+            numpy.ndarray: An array with the shape and dtype it was written
+                with.
+        """
         cdef unique_ptr[ItemInfo] info = self._client.get_item_info_ptr(
                 handle.unwrap()[0])
         return construct_tensor(info.get()[0])
 
     def wait_for_tensor(self, IncomingHandle handle, float timeout):
+        """Block until a tensor is available under the given handle.
+
+        Args:
+            handle (IncomingHandle): The handle naming the key to read.
+            timeout (float): Maximum time to wait, in seconds.
+
+        Returns:
+            numpy.ndarray: An array with the shape and dtype it was written
+                with, once it becomes available.
+        """
         cdef milliseconds timeout_ = milliseconds(<int64_t>(timeout * 1000))
         cdef unique_ptr[ItemInfo] info = self._client.wait_for_item_info_ptr(
                 handle.unwrap()[0], timeout_)
@@ -126,6 +192,20 @@ cdef class PyClient:
 
 
 cdef class DragonClient(PyClient):
+    """Create a client that attaches to a Dragon DDict, either from arguments or the environment.
+
+    Args:
+        descriptor (str | None): The serialized DDict descriptor to attach
+            to. If omitted (along with `timeout`), the descriptor and
+            timeout are instead read from the environment.
+        timeout (int | None): Timeout, in seconds, for attaching to the
+            DDict. Must be set together with `descriptor`, or omitted
+            together with it.
+
+    Raises:
+        ValueError: If exactly one of `descriptor`/`timeout` is set, or
+            if `descriptor` is empty or `timeout` is negative.
+    """
     def __cinit__(
         self, descriptor: str | None = None, timeout: int | None = None
     ):
