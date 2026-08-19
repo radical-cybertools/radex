@@ -76,15 +76,18 @@ def make_extensions():
         "extra_compile_args": ["-std=c++17"],
     }
 
+    def source_path(path):
+        return os.fspath(path.relative_to(HERE))
+
     return [
         Extension(
             "radex.clients.core",
-            sources=[os.fspath(PY_SRC / "radex/clients/core.pyx")],
+            sources=[source_path(PY_SRC / "radex/clients/core.pyx")],
             **common,
         ),
         Extension(
             "radex.handles.handles",
-            sources=[os.fspath(PY_SRC / "radex/handles/handles.pyx")],
+            sources=[source_path(PY_SRC / "radex/handles/handles.pyx")],
             **common,
         ),
     ]

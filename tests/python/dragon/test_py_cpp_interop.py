@@ -275,7 +275,7 @@ def test_wait_for_tensors(
                 cpp_tensor);
 
             auto [dims, data] = client.wait_for_tensor<{cpp_type_name}>(
-                radex::data::IncomingHandle("{py_key}"), std::chrono:milliseconds({10000}));
+                radex::data::IncomingHandle("{py_key}"), std::chrono::milliseconds({10000}));
             if (dims != expected_py_dims)
                 throw std::logic_error("Dims did not match");
             if (data != expected_py_data)

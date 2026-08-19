@@ -49,6 +49,7 @@ if(ENABLE_CXX)
 
     set(RADEX_SOURCES)
     list(APPEND RADEX_SOURCES cpp/client.cpp)
+    list(APPEND RADEX_SOURCES cpp/handles.cpp)
     list(APPEND RADEX_SOURCES cpp/smartredis.cpp)
     list(APPEND RADEX_SOURCES cpp/dragon.cpp)
 
