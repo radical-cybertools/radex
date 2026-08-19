@@ -98,6 +98,12 @@ class build_py_with_cpp_artifacts(build_py):
 
     def run(self):
         super().run()
+        if not RADEX_INSTALL_DIR.is_dir():
+            raise FileNotFoundError(
+                f"Could not find the installed RaDex tree at {RADEX_INSTALL_DIR}. "
+                "Build and install the RaDex C++ library first, or set "
+                "RADEX_INSTALL_DIR to its install prefix."
+            )
         pkg_dir = pathlib.Path(self.build_lib) / "radex_cpp"
         shutil.copytree(RADEX_INSTALL_DIR, pkg_dir, dirs_exist_ok=True)
 
@@ -110,6 +116,13 @@ if __name__ == "__main__":
         },
         packages=find_packages("src"),
         package_dir={"": "src"},
-        package_data={"radex_cpp": ["include/**/*", "lib/**/*", "share/**/*"]},
+        package_data={
+            "radex_cpp": [
+                "bin/**/*",
+                "include/**/*",
+                "lib/**/*",
+                "share/**/*",
+            ]
+        },
         ext_modules=cythonize(make_extensions()),
     )
