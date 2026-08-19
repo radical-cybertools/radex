@@ -103,8 +103,12 @@ class DragonExample(Example):
             from dragon.globalservices.api_setup import get_gs_ret_cuid
             from dragon.native.machine import System as DrgSystem
         except ImportError:
+            libs_path = None
             marks.append(pytest.mark.skip(reason="This example requires dragon"))
         else:
+            dragon_path, *_ = dragon.__path__
+            libs_path = pathlib.Path(dragon_path).absolute() / "lib"
+
             NOT_ENOUGH_NODES = pytest.mark.skip(
                 reason=f"Example requires an allocation of {num_nodes} node(s)"
             )
@@ -144,8 +148,18 @@ class DragonExample(Example):
 
         super().__init__(directory, marks=marks)
         self._dragon_args = dragon_args
+        self._libs_path = libs_path
 
     def _run(self, cwd, out, err) -> int:
+        # FIXME: Ideally we can remove this env futzing when we figure out why
+        #        the examples are linking twice against dragon.
+        env = dict(os.environ)
+        lib_key = "DYLD_LIBRARY_PATH" if sys.platform == "darwin" else "LD_LIBRARY_PATH"
+        prev_libs = env.get(lib_key, "")
+        if self._libs_path is not None:
+            dragon_libs = os.fspath(self._libs_path)
+            env[lib_key] = f"{dragon_libs}:{prev_libs}" if prev_libs else dragon_libs
+
         return sp.run(
             [
                 sys.executable,
@@ -156,6 +170,7 @@ class DragonExample(Example):
                 os.fspath(self.driver),
             ],
             cwd=cwd,
+            env=env,
             stdout=out,
             stderr=err,
         ).returncode
