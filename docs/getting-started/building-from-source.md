@@ -20,7 +20,7 @@ Defined in [`cmake/radex-options.cmake`](https://github.com/radical-cybertools/r
 
 ## Configuring Backends
 
-Both backends below must already be built/installed before configuring radex — see [Fetching the Dragon and SmartRedis Backends](fetching-backends.md) for step-by-step instructions.
+Both backends below must already be built/installed before configuring radex — see [Fetching the Dragon and SmartRedis Backends](fetching-backends.md) for step-by-step instructions. Take particular note of the installation path of the the SmartRedis library.
 
 ### Dragon
 

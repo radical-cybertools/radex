@@ -107,6 +107,7 @@ nav:
       - Building From Source: getting-started/building-from-source.md
       - Fetching Dragon & SmartRedis: getting-started/fetching-backends.md
       - Quick Start: getting-started/quick-start.md
+      - Developer's Guide: getting-started/developer-guide.md
       - Issues (GitHub): https://github.com/radical-cybertools/RaDex/issues
   - Examples:
       - Overview: examples/index.md

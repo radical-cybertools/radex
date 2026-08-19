@@ -33,4 +33,6 @@ docs:
 	cd $(ROOT)/.. && $(PYTHON) -m mkdocs build --clean
 
 docs-serve:
+	@command -v doxygen >/dev/null 2>&1 || \
+		echo "warning: 'doxygen' not found on PATH; the C++ API reference will fail to build."
 	cd $(ROOT)/.. && $(PYTHON) -m mkdocs serve -a 0.0.0.0:8001
