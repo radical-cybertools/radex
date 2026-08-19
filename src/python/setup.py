@@ -104,7 +104,7 @@ class build_py_with_cpp_artifacts(build_py):
                 "Build and install the RaDex C++ library first, or set "
                 "RADEX_INSTALL_DIR to its install prefix."
             )
-        pkg_dir = pathlib.Path(self.build_lib) / "radex_cpp"
+        pkg_dir = pathlib.Path(self.build_lib) / "radex/cpp"
         shutil.copytree(RADEX_INSTALL_DIR, pkg_dir, dirs_exist_ok=True)
 
 
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         packages=find_packages("src"),
         package_dir={"": "src"},
         package_data={
-            "radex_cpp": [
+            "radex.cpp": [
                 "bin/**/*",
                 "include/**/*",
                 "lib/**/*",
