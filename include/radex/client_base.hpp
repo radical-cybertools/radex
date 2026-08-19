@@ -328,25 +328,18 @@ class Client : public IClient {
         }
 
         bool contains(std::string_view key) override {
-                (void)key;
                 throw_backend_unavailable();
         }
 
         void put_bytes(std::string_view key, const void *bytes, detail::MetaInt length) override {
-                (void)key;
-                (void)bytes;
-                (void)length;
                 throw_backend_unavailable();
         }
 
         detail::BytesBuffer get_bytes(std::string_view key) override {
-                (void)key;
                 throw_backend_unavailable();
         }
 
         detail::BytesBuffer wait_for_bytes(std::string_view key, std::chrono::milliseconds timeout) override {
-                (void)key;
-                (void)timeout;
                 throw_backend_unavailable();
         }
 };
