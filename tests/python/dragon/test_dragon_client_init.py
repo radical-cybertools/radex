@@ -7,6 +7,10 @@ import radex.clients.core
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 
+def test_client_is_importable():
+    from radex.clients.core import DragonClient
+
+
 def test_init_raises_if_wait_for_keys_is_disabled(_requires_dragon_runtime):
     ddict = DDict(managers_per_node=1, n_nodes=1, wait_for_keys=False)
     with pytest.raises(RuntimeError, match=r"wait_for_keys"):

@@ -21,13 +21,13 @@ _SUPPORTED_NP_DTYPES = {
 @pytest.fixture(scope="session")
 def _radex_cpp():
     try:
-        import radex_cpp
+        import radex.cpp
     except ImportError:
         pytest.fail(
             "The `radex_cpp` package is not importable. Install the RaDex "
             "Python package to make the C++ headers and libraries available."
         )
-    yield radex_cpp
+    yield radex.cpp
 
 
 @pytest.fixture(scope="session")
