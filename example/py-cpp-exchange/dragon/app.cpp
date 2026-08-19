@@ -1,4 +1,5 @@
 #include <ctime>
+#include <chrono>
 #include <iostream>
 #include <numeric>
 #include <stdexcept>
@@ -7,6 +8,8 @@
 
 #include "radex/client.hpp"
 #include "radex/dragon.hpp"
+
+using namespace std::literals::chrono_literals;
 
 const std::string IDENT{"               "};
 

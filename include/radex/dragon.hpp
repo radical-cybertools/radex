@@ -1,14 +1,19 @@
 #ifndef __RADEX_DRAGON_HPP__
 #define __RADEX_DRAGON_HPP__
 
-#include "radex/client.hpp"
+#include "radex/client_base.hpp"
+#include "radex/build_config.hpp"
 
+#ifdef RADEX_HAS_DRAGON
 #include <dragon/dictionary.hpp>
 #include <dragon/serializable.hpp>
+#endif
+#include <ctime>
 #include <string_view>
 
 namespace radex::drg::ddict {
 
+#ifdef RADEX_HAS_DRAGON
 class Client : public IClient {
   private:
     dragon::DDict<dragon::Serializable, dragon::Serializable> ddict;
@@ -19,7 +24,7 @@ class Client : public IClient {
 
   public:
     Client();
-    Client(const char *descriptor, const timespec_t *timeout);
+    Client(const char *descriptor, const timespec *timeout);
 
     Client(const Client &other) = delete;
     Client(Client &&other) = default;
@@ -34,6 +39,13 @@ class Client : public IClient {
                    detail::MetaInt length) override;
     radex::detail::BytesBuffer get_bytes(std::string_view key) override;
 };
+#else
+class Client : public radex::unsupported_backend::Client {
+  public:
+    Client();
+    Client(const char *descriptor, const timespec *timeout);
+};
+#endif
 
 } // namespace radex::drg::ddict
 

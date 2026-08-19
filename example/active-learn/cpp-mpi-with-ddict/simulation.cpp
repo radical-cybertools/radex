@@ -7,7 +7,7 @@
 #include <stdexcept>
 
 constexpr double pi = 3.14159265358979323846;
-static timespec_t TIMEOUT = {5, 0};
+static timespec TIMEOUT = {5, 0};
 
 static size_t N_SAMPLES_PER_RANK = 8;
 

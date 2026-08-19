@@ -41,6 +41,12 @@ class UnorderedMapClient : public radex::IClient {
         std::copy(buf.begin(), buf.end(), ptr.get());
         return {std::move(ptr), buf.size()};
     }
+
+    radex::detail::BytesBuffer
+    wait_for_bytes(std::string_view key,
+                   std::chrono::milliseconds timeout) override {
+        return IClient::wait_for_bytes(key, timeout);
+    }
 };
 
 } // namespace localkv
