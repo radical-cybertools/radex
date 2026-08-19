@@ -1,9 +1,7 @@
 import dataclasses
 import functools
-import glob
 import operator
 import os
-import os.path
 import pathlib
 import shutil
 import subprocess
@@ -19,30 +17,37 @@ _SUPPORTED_NP_DTYPES = {
     np.float64: "double",
 }
 
-_HERE = pathlib.Path(__file__).parent.absolute()
-_ROOT = _HERE.parent.parent
+
+@pytest.fixture(scope="session")
+def _radex_cpp():
+    try:
+        import radex_cpp
+    except ImportError:
+        pytest.fail(
+            "The `radex_cpp` package is not importable. Install the RaDex "
+            "Python package to make the C++ headers and libraries available."
+        )
+    yield radex_cpp
 
 
 @pytest.fixture(scope="session")
-def _radex_lib_dir():
+def _radex_lib_dir(_radex_cpp):
+    lib_dir = pathlib.Path(_radex_cpp.get_lib_dir())
     os_to_libname = {"linux": "libradex.so", "darwin": "libradex.dylib"}
     libname = os_to_libname[sys.platform]
-
-    search = os.path.join(_ROOT, f"install/**/{libname}")
-    lib = next(glob.iglob(search), None)
-    if lib is None:
-        raise FileNotFoundError(f"Cannot find radex library at: {_ROOT}/install")
-    yield pathlib.Path(lib).parent
+    if not (lib_dir / libname).is_file():
+        raise FileNotFoundError(f"Cannot find {libname} at: {lib_dir}")
+    yield lib_dir
 
 
 @pytest.fixture(scope="session")
-def _radex_include_dir():
-    yield _ROOT / "install" / "include"
+def _radex_include_dir(_radex_cpp):
+    yield pathlib.Path(_radex_cpp.get_include())
 
 
 @pytest.fixture(scope="session")
-def _radex_lib_name():
-    yield "radex"
+def _radex_lib_name(_radex_cpp):
+    yield _radex_cpp.get_lib_name()
 
 
 @pytest.fixture(scope="function")

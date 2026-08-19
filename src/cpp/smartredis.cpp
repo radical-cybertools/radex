@@ -1,11 +1,13 @@
 #include "radex/smartredis.hpp"
 #include "radex/constants.hpp"
 
-#include <configoptions.h>
 #include <cstdlib>
 #include <memory>
 #include <stdexcept>
 #include <string>
+
+#ifdef RADEX_HAS_SMARTREDIS
+#include <configoptions.h>
 
 namespace {
 
@@ -42,6 +44,7 @@ std::string _logger_name_from_env() {
     const char *logger = getenv("SMARTREDIS_LOGGER_NAME");
     return logger ? logger : "radex-client";
 }
+
 } // namespace
 
 namespace radex::redis::smartredis {
@@ -74,4 +77,23 @@ radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
     return {std::move(uniq), out_n_bytes};
 }
 
+radex::detail::BytesBuffer
+Client::wait_for_bytes(std::string_view key,
+                       std::chrono::milliseconds timeout) {
+    return IClient::wait_for_bytes(key, timeout);
+}
+
 } // namespace radex::redis::smartredis
+#else
+namespace radex::redis::smartredis {
+
+Client::Client()
+    : radex::unsupported_backend::Client("SmartRedis", "BUILD_SMARTREDIS") {}
+
+Client::Client(std::string_view logger_name)
+    : radex::unsupported_backend::Client("SmartRedis", "BUILD_SMARTREDIS") {
+    (void)logger_name;
+}
+
+} // namespace radex::redis::smartredis
+#endif

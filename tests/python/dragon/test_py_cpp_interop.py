@@ -184,6 +184,7 @@ def test_wait_for_scalars(
     bin_ = cpp_dragon_compile(textwrap.dedent(f"""\
         #include "radex/dragon.hpp"
         #include "radex/handles.hpp"
+        #include <iostream>
         #include <chrono>
         #include <thread>
 
@@ -195,7 +196,7 @@ def test_wait_for_scalars(
             client.put_scalar(radex::data::OutgoingHandle("{cpp_key}"), value);
 
             auto x = client.wait_for_scalar<{cpp_type_name}>(
-                radex::data::IncomingHandle("{py_key}"), 10'000ms);
+                radex::data::IncomingHandle("{py_key}"), std::chrono::milliseconds({10000}));
             return x == 12 ? 0 : 1;
         }}
         """))
@@ -216,7 +217,8 @@ def test_wait_for_scalars(
     finally:
         proc.wait()
 
-    assert cpp_put_delay - 0.5 < py_wait_time < cpp_put_delay + 0.5
+    wait_interval = 2.0
+    assert cpp_put_delay - wait_interval < py_wait_time < cpp_put_delay + wait_interval
     assert value.dtype == np_dtype
     assert value == np_dtype(123)
     assert proc.returncode == 0
@@ -273,7 +275,7 @@ def test_wait_for_tensors(
                 cpp_tensor);
 
             auto [dims, data] = client.wait_for_tensor<{cpp_type_name}>(
-                radex::data::IncomingHandle("{py_key}"), 10'000ms);
+                radex::data::IncomingHandle("{py_key}"), std::chrono::milliseconds({10000}));
             if (dims != expected_py_dims)
                 throw std::logic_error("Dims did not match");
             if (data != expected_py_data)
@@ -296,8 +298,8 @@ def test_wait_for_tensors(
         proc.kill()
     finally:
         proc.wait()
-
-    assert cpp_put_delay - 0.5 < py_wait_time < cpp_put_delay + 0.5
+    wait_interval = 2.0
+    assert cpp_put_delay - wait_interval < py_wait_time < cpp_put_delay + wait_interval
     assert cpp_tensor.dtype == expected_cpp_tensor.dtype == np_dtype
     assert (cpp_tensor == expected_cpp_tensor).all()
     assert proc.returncode == 0

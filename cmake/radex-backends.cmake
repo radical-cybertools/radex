@@ -4,6 +4,12 @@ function(radex_find_backends)
     if(BUILD_SMARTREDIS)
         find_package(smartredis REQUIRED)
         message(STATUS "SmartRedis found: ${smartredis_DIR}")
+
+        get_target_property(SMARTREDIS_LIBRARY smartredis LOCATION)
+        get_filename_component(SMARTREDIS_LIB_DIR ${SMARTREDIS_LIBRARY} DIRECTORY)
+        get_filename_component(SMARTREDIS_ROOT ${SMARTREDIS_LIB_DIR} DIRECTORY)
+        set(SMARTREDIS_LIB_DIR ${SMARTREDIS_LIB_DIR} CACHE PATH "SmartRedis library directory")
+        set(SMARTREDIS_INCLUDE_DIR ${SMARTREDIS_ROOT}/include CACHE PATH "SmartRedis include directory")
     endif()
 
     if(BUILD_DRAGON)
