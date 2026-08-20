@@ -1,8 +1,11 @@
 #ifndef __RADEX_HANDLES_HPP__
 #define __RADEX_HANDLES_HPP__
 
+#include "radex/detail.hpp"
+
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace radex::data {
 
@@ -38,6 +41,37 @@ class OutgoingHandle : public IHandle {
     OutgoingHandle(std::string_view name) : name{name} {}
     auto key() const -> std::string override;
     auto metadata_key() const -> std::string override;
+};
+
+class ForeignApplication {
+  private:
+    const std::string app_name;
+    const radex::detail::MetaInt n_ranks;
+
+  public:
+    ForeignApplication(std::string_view app_name,
+                       radex::detail::MetaInt world_size)
+        : app_name{app_name}, n_ranks{world_size} {}
+    auto from_rank(std::string_view name, radex::detail::MetaInt) const
+        -> IncomingHandle;
+    auto across_ranks(std::string_view name) const
+        -> std::vector<IncomingHandle>;
+
+  protected:
+    auto add_rank_data_to_key(std::string_view key,
+                              radex::detail::MetaInt rank_id) const
+        -> std::string;
+};
+
+class ThisApplication : public ForeignApplication {
+  private:
+    const radex::detail::MetaInt rank;
+
+  public:
+    ThisApplication(std::string_view app_name, radex::detail::MetaInt my_rank,
+                    radex::detail::MetaInt world_size)
+        : ForeignApplication{app_name, world_size}, rank{my_rank} {}
+    auto with_rank_info(std::string_view name) const -> OutgoingHandle;
 };
 
 } // namespace radex::data

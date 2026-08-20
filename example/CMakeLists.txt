@@ -66,6 +66,17 @@ if(BUILD_DRAGON)
     )
     list(APPEND DRAGON_EXAMPLES dragon-cpp-with-py)
 
+    # Dragon Multi-rank exmples
+    add_executable(dragon-multi-rank-producer
+        multi-rank/dragon/producer.cpp
+    )
+    list(APPEND DRAGON_EXAMPLES dragon-multi-rank-producer)
+
+    add_executable(dragon-multi-rank-consumer
+        multi-rank/dragon/consumer.cpp
+    )
+    list(APPEND DRAGON_EXAMPLES dragon-multi-rank-consumer)
+
     # Simulation example
     find_package(MPI)
     add_executable(simulation

@@ -1,6 +1,10 @@
 #ifndef __RADEX_CLIENT_BASE_HPP__
 #define __RADEX_CLIENT_BASE_HPP__
 
+#include "radex/detail.hpp"
+#include "radex/exceptions.hpp"
+#include "radex/handles.hpp"
+
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -8,21 +12,13 @@
 #include <functional>
 #include <memory>
 #include <numeric>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
-#include "radex/exceptions.hpp"
-#include "radex/handles.hpp"
-
 namespace radex {
-
-namespace detail {
-using MetaInt = std::size_t;
-}
 
 namespace data {
 
@@ -194,8 +190,7 @@ class IClient {
     /// Block until `key` becomes available, then return its raw bytes.
     /// @param timeout Maximum time to wait for the key to appear.
     virtual detail::BytesBuffer
-    wait_for_bytes(std::string_view key,
-                   std::chrono::milliseconds timeout) = 0;
+    wait_for_bytes(std::string_view key, std::chrono::milliseconds timeout) = 0;
     virtual ~IClient() {}
 
     // <<< End Virtual Methods <<<
@@ -256,7 +251,8 @@ class IClient {
     put_tensor(const data::OutgoingHandle &handle,
                const std::vector<detail::MetaInt> &dims,
                const std::vector<T> &data) {
-        put_tensor<T>(handle, dims.data(), dims.size(), data.data(), data.size());
+        put_tensor<T>(handle, dims.data(), dims.size(), data.data(),
+                      data.size());
     }
 
     /// Store a tensor under `handle`, given raw dimension/element pointers.
@@ -296,6 +292,19 @@ class IClient {
                                      std::placeholders::_1, timeout);
         const auto info = get_item_info(fetch, handle);
         return assemble_tensor<T>(info);
+    }
+
+    template <typename T>
+    typename std::enable_if<data::is_supported_type<T>::value,
+                            std::vector<TensorInfo<T>>>::type
+    gather_tensors(const std::vector<data::IncomingHandle> &handles,
+                   std::chrono::milliseconds timeout) {
+        // TODO: These tensors should be retrieved in parrallel
+        std::vector<TensorInfo<T>> tensors;
+        for (const auto &handle : handles) {
+            tensors.push_back(wait_for_tensor<T>(handle, timeout));
+        }
+        return tensors;
     }
 
   private:
@@ -340,40 +349,44 @@ namespace unsupported_backend {
 /// method throws `radex::BackendUnavailableError` explaining how to rebuild
 /// with it enabled.
 class Client : public IClient {
-    private:
-        std::string backend_name;
-        std::string enable_option;
+  private:
+    std::string backend_name;
+    std::string enable_option;
 
-    protected:
-        [[noreturn]] void throw_backend_unavailable() const {
-                throw BackendUnavailableError(
-                        "RaDex was built without " + backend_name + " backend support. "
-                        "Rebuild with -D" + enable_option + "=ON to enable this client."
-                );
-        }
+  protected:
+    [[noreturn]] void throw_backend_unavailable() const {
+        throw BackendUnavailableError(
+            "RaDex was built without " + backend_name +
+            " backend support. "
+            "Rebuild with -D" +
+            enable_option + "=ON to enable this client.");
+    }
 
-    public:
-        Client(std::string backend_name, std::string enable_option)
-                : backend_name{std::move(backend_name)},
-                    enable_option{std::move(enable_option)} {
-            throw_backend_unavailable();
-        }
+  public:
+    Client(std::string backend_name, std::string enable_option)
+        : backend_name{std::move(backend_name)},
+          enable_option{std::move(enable_option)} {
+        throw_backend_unavailable();
+    }
 
-        bool contains(std::string_view key) override {
-                throw_backend_unavailable();
-        }
+    bool contains(std::string_view key) override {
+        throw_backend_unavailable();
+    }
 
-        void put_bytes(std::string_view key, const void *bytes, detail::MetaInt length) override {
-                throw_backend_unavailable();
-        }
+    void put_bytes(std::string_view key, const void *bytes,
+                   detail::MetaInt length) override {
+        throw_backend_unavailable();
+    }
 
-        detail::BytesBuffer get_bytes(std::string_view key) override {
-                throw_backend_unavailable();
-        }
+    detail::BytesBuffer get_bytes(std::string_view key) override {
+        throw_backend_unavailable();
+    }
 
-        detail::BytesBuffer wait_for_bytes(std::string_view key, std::chrono::milliseconds timeout) override {
-                throw_backend_unavailable();
-        }
+    detail::BytesBuffer
+    wait_for_bytes(std::string_view key,
+                   std::chrono::milliseconds timeout) override {
+        throw_backend_unavailable();
+    }
 };
 
 } // namespace unsupported_backend
