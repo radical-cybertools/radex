@@ -7,16 +7,12 @@
 
 int main() {
     char *serialized_dd = getenv("SERIALIZED_DDICT");
-    if (serialized_dd == nullptr) {
-        throw std::runtime_error("DDict descriptor not found!");
-    }
 
     std::cout << "===========================\n"
               << "Hello World from Producer!!\n"
               << "---------------------------\n";
 
-    timespec timeout{5, 0};
-    radex::drg::ddict::Client client{serialized_dd, &timeout};
+    radex::drg::ddict::Client client{};
 
     client.put_scalar<int32_t>(radex::data::OutgoingHandle{"some-int"}, 123);
     client.put_scalar<double>(radex::data::OutgoingHandle{"some-float"}, 1.23);

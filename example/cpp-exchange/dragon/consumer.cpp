@@ -17,17 +17,12 @@ template <typename T> std::string vec_to_str(const std::vector<T> &vec) {
 }
 
 int main() {
-    char *serialized_dd = getenv("SERIALIZED_DDICT");
-    if (serialized_dd == nullptr) {
-        throw std::runtime_error("DDict descriptor not found!");
-    }
 
     std::cout << "===========================\n"
               << "Hello World from Consumer!!\n"
               << "---------------------------\n";
 
-    timespec timeout{5, 0};
-    radex::drg::ddict::Client client{serialized_dd, &timeout};
+    radex::drg::ddict::Client client{};
 
     auto some_int =
         client.get_scalar<int32_t>(radex::data::IncomingHandle{"some-int"});
