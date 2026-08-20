@@ -32,6 +32,13 @@ def test_run_example(example, tmp_path, monkeypatch):
     # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     returncode, out, err = example.run(where=tmp_path)
+    print("Out:")
+    with open(out, "r", encoding="utf-8") as f:
+        print(f.read())
+    print("Err:")
+    with open(err, "r", encoding="utf-8") as f:
+        print(f.read())
+
     assert returncode == 0
     with (
         open(out, "r", encoding="utf-8") as fh,
