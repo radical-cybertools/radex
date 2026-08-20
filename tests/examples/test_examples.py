@@ -1,4 +1,36 @@
-def test_run_example(example, tmp_path):
+import os
+import pathlib
+import sys
+
+
+def test_run_example(example, tmp_path, monkeypatch):
+    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # FIXME: Ideally we can remove this env futzing when we figure out why
+    #        the examples are linking twice against dragon.
+    # =================================================================================
+    ld_lib_path = "DYLD_LIBRARY_PATH" if sys.platform == "darwin" else "LD_LIBRARY_PATH"
+    try:
+        import dragon
+    except ImportError:
+        pytest.xfail(
+            reason=(
+                f"Dragon library `libdragon.so` must be on {ld_lib_path} "
+                "to run the examples due to unresolved linking errors"
+            )
+        )
+    else:
+        dragon_path, *_ = dragon.__path__
+        drg_libs_paths = ":".join(
+            os.fspath(p) for p in pathlib.Path(dragon_path).absolute().glob("lib*")
+        )
+
+        prev_ld_lib_path = os.environ.get(ld_lib_path, "")
+        new_ld_lib_path = (
+            f"{drg_libs_paths}:{prev_ld_lib_path}" if prev_ld_lib_path else dragon_libs
+        )
+        monkeypatch.setenv(ld_lib_path, new_ld_lib_path)
+    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
     returncode, out, err = example.run(where=tmp_path)
     assert returncode == 0
     with (
