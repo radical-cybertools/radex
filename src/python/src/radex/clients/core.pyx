@@ -6,7 +6,8 @@ from libcpp.memory cimport unique_ptr
 from libcpp.string cimport string
 
 from radex.clients.core cimport IClient
-from radex.clients.dragon cimport Client
+from radex.clients.dragon cimport Client as _CXXDragonClient
+from radex.clients.redis cimport Client as _CXXSRClient
 from radex.utils.data cimport (
     BytesBuffer,
     DType,
@@ -219,7 +220,7 @@ cdef class DragonClient(PyClient):
             )
 
     cdef void _init_from_env(self):
-        self._client = new Client()
+        self._client = new _CXXDragonClient()
 
     cdef void _init_from_args(self, str descriptor, int timeout):
         if len(descriptor) == 0:
@@ -228,4 +229,17 @@ cdef class DragonClient(PyClient):
             raise ValueError("timeout must be positive")
         cdef EncodedStr desc = encode_str(descriptor)
         cdef timespec spec = timespec(timeout, 0)
-        self._client = new Client(desc.c_str(), &spec)
+        self._client = new _CXXDragonClient(desc.c_str(), &spec)
+
+
+cdef class RedisClient(PyClient):
+    def __cinit__(self, logger_name: str | None = None):
+        cdef EncodedStr name
+
+        if logger_name is None:
+            self._client = new _CXXSRClient()
+        elif isinstance(logger_name, str):
+            name = encode_str(logger_name)
+            self._client = new _CXXSRClient(name.c_str())
+        else:
+            raise TypeError(f"Unexpected logger name type: {type(logger_name)}")
