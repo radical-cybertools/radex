@@ -154,8 +154,11 @@ class ItemInfo {
 
 } // namespace detail
 
+/// The result of reading a tensor: its shape and flattened element data.
 template <typename T> struct TensorInfo {
+    /// The tensor's dimensions, outermost first.
     std::vector<detail::MetaInt> dims;
+    /// The tensor's elements in row-major (C) order.
     std::vector<T> data;
 
   public:
@@ -170,14 +173,25 @@ template <typename T> struct TensorInfo {
     ~TensorInfo() = default;
 };
 
+/// Abstract base class for all RaDex backend clients (Dragon, SmartRedis, ...).
+///
+/// Provides typed `put_scalar`/`get_scalar`/`put_tensor`/`get_tensor` (and
+/// their `wait_for_*` blocking variants) on top of the raw byte-oriented
+/// `put_bytes`/`get_bytes`/`wait_for_bytes` methods that concrete backends
+/// implement.
 class IClient {
   public:
     // >>> Start Virtual Methods >>>
 
+    /// @return True if `key` exists in the backing store.
     virtual bool contains(std::string_view key) = 0;
+    /// Store raw bytes under `key`, overwriting any existing value.
     virtual void put_bytes(std::string_view key, const void *bytes,
                            detail::MetaInt length) = 0;
+    /// @return The raw bytes previously stored under `key`.
     virtual detail::BytesBuffer get_bytes(std::string_view key) = 0;
+    /// Block until `key` becomes available, then return its raw bytes.
+    /// @param timeout Maximum time to wait for the key to appear.
     virtual detail::BytesBuffer
     wait_for_bytes(std::string_view key,
                    std::chrono::milliseconds timeout) = 0;
@@ -199,6 +213,8 @@ class IClient {
                            std::chrono::milliseconds timeout);
 
   public:
+    /// Store a scalar value under `handle`.
+    /// @tparam T One of `int32_t`, `int64_t`, `float`, `double`.
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, void>::type
     put_scalar(const data::OutgoingHandle &handle, const T &value) {
@@ -207,6 +223,9 @@ class IClient {
         put_bytes(handle.key(), &value, sizeof(T));
     }
 
+    /// @return The scalar value previously written under `handle`.
+    /// @throws std::runtime_error If the stored value is a tensor, or its
+    ///     type does not match `T`.
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, T>::type
     get_scalar(const data::IncomingHandle handle) {
@@ -216,6 +235,8 @@ class IClient {
         return assemble_scalar<T>(info);
     }
 
+    /// Block until a scalar value is available under `handle`, then return it.
+    /// @param timeout Maximum time to wait for the value to appear.
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, T>::type
     wait_for_scalar(const data::IncomingHandle handle,
@@ -226,6 +247,9 @@ class IClient {
         return assemble_scalar<T>(info);
     }
 
+    /// Store a tensor under `handle`.
+    /// @param dims The tensor's dimensions, outermost first.
+    /// @param data The tensor's elements in row-major (C) order.
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, void>::type
     put_tensor(const data::OutgoingHandle &handle,
@@ -234,6 +258,9 @@ class IClient {
         put_tensor<T>(handle, dims.data(), dims.size(), data.data(), data.size());
     }
 
+    /// Store a tensor under `handle`, given raw dimension/element pointers.
+    /// @param dims Pointer to `n_dims` dimension sizes, outermost first.
+    /// @param elements Pointer to `n_elements` elements in row-major order.
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, void>::type
     put_tensor(const data::OutgoingHandle &handle, const detail::MetaInt *dims,
@@ -244,6 +271,9 @@ class IClient {
         put_bytes(handle.key(), elements, n_elements * sizeof(T));
     }
 
+    /// @return The tensor previously written under `handle`.
+    /// @throws std::runtime_error If the stored value is a scalar, or its
+    ///     type does not match `T`.
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value,
                             TensorInfo<T>>::type
@@ -254,6 +284,8 @@ class IClient {
         return assemble_tensor<T>(info);
     }
 
+    /// Block until a tensor is available under `handle`, then return it.
+    /// @param timeout Maximum time to wait for the value to appear.
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value,
                             TensorInfo<T>>::type
@@ -307,6 +339,8 @@ class IClient {
 
 namespace unsupported_backend {
 
+/// Placeholder `IClient` used when a backend was disabled at build time; every
+/// method throws `std::runtime_error` explaining how to rebuild with it enabled.
 class Client : public IClient {
     private:
         std::string backend_name;

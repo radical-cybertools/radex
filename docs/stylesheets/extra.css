@@ -1,0 +1,15 @@
+/* RaDex Documentation Extra Styles */
+
+:root {
+  --radex-primary: #455a64;
+  /* Blue Grey 700 */
+  --radex-secondary: #00897b;
+  /* Teal 600 */
+  --md-primary-fg-color: var(--radex-primary);
+  --md-accent-fg-color: var(--radex-secondary);
+}
+
+.md-nav__item--active > .md-nav__link {
+  color: var(--radex-secondary) !important;
+  font-weight: 700;
+}
