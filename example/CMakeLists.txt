@@ -44,10 +44,6 @@ if(BUILD_SMARTREDIS)
     add_executable(redis-cpp-consumer cpp-exchange/redis/consumer.cpp)
     list(APPEND SMARTREDIS_EXAMPLES redis-cpp-consumer)
 
-    foreach(target IN LISTS SMARTREDIS_EXAMPLES)
-        target_link_libraries(${target} PRIVATE smartredis)
-    endforeach()
-
     list(APPEND EXAMPLES ${SMARTREDIS_EXAMPLES})
 
 endif()
@@ -78,21 +74,12 @@ if(BUILD_DRAGON)
     target_link_libraries(simulation PRIVATE MPI::MPI_CXX)
     list(APPEND DRAGON_EXAMPLES simulation)
 
-    foreach(target in LISTS DRAGON_EXAMPLES)
-        target_link_libraries(dragon-cpp-consumer PRIVATE dragon)
-        target_include_directories(dragon-cpp-consumer PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/include
-        )
-    endforeach()
     list(APPEND EXAMPLES ${DRAGON_EXAMPLES})
 
 endif()
 
 foreach(target IN LISTS EXAMPLES)
     radex_set_target_install_rpath(${target})
-    target_include_directories(${target} PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    )
     target_link_libraries(${target} PRIVATE radex::radex)
 endforeach()
 

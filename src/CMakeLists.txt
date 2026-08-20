@@ -40,7 +40,9 @@ if(ENABLE_CXX)
     endif()
 
     set(RADEX_GENERATED_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/include)
-    file(MAKE_DIRECTORY ${RADEX_GENERATED_INCLUDE_DIR}/radex)
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../include/
+        DESTINATION ${RADEX_GENERATED_INCLUDE_DIR}
+    )
     configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/radex-build-config.hpp.in
         ${RADEX_GENERATED_INCLUDE_DIR}/radex/build_config.hpp
@@ -82,7 +84,6 @@ if(ENABLE_CXX)
     target_link_libraries(radex INTERFACE ${RADEX_PRIMARY_TARGET})
     target_include_directories(radex INTERFACE
         $<BUILD_INTERFACE:${RADEX_GENERATED_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
@@ -90,7 +91,6 @@ if(ENABLE_CXX)
     foreach(target IN LISTS LIBRARY_TARGETS)
         target_include_directories(${target} PUBLIC
             $<BUILD_INTERFACE:${RADEX_GENERATED_INCLUDE_DIR}>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         )
         radex_set_target_install_rpath(${target} smartredis dragon)
@@ -122,13 +122,8 @@ if(ENABLE_CXX)
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/
+    install(DIRECTORY ${RADEX_GENERATED_INCLUDE_DIR}/
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-
-    install(
-        FILES ${RADEX_GENERATED_INCLUDE_DIR}/radex/build_config.hpp
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/radex
     )
 
     install(EXPORT radex-targets

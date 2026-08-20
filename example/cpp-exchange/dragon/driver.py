@@ -16,16 +16,16 @@ def main() -> int:
         n_nodes=1,
         trace=False,
         wait_for_keys=True,
-        working_set_size=3,
+        working_set_size=4,
     )
     serial_dd = dd.serialize()
     producer_tmpl = ProcessTemplate(
         target=os.fspath(EXAMPLES_BIN_DIR / "dragon-cpp-producer"),
-        env={"SERIALIZED_DDICT": serial_dd},
+        env={"RADEX_STORE": serial_dd},
     )
     consumer_tmpl = ProcessTemplate(
         target=os.fspath(EXAMPLES_BIN_DIR / "dragon-cpp-consumer"),
-        env={"SERIALIZED_DDICT": serial_dd},
+        env={"RADEX_STORE": serial_dd},
     )
 
     print("==> Running Producer...", flush=True)

@@ -26,3 +26,9 @@ build/
 CMakeFiles/
 CMakeCache.txt
 install/
+
+# Docs
+site/
+docs/api/
+docs/radexCpp/
+docs/doxyoutput/
