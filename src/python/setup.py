@@ -48,7 +48,11 @@ def _required_env(name, backend):
 
 
 def make_extensions():
-    include_dirs = [os.fspath(RADEX_INCLUDE_DIR), numpy.get_include()]
+    include_dirs = [
+        os.fspath(RADEX_INCLUDE_DIR),
+        os.fspath(PY_SRC),
+        numpy.get_include(),
+    ]
     library_dirs = [os.fspath(RADEX_LIB_DIR)]
     libraries = ["radex"]
     runtime_library_dirs = [os.fspath(RADEX_LIB_DIR)]

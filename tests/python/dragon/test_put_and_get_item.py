@@ -3,6 +3,7 @@ import math
 import numpy as np
 import pytest
 
+import radex.exceptions as ex
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 
@@ -29,6 +30,32 @@ def test_put_and_get_tensor(client, random_np_tensor, np_dtype):
     assert random_np_tensor.dtype == ret_tensor.dtype == np_dtype
     assert random_np_tensor.shape == ret_tensor.shape
     assert (random_np_tensor == ret_tensor).all()
+
+
+def test_get_missing_key_raises(client):
+    # Regression: a get on an absent key used to block on the key instead
+    key = "no-such-key"
+    assert not client.contains(key)
+
+    with pytest.raises(ex.KeyNotFoundError):
+        client.get_scalar(IncomingHandle(key))
+
+    with pytest.raises(ex.KeyNotFoundError):
+        client.get_tensor(IncomingHandle(key))
+
+
+def test_reading_a_tensor_as_a_scalar_raises(client):
+    key = "a-tensor"
+    client.put_tensor(OutgoingHandle(key), np.arange(4, dtype=np.float64))
+
+    with pytest.raises(ex.RankMismatchError):
+        client.get_scalar(IncomingHandle(key))
+
+
+def test_radex_errors_remain_runtime_errors(client):
+    # Callers written before the exception hierarchy caught RuntimeError
+    with pytest.raises(RuntimeError):
+        client.get_scalar(IncomingHandle("still-no-such-key"))
 
 
 @pytest.mark.parametrize("size", [pytest.param(int(1e6), id="size-1MB")])

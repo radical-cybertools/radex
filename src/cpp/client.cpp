@@ -37,7 +37,7 @@ MetaData MetaData::from_buffer(BytesBuffer buffer) {
     MetaInt expected_size =
         (meta.n_dims() + Index::END_OF_HEADER) * sizeof(MetaInt);
     if (meta.size() != expected_size) {
-        throw std::runtime_error("Malformed item metadata buffer received");
+        throw radex::MetadataError("Malformed item metadata buffer received");
     }
     return meta;
 }
@@ -74,8 +74,7 @@ detail::BytesBuffer IClient::wait_for_bytes(std::string_view key,
             std::ostringstream msg;
             msg << "Failed to find key `" << key << "` before timeout";
 
-            // TODO: Better error type here
-            throw std::runtime_error(msg.str());
+            throw radex::TimeoutError(msg.str());
         }
         std::this_thread::sleep_for(poll_interval);
     }

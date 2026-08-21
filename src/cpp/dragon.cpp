@@ -103,7 +103,8 @@ radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
     const std::chrono::milliseconds fast_timeout{1};
     // TODO: Check if/when Dragon can support bypassing wait for keys
     if (!contains(key)) {
-        std::runtime_error("Key does not exist in the DDict: " + std::string(key));
+        throw radex::KeyNotFoundError("Key does not exist in the DDict: " +
+                                     std::string(key));
     }
     return wait_for_bytes(key, fast_timeout);
 }
