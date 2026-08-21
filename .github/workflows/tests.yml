@@ -63,7 +63,7 @@ jobs:
     - name: Install DragonHPC
       run: |
             git clone https://github.com/DragonHPC/dragon.git
-            pushd dragon && git checkout $_DRAGON_VERSION && pushd devtools && source VARIABLES && popd && pip install -e src/
+            pushd dragon && git checkout $_DRAGON_VERSION && pushd devtools && source VARIABLES && popd && pip install src/
 
     - name: Install Redis backend
       run: |

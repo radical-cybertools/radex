@@ -1,7 +1,7 @@
 import pathlib
 import subprocess
 
-HERE = pathlib.Path(__file__).parent.absolute()
+HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent.parent
 EXAMPLES_BIN_DIR = ROOT / "install" / "bin" / "examples"
 

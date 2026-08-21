@@ -65,7 +65,7 @@ MSE_THRESHOLD: float = 0.1  # convergence target
 MAX_ITER: int = 10  # hard cap on iterations
 
 # ── Consts ─────────────────────────────────────────────────────────────────────
-HERE = Path(__file__).parent.absolute()
+HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent.parent
 EXAMPLES_BIN_DIR = ROOT / "install" / "bin" / "examples"
 

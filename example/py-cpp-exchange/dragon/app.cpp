@@ -46,6 +46,7 @@ void print_vector_key(radex::IClient &client, const std::string &key) {
 }
 
 int main() {
+    const auto DELAY_SET_TIME = 1'000ms;
     char *serialized_dd = getenv("SERIALIZED_DDICT");
     if (serialized_dd == nullptr) {
         throw std::runtime_error("DDict descriptor not found!");
@@ -62,22 +63,22 @@ int main() {
     print_vector_key<int>(client, "py-int-tensor");
     print_vector_key<double>(client, "py-float-tensor");
 
-    std::this_thread::sleep_for(3'000ms);
+    std::this_thread::sleep_for(DELAY_SET_TIME);
     std::cout << IDENT << "App: Setting Double" << std::endl;
     client.put_scalar<double>(radex::data::OutgoingHandle{"cpp-double"}, 1.23);
 
-    std::this_thread::sleep_for(3'000ms);
+    std::this_thread::sleep_for(DELAY_SET_TIME);
     std::cout << IDENT << "App: Setting Int" << std::endl;
     client.put_scalar<int>(radex::data::OutgoingHandle{"cpp-int"}, 987);
 
-    std::this_thread::sleep_for(3'000ms);
+    std::this_thread::sleep_for(DELAY_SET_TIME);
     std::cout << IDENT << "App: Setting Double Tensor" << std::endl;
     std::vector<double> v(12);
     std::iota(v.begin(), v.end(), 0);
     client.put_tensor(radex::data::OutgoingHandle{"cpp-double-tensor"}, {4, 3},
                       v);
 
-    std::this_thread::sleep_for(3'000ms);
+    std::this_thread::sleep_for(DELAY_SET_TIME);
     std::cout << IDENT << "App: Setting Long Tensor" << std::endl;
     client.put_tensor<int32_t>(radex::data::OutgoingHandle{"cpp-long-tensor"},
                                {2, 2, 2}, {1, 2, 3, 4, 5, 6, 7, 8});
