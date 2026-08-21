@@ -31,6 +31,18 @@ def test_put_and_get_tensor(client, random_np_tensor, np_dtype):
     assert (random_np_tensor == ret_tensor).all()
 
 
+def test_get_missing_key_raises(client):
+    # Regression: a get on an absent key used to block on the key instead
+    key = "no-such-key"
+    assert not client.contains(key)
+
+    with pytest.raises(RuntimeError):
+        client.get_scalar(IncomingHandle(key))
+
+    with pytest.raises(RuntimeError):
+        client.get_tensor(IncomingHandle(key))
+
+
 @pytest.mark.parametrize("size", [pytest.param(int(1e6), id="size-1MB")])
 @pytest.mark.parametrize(
     "n_dims", [pytest.param(n, id=f"shape-{n}D") for n in range(1, 5)]
