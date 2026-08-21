@@ -40,9 +40,21 @@ if(ENABLE_CXX)
     endif()
 
     set(RADEX_GENERATED_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/include)
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../include/
-        DESTINATION ${RADEX_GENERATED_INCLUDE_DIR}
+    set(RADEX_PUBLIC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+
+    file(GLOB_RECURSE RADEX_PUBLIC_HEADERS
+        RELATIVE ${RADEX_PUBLIC_INCLUDE_DIR}
+        ${RADEX_PUBLIC_INCLUDE_DIR}/*.hpp
     )
+    foreach(header IN LISTS RADEX_PUBLIC_HEADERS)
+        configure_file(
+            ${RADEX_PUBLIC_INCLUDE_DIR}/${header}
+            ${RADEX_GENERATED_INCLUDE_DIR}/${header}
+            COPYONLY
+        )
+    endforeach()
+
+    # Overwrite the build_config.hpp
     configure_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/radex-build-config.hpp.in
         ${RADEX_GENERATED_INCLUDE_DIR}/radex/build_config.hpp
