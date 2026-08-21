@@ -30,12 +30,13 @@ async def test_start_ready_shutdown_roundtrip():
 
 
 async def test_client_roundtrip_put_get_scalar():
+    from radex.clients.core import DragonClient
     from radex.handles.handles import IncomingHandle, OutgoingHandle
 
     store = DragonStore(managers_per_node=1, n_nodes=1)
     await store.start()
     try:
-        client = store.client(timeout=5)
+        client = DragonClient(descriptor=store.endpoints[0].serialize(), timeout=5)
         client.put_scalar(OutgoingHandle("store-test-key"), 0.5)
         assert client.get_scalar(IncomingHandle("store-test-key")) == 0.5
     finally:

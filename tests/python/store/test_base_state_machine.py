@@ -19,9 +19,6 @@ class _FakeEndpoint(Endpoint):
     def serialize(self) -> str:
         return self.tag
 
-    def client(self, **kwargs):
-        return {"tag": self.tag, **kwargs}
-
 
 class _FakeStore(Store):
     def __init__(self, fail_start: bool = False, fail_ready: bool = False):
@@ -129,14 +126,6 @@ async def test_shutdown_after_failure_is_noop_and_invokes_hook_once():
     await store.shutdown()
     assert store.state is StoreState.SHUTDOWN
     assert store.shutdown_calls == 1
-
-
-async def test_store_client_delegates_and_gates_on_readiness():
-    store = _FakeStore()
-    with pytest.raises(StoreNotReadyError):
-        store.client()
-    await store.start()
-    assert store.client(extra=1) == {"tag": "fake", "extra": 1}
 
 
 async def test_ready_reflects_lifecycle():

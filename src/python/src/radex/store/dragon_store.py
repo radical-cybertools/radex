@@ -23,20 +23,18 @@ class DragonEndpoint(Endpoint):
 
     Unlike Redis, there is no host/port here -- `serialize()` returns the
     opaque base64 descriptor produced by `DDict.serialize()`, which is what
-    both the compiled `radex::drg::ddict::Client` and `DDict.attach()` expect.
+    both the compiled `radex::drg::ddict::Client` and `DDict.attach()`
+    expect. `DragonEndpoint` never constructs a client itself -- build one
+    directly from the descriptor, e.g.::
+
+        from radex.clients.core import DragonClient
+        client = DragonClient(descriptor=endpoint.serialize(), timeout=5)
     """
 
     descriptor: str
 
     def serialize(self) -> str:
         return self.descriptor
-
-    def client(self, *, timeout: int = 5) -> Any:
-        # Deferred import: radex.store must stay importable even when the
-        # compiled radex.clients.core extension isn't available/built.
-        from radex.clients.core import DragonClient
-
-        return DragonClient(descriptor=self.descriptor, timeout=timeout)
 
 
 class DragonStore(Store):
@@ -54,10 +52,11 @@ class DragonStore(Store):
     `wait_for_keys=False`, so any other value would guarantee every
     downstream C++/Cython client fails to construct.
 
-    Client lifetime note: drop/`del` any client from `.client()` before
-    calling `shutdown()`. Destroying the DDict first and letting a client
-    outlive it is harmless but prints a DRAGON_OBJECT_DESTROYED message from
-    the compiled client's destructor when it later tries to detach.
+    Client lifetime note: drop/`del` any `DragonClient` constructed from
+    this store's endpoint before calling `shutdown()`. Destroying the DDict
+    first and letting a client outlive it is harmless but prints a
+    DRAGON_OBJECT_DESTROYED message from the compiled client's destructor
+    when it later tries to detach.
     """
 
     def __init__(

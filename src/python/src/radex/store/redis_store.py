@@ -28,13 +28,18 @@ class RedisEndpoint(Endpoint):
     SSDB env-var format read by the existing compiled
     `radex::redis::smartredis::Client` (`include/radex/smartredis.hpp`) --
     RadexStore never sets this into os.environ itself; wire it through
-    yourself if you need that compiled client to attach to a node this
+    yourself if you need the typed RADEX client to attach to a node this
     Store launched, e.g.::
 
         os.environ["RADEX_STORE"] = endpoint.serialize()
         os.environ["RADEX_STORE_OPTS"] = "<SmartRedis SR_DB_TYPE for a
             standalone/non-cluster instance -- verify the exact accepted
             string against the SmartRedis ConfigOptions docs>"
+        from radex.clients.core import RedisClient
+        client = RedisClient()
+
+    `RedisEndpoint` never constructs a client itself -- for a raw
+    redis-py client instead, use `RedisStore.client()`.
     """
 
     host: str
@@ -42,14 +47,6 @@ class RedisEndpoint(Endpoint):
 
     def serialize(self) -> str:
         return f"{self.host}:{self.port}"
-
-    def client(self, **kwargs: Any) -> "redis.Redis":
-        if redis is None:
-            raise ImportError(
-                "redis-py is required for RedisEndpoint.client(); "
-                "install with `pip install radex[redis]`."
-            )
-        return redis.Redis(host=self.host, port=self.port, **kwargs)
 
 
 class RedisStore(Store):
@@ -65,6 +62,12 @@ class RedisStore(Store):
     host/port and executed directly, never via a shell) plus an explicit
     `port`, since a free port picked on the launching host says nothing
     about availability on a remote target host.
+
+    `RedisStore.client(index=0)` is a convenience for a raw redis-py client
+    on one node, for direct redis-py interaction. It is not RADEX's typed
+    client -- for `put_scalar`/`get_scalar`/`put_tensor`/`get_tensor`,
+    construct `radex.clients.core.RedisClient` yourself from an endpoint's
+    `serialize()` (see `RedisEndpoint`'s docstring).
     """
 
     def __init__(
@@ -102,6 +105,19 @@ class RedisStore(Store):
         self._shutdown_grace_period = shutdown_grace_period
         self._processes: dict[int, asyncio.subprocess.Process] = {}
         self._planned: list[tuple[str, int]] = []
+
+    def client(self, index: int = 0, **kwargs: Any) -> "redis.Redis":
+        """Raw redis-py client for one node (default: the first), for
+        direct redis-py interaction. This is not RADEX's typed client --
+        for that, construct `radex.clients.core.RedisClient` yourself (see
+        `RedisEndpoint`'s docstring)."""
+        if redis is None:
+            raise ImportError(
+                "redis-py is required for RedisStore.client(); "
+                "install with `pip install radex[redis]`."
+            )
+        endpoint = self.endpoints[index]
+        return redis.Redis(host=endpoint.host, port=endpoint.port, **kwargs)
 
     def _resolve_port(self) -> int:
         if self._explicit_port is not None:

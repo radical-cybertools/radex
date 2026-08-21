@@ -9,9 +9,11 @@ Architecture
 
     DragonStore.start()     -> constructs the DDict, blocks until ready
     DragonStore.endpoints   -> [DragonEndpoint(descriptor=...)]
-    DragonStore.client()    -> a real radex.clients.core.DragonClient bound
-                                to this store's DDict
     DragonStore.shutdown()  -> destroys the DDict
+
+  DragonStore never constructs a client itself -- a real
+  radex.clients.core.DragonClient is built directly from the endpoint's
+  serialized descriptor, below.
 
   The serialized descriptor (`store.endpoints[0].serialize()`) is what you'd
   hand to a separately-launched process (env var, task kwarg, etc.) -- the
@@ -26,9 +28,11 @@ import os
 import pathlib
 import time
 
+import numpy as np
 from dragon.native.process import Process, ProcessTemplate
 
 from radex import DragonStore
+from radex.clients.core import DragonClient
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 HERE = pathlib.Path(__file__).parent.absolute()
@@ -42,8 +46,9 @@ async def main() -> int:
     await store.start()
     print(f"[Driver] DragonStore ready: {store.endpoints[0].serialize()[:32]}...")
 
-    # ── 2. A ready-to-use client, from the Store itself ──────────────────────
-    client = store.client(timeout=5)
+    # ── 2. RADEX client, built directly from the endpoint's descriptor --
+    #      Store never constructs clients itself ─────────────────────────
+    client = DragonClient(descriptor=store.endpoints[0].serialize(), timeout=5)
 
     try:
         # ── 3. Hand the serialized descriptor to a separately-launched
@@ -65,9 +70,26 @@ async def main() -> int:
             print("[Driver] Setting Double")
             client.put_scalar(OutgoingHandle("py-double"), 9.87)
 
+            time.sleep(3)
+            print("[Driver] Setting Numpy Float")
+            client.put_scalar(OutgoingHandle("py-np-float"), np.float32(45.6))
+
+            time.sleep(3)
+            print("[Driver] Setting Int Tensor")
+            client.put_tensor(OutgoingHandle("py-int-tensor"), np.arange(4, dtype=np.int32))
+
+            time.sleep(3)
+            print("[Driver] Setting Float Tensor")
+            client.put_tensor(
+                OutgoingHandle("py-float-tensor"),
+                np.arange(12, dtype=np.float64).reshape((6, 2)),
+            )
+
             print("[Driver] Looking for keys")
             print_scalar(client, "cpp-double")
             print_scalar(client, "cpp-int")
+            print_tensor(client, "cpp-double-tensor")
+            print_tensor(client, "cpp-long-tensor")
         finally:
             app.join()
     finally:
@@ -82,6 +104,12 @@ def print_scalar(client, key):
     print(f"[Driver] Waiting for scalar key `{key}`")
     scalar = client.wait_for_scalar(IncomingHandle(key), 10)
     print(f"[Driver] Got scalar: {scalar}")
+
+
+def print_tensor(client, key):
+    print(f"[Driver] Waiting for tensor key `{key}`")
+    tensor = client.wait_for_tensor(IncomingHandle(key), 10)
+    print(f"[Driver] Got tensor: {tensor.ravel()}")
 
 
 if __name__ == "__main__":

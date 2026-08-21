@@ -3,7 +3,6 @@ from __future__ import annotations
 import abc
 import asyncio
 import enum
-from typing import Any
 
 
 class StoreState(enum.Enum):
@@ -30,7 +29,7 @@ class StoreStateError(StoreError):
 
 
 class StoreNotReadyError(StoreStateError):
-    """Raised by `.endpoints`/`.client()` before a successful start()."""
+    """Raised by `.endpoints` before a successful start()."""
 
 
 class StoreTerminatedError(StoreStateError):
@@ -50,11 +49,6 @@ class Endpoint(abc.ABC):
         """Return a string a caller can pass through explicitly (env var,
         kwarg, task arg) to reconnect a client elsewhere. Store never sets
         this into os.environ itself -- callers own that decision."""
-
-    @abc.abstractmethod
-    def client(self, **kwargs: Any) -> Any:
-        """Construct a ready-to-use client bound to this endpoint. The
-        concrete return type is backend-specific."""
 
 
 class Store(abc.ABC):
@@ -136,9 +130,6 @@ class Store(abc.ABC):
                 self._state = StoreState.SHUTDOWN
                 self._endpoints = []
             return self
-
-    def client(self, index: int = 0, **kwargs: Any) -> Any:
-        return self.endpoints[index].client(**kwargs)
 
     @abc.abstractmethod
     async def _do_start(self, wait: bool) -> list[Endpoint]:
