@@ -8,7 +8,7 @@ def test_delete_typed_item(client, random_np_value):
     client.put_scalar(OutgoingHandle(key), random_np_value)
     assert client.contains(key)
 
-    client.delete_item(IncomingHandle(key))
+    client.delete_item(OutgoingHandle(key))
 
     assert not client.contains(key)
     with pytest.raises(Exception):
@@ -20,6 +20,6 @@ def test_delete_raw_key(client, random_picklable):
     client.put_picklable(key, random_picklable)
     assert client.contains(key)
 
-    client.delete_item(IncomingHandle(key))
+    client.delete_item(OutgoingHandle(key))
 
     assert not client.contains(key)

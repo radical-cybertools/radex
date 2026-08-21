@@ -217,7 +217,7 @@ class IClient {
                            std::chrono::milliseconds timeout);
 
     /// Delete a typed value and its associated metadata.
-    void delete_item(const data::IncomingHandle &handle);
+    void delete_item(const data::OutgoingHandle &handle);
 
   public:
     /// Store a scalar value under `handle`.

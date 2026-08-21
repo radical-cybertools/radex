@@ -83,12 +83,12 @@ TEMPLATE_TEST_CASE("In memory client test cases", "[in-mem]", std::int32_t,
 
     SECTION("Client can delete a scalar value and its metadata") {
         const radex::data::OutgoingHandle outgoing{"my-scalar"};
-        const radex::data::IncomingHandle incoming{"my-scalar"};
+        const radex::data::OutgoingHandle deletion_handle{"my-scalar"};
         client.put_scalar(outgoing, TestType{});
         REQUIRE(client.contains(outgoing.key()));
         REQUIRE(client.contains(outgoing.metadata_key()));
 
-        client.delete_item(incoming);
+        client.delete_item(deletion_handle);
 
         REQUIRE_FALSE(client.contains(outgoing.key()));
         REQUIRE_FALSE(client.contains(outgoing.metadata_key()));
@@ -96,14 +96,14 @@ TEMPLATE_TEST_CASE("In memory client test cases", "[in-mem]", std::int32_t,
 
     SECTION("Client can delete a tensor value and its metadata") {
         const radex::data::OutgoingHandle outgoing{"my-tensor-to-delete"};
-        const radex::data::IncomingHandle incoming{"my-tensor-to-delete"};
+        const radex::data::OutgoingHandle deletion_handle{"my-tensor-to-delete"};
         const std::vector<radex::detail::MetaInt> dims{2};
         const std::vector<TestType> data{TestType{1}, TestType{2}};
         client.put_tensor(outgoing, dims, data);
         REQUIRE(client.contains(outgoing.key()));
         REQUIRE(client.contains(outgoing.metadata_key()));
 
-        client.delete_item(incoming);
+        client.delete_item(deletion_handle);
 
         REQUIRE_FALSE(client.contains(outgoing.key()));
         REQUIRE_FALSE(client.contains(outgoing.metadata_key()));

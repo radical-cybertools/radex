@@ -65,7 +65,7 @@ cdef class PyClient:
         cdef np.number val = coerce_py_objects_to_np_numbers(value)
         return self._put_scalar(handle, val)
 
-    def delete_item(self, IncomingHandle handle):
+    def delete_item(self, OutgoingHandle handle):
         """Delete a typed value and its associated metadata."""
         self._client.delete_item(handle.unwrap()[0])
 
