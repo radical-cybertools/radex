@@ -6,8 +6,6 @@ cimport numpy as np
 import numpy as np
 np.import_array()
 
-from radex.exceptions import RankMismatchError
-
 ctypedef fused SupportedType:
     int32_t
     int64_t
@@ -72,6 +70,7 @@ cdef inline np.number coerce_py_objects_to_np_numbers(object value):
 
 cdef inline construct_scalar(const ItemInfo &info):
     if info.metadata().n_dims() != 0:
+        from radex.exceptions import RankMismatchError
         raise RankMismatchError(
             "Attempted to retrieve scalar at a key with a vector")
 
