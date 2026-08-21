@@ -29,19 +29,34 @@ if(ENABLE_CXX)
     # ============================================================================
     # RaDex Library
     # ============================================================================
+    set(RADEX_BUILD_HAS_DRAGON 0)
+    if(BUILD_DRAGON)
+        set(RADEX_BUILD_HAS_DRAGON 1)
+    endif()
+
+    set(RADEX_BUILD_HAS_SMARTREDIS 0)
+    if(BUILD_SMARTREDIS)
+        set(RADEX_BUILD_HAS_SMARTREDIS 1)
+    endif()
+
+    set(RADEX_GENERATED_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/include)
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../include/
+        DESTINATION ${RADEX_GENERATED_INCLUDE_DIR}
+    )
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/radex-build-config.hpp.in
+        ${RADEX_GENERATED_INCLUDE_DIR}/radex/build_config.hpp
+        @ONLY
+    )
+
     set(RADEX_SOURCES)
     list(APPEND RADEX_SOURCES cpp/client.cpp)
     list(APPEND RADEX_SOURCES cpp/handles.cpp)
-
-    if(BUILD_SMARTREDIS)
-        list(APPEND RADEX_SOURCES cpp/smartredis.cpp)
-    endif()
-
-    if(BUILD_DRAGON)
-        list(APPEND RADEX_SOURCES cpp/dragon.cpp)
-    endif()
+    list(APPEND RADEX_SOURCES cpp/smartredis.cpp)
+    list(APPEND RADEX_SOURCES cpp/dragon.cpp)
 
     add_library(objlib OBJECT ${RADEX_SOURCES})
+    target_compile_options(objlib PRIVATE -Wpedantic -Wall)
 
     set(LIBRARY_TARGETS objlib)
     if(BUILD_SHARED_LIBS)
@@ -68,14 +83,14 @@ if(ENABLE_CXX)
     add_library(radex::radex ALIAS radex)
     target_link_libraries(radex INTERFACE ${RADEX_PRIMARY_TARGET})
     target_include_directories(radex INTERFACE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+        $<BUILD_INTERFACE:${RADEX_GENERATED_INCLUDE_DIR}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
     # Apply include and properties to each library being built
     foreach(target IN LISTS LIBRARY_TARGETS)
         target_include_directories(${target} PUBLIC
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+            $<BUILD_INTERFACE:${RADEX_GENERATED_INCLUDE_DIR}>
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         )
         radex_set_target_install_rpath(${target} smartredis dragon)
@@ -107,7 +122,7 @@ if(ENABLE_CXX)
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../include/
+    install(DIRECTORY ${RADEX_GENERATED_INCLUDE_DIR}/
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
@@ -153,11 +168,19 @@ if(ENABLE_PYTHON)
   message(STATUS "Python package will be installed")
   message(STATUS "\tPython Executable: ${Python3_EXECUTABLE}")
   message(STATUS "\tPython Version: ${Python3_VERSION}")
-  add_custom_target(install_python_package ALL
-      COMMAND ${CMAKE_COMMAND} -E env
-          DRAGON_INCLUDE_DIR=${DRAGON_INCLUDE_DIR}
-          DRAGON_LIB_DIR=${DRAGON_LIB_DIR}
-          ${Python3_EXECUTABLE} -m pip install "${CMAKE_CURRENT_SOURCE_DIR}/python"
-      COMMENT "Building and installing Python package"
-  )
+
+  #
+  install(CODE "
+      message(STATUS \"Building and installing Python package\")
+      execute_process(
+          COMMAND ${CMAKE_COMMAND} -E env
+              RADEX_INSTALL_DIR=${CMAKE_INSTALL_PREFIX}
+              DRAGON_INCLUDE_DIR=${DRAGON_INCLUDE_DIR}
+              DRAGON_LIB_DIR=${DRAGON_LIB_DIR}
+              SMARTREDIS_INCLUDE_DIR=${SMARTREDIS_INCLUDE_DIR}
+              SMARTREDIS_LIB_DIR=${SMARTREDIS_LIB_DIR}
+              ${Python3_EXECUTABLE} -m pip install \"${CMAKE_CURRENT_SOURCE_DIR}/python\"
+          COMMAND_ERROR_IS_FATAL ANY
+      )
+  ")
 endif()

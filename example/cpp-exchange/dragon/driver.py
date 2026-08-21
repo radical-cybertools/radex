@@ -11,15 +11,21 @@ EXAMPLES_BIN_DIR = ROOT / "install" / "bin" / "examples"
 
 
 def main() -> int:
-    dd = DDict(managers_per_node=1, n_nodes=1, trace=False)
+    dd = DDict(
+        managers_per_node=1,
+        n_nodes=1,
+        trace=False,
+        wait_for_keys=True,
+        working_set_size=4,
+    )
     serial_dd = dd.serialize()
     producer_tmpl = ProcessTemplate(
         target=os.fspath(EXAMPLES_BIN_DIR / "dragon-cpp-producer"),
-        env={"SERIALIZED_DDICT": serial_dd},
+        env={"RADEX_STORE": serial_dd},
     )
     consumer_tmpl = ProcessTemplate(
         target=os.fspath(EXAMPLES_BIN_DIR / "dragon-cpp-consumer"),
-        env={"SERIALIZED_DDICT": serial_dd},
+        env={"RADEX_STORE": serial_dd},
     )
 
     print("==> Running Producer...", flush=True)
