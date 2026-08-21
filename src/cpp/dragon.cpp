@@ -67,6 +67,11 @@ bool Client::contains(std::string_view key) {
     return ddict.contains(key_);
 }
 
+void Client::delete_key(std::string_view key) {
+    dragon::SerializableString key_{std::string{key}};
+    ddict.erase(key_);
+}
+
 void Client::put_bytes(std::string_view key, const void *bytes,
                        detail::MetaInt length) {
     // FIXME: Gross const cast needed -- check with Kent\!\!

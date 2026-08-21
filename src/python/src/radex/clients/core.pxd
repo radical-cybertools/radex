@@ -25,6 +25,7 @@ cdef extern from "radex/client.hpp" namespace "radex":
         void put_bytes(string_view, const void*, size_t) except +raise_py_error
         BytesBuffer get_bytes(string_view) except +raise_py_error
         BytesBuffer wait_for_bytes(string_view, milliseconds) except +raise_py_error
+        void delete_key(string_view) except +
         # <<< End Virtual Methods <<<
 
         void put_scalar[T](const OutgoingHandle&, T) except +raise_py_error
@@ -35,3 +36,4 @@ cdef extern from "radex/client.hpp" namespace "radex":
         unique_ptr[ItemInfo] get_item_info_ptr(const IncomingHandle&) except +raise_py_error
         unique_ptr[ItemInfo] wait_for_item_info_ptr(
                 const IncomingHandle&, milliseconds) except +raise_py_error
+        void delete_item(const IncomingHandle&) except +raise_py_error

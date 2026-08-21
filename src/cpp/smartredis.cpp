@@ -63,6 +63,10 @@ bool Client::contains(std::string_view key) {
     return client.key_exists(std::string{key});
 }
 
+void Client::delete_key(std::string_view key) {
+    client.delete_key(std::string{key});
+}
+
 void Client::put_bytes(std::string_view key, const void *bytes,
                        detail::MetaInt length) {
     client.put_bytes(std::string{key}, bytes, length);

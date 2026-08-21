@@ -186,6 +186,8 @@ class IClient {
 
     /// @return True if `key` exists in the backing store.
     virtual bool contains(std::string_view key) = 0;
+    /// Delete the entry stored under `key`.
+    virtual void delete_key(std::string_view key) = 0;
     /// Store raw bytes under `key`, overwriting any existing value.
     virtual void put_bytes(std::string_view key, const void *bytes,
                            detail::MetaInt length) = 0;
@@ -212,6 +214,9 @@ class IClient {
     std::unique_ptr<detail::ItemInfo>
     wait_for_item_info_ptr(const data::IncomingHandle &handle,
                            std::chrono::milliseconds timeout);
+
+    /// Delete a typed value and its associated metadata.
+    void delete_item(const data::IncomingHandle &handle);
 
   public:
     /// Store a scalar value under `handle`.
@@ -361,6 +366,10 @@ class Client : public IClient {
 
         bool contains(std::string_view key) override {
                 throw_backend_unavailable();
+        }
+
+        void delete_key(std::string_view key) override {
+            throw_backend_unavailable();
         }
 
         void put_bytes(std::string_view key, const void *bytes, detail::MetaInt length) override {

@@ -65,6 +65,15 @@ cdef class PyClient:
         cdef np.number val = coerce_py_objects_to_np_numbers(value)
         return self._put_scalar(handle, val)
 
+    def delete_key(self, str key):
+        """Delete a raw entry from the backing store."""
+        cdef string key_ = encode_str(key)
+        self._client.delete_key(key_.c_str())
+
+    def delete_item(self, IncomingHandle handle):
+        """Delete a typed value and its associated metadata."""
+        self._client.delete_item(handle.unwrap()[0])
+
     def _put_scalar(self, OutgoingHandle handle, np.number value not None):
         # FIXME: Get rid of this ugly swith statment. Ideally we could used the
         #        fused `SupportedType` type, but there seems to be a known
