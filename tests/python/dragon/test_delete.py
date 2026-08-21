@@ -11,8 +11,7 @@ def test_delete_typed_item(client, random_np_value):
     client.delete_item(OutgoingHandle(key))
 
     assert not client.contains(key)
-    with pytest.raises(Exception):
-        client.get_scalar(IncomingHandle(key))
+    assert not client.contains(f"meta::{key}")
 
 
 def test_delete_raw_key(client, random_picklable):
