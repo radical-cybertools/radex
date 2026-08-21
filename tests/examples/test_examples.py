@@ -5,8 +5,14 @@ import sys
 
 def test_run_example(example, tmp_path, monkeypatch):
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # FIXME: Ideally we can remove this env futzing when we figure out why
-    #        the examples are linking twice against dragon.
+    # FIXME: Ideally we can remove this env futzing when we figure out how to
+    #        properly set the rpath on the examples such that `libdragon.so`
+    #        does not need to be present on
+    #        `LD_LIBRARY_PATH`/`DYLD_LIBRARY_PATH`. For now we can just add it
+    #        based on the install site of the dragon package. There is likely a
+    #        similar error with `libsmartredis.so` as well, but our CI appends
+    #        the path to the library look up env var already, so we do not need
+    #        to do that here.
     # =================================================================================
     ld_lib_path = "DYLD_LIBRARY_PATH" if sys.platform == "darwin" else "LD_LIBRARY_PATH"
     try:
