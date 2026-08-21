@@ -48,7 +48,6 @@ def _required_env(name, backend):
 
 
 def make_extensions():
-    # PY_SRC provides radex/utils/exception_translation.hpp
     include_dirs = [
         os.fspath(RADEX_INCLUDE_DIR),
         os.fspath(PY_SRC),
