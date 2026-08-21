@@ -28,6 +28,12 @@ class UnorderedMapClient : public radex::IClient {
         return true;
     }
 
+    private:
+        void delete_key(std::string_view key) override {
+        _map.erase(std::string{key});
+    }
+
+    public:
     void put_bytes(std::string_view key, const void *bytes,
                    radex::detail::MetaInt length) override {
         auto ptr = static_cast<const std::uint8_t *>(bytes);

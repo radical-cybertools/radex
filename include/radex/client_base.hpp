@@ -186,8 +186,6 @@ class IClient {
 
     /// @return True if `key` exists in the backing store.
     virtual bool contains(std::string_view key) = 0;
-    /// Delete the entry stored under `key`.
-    virtual void delete_key(std::string_view key) = 0;
     /// Store raw bytes under `key`, overwriting any existing value.
     virtual void put_bytes(std::string_view key, const void *bytes,
                            detail::MetaInt length) = 0;
@@ -203,6 +201,9 @@ class IClient {
     // <<< End Virtual Methods <<<
 
   private:
+    /// Delete the entry stored under `key` in the backing store.
+    virtual void delete_key(std::string_view key) = 0;
+
     detail::ItemInfo get_item_info(
         std::function<detail::BytesBuffer(std::string_view)> fetch_bytes,
         const data::IncomingHandle &handle);
@@ -368,6 +369,7 @@ class Client : public IClient {
                 throw_backend_unavailable();
         }
 
+    private:
         void delete_key(std::string_view key) override {
             throw_backend_unavailable();
         }

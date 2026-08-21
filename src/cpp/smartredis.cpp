@@ -64,7 +64,7 @@ bool Client::contains(std::string_view key) {
 }
 
 void Client::delete_key(std::string_view key) {
-    client.delete_key(std::string{key});
+    client.delete_bytes(std::string{key});
 }
 
 void Client::put_bytes(std::string_view key, const void *bytes,

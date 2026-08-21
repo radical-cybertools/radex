@@ -21,6 +21,8 @@ class Client : public IClient {
 
     Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict);
 
+    void delete_key(std::string_view key) override;
+
     bool dormant_timeout_warning_triggered = false;
 
   public:
@@ -37,7 +39,6 @@ class Client : public IClient {
     ~Client() = default;
 
     bool contains(std::string_view key) override;
-    void delete_key(std::string_view key) override;
     detail::BytesBuffer wait_for_bytes(std::string_view key,
                                        std::chrono::milliseconds timeout) override;
     void put_bytes(std::string_view key, const void *bytes,

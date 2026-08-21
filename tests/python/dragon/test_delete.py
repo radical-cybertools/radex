@@ -20,6 +20,6 @@ def test_delete_raw_key(client, random_picklable):
     client.put_picklable(key, random_picklable)
     assert client.contains(key)
 
-    client.delete_key(key)
+    client.delete_item(IncomingHandle(key))
 
     assert not client.contains(key)

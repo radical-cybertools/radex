@@ -20,6 +20,8 @@ class Client : public IClient {
     Client(std::unique_ptr<SmartRedis::ConfigOptions> options,
            std::string_view logger_name);
 
+    void delete_key(std::string_view key) override;
+
   public:
     /// Connect using configuration read from the environment.
     Client();
@@ -33,7 +35,6 @@ class Client : public IClient {
     ~Client() = default;
 
     bool contains(std::string_view key) override;
-    void delete_key(std::string_view key) override;
     void put_bytes(std::string_view key, const void *bytes,
                    detail::MetaInt length) override;
     radex::detail::BytesBuffer get_bytes(std::string_view key) override;
