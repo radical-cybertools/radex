@@ -48,7 +48,9 @@ async def test_multi_node_concurrent_launch(_requires_redis_server):
 
 
 @pytest.mark.redis
-async def test_partial_failure_rolls_back_all_nodes(_requires_redis_server, monkeypatch):
+async def test_partial_failure_rolls_back_all_nodes(
+    _requires_redis_server, monkeypatch
+):
     store = RedisStore(hosts=["localhost"] * 3, startup_timeout=1.0, poll_interval=0.05)
     seen: dict[tuple[str, int], int] = {}
     orig_ping = RedisStore._ping
@@ -116,7 +118,9 @@ async def test_terminate_one_skips_already_exited_process():
 
 
 @pytest.mark.redis
-async def test_client_raises_import_error_without_redis_py(_requires_redis_server, monkeypatch):
+async def test_client_raises_import_error_without_redis_py(
+    _requires_redis_server, monkeypatch
+):
     monkeypatch.setattr(redis_store_module, "redis", None)
     store = RedisStore()
     await store.start()

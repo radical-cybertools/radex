@@ -76,7 +76,9 @@ async def main() -> int:
 
             time.sleep(3)
             print("[Driver] Setting Int Tensor")
-            client.put_tensor(OutgoingHandle("py-int-tensor"), np.arange(4, dtype=np.int32))
+            client.put_tensor(
+                OutgoingHandle("py-int-tensor"), np.arange(4, dtype=np.int32)
+            )
 
             time.sleep(3)
             print("[Driver] Setting Float Tensor")
