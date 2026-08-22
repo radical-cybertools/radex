@@ -3,9 +3,9 @@ import time
 
 import pytest
 
+import radex.store.redis_store as redis_store_module
 from radex.store.base import StoreStartupError, StoreState
 from radex.store.redis_store import RedisStore
-import radex.store.redis_store as redis_store_module
 
 
 @pytest.mark.redis
