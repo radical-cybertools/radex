@@ -70,8 +70,9 @@ cdef inline np.number coerce_py_objects_to_np_numbers(object value):
 
 cdef inline construct_scalar(const ItemInfo &info):
     if info.metadata().n_dims() != 0:
-        # TODO: Better error type/msg here
-        raise ValueError("Attempted to retrieve scalar at a key with a vector")
+        from radex.exceptions import RankMismatchError
+        raise RankMismatchError(
+            "Attempted to retrieve scalar at a key with a vector")
 
     cdef DType type_ = info.metadata().type()
     return make_ndarray(type_, info.data(), 1)[0]
@@ -80,8 +81,9 @@ cdef inline construct_scalar(const ItemInfo &info):
 cdef inline construct_tensor(const ItemInfo &info):
     cdef MetaInt n_dims = info.metadata().n_dims()
     if n_dims == 0:
-        # TODO: Better error type/msg here
-        raise ValueError("Attempted to retrieve vector at a key with a scalar")
+        from radex.exceptions import RankMismatchError
+        raise RankMismatchError(
+            "Attempted to retrieve vector at a key with a scalar")
 
     cdef const MetaInt[:] dims = <const MetaInt[:n_dims]> info.metadata().dims_ptr()
     cdef n_elements = info.metadata().n_elements()

@@ -8,6 +8,7 @@ asyncio_mode = "auto"
 markers = [
     "slow: Test may be slow to run",
     "compiled: Test has a component compiled at run time",
+    "example: Test is running one of the examples",
     "redis: Test requires a real redis-server binary on PATH"
 ]
 

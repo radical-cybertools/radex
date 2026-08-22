@@ -29,6 +29,7 @@ install/
 
 # Docs
 site/
-docs/api/
+docs/api/*
+!docs/api/index.md
 docs/radexCpp/
 docs/doxyoutput/

@@ -15,6 +15,7 @@
 #include <utility>
 #include <vector>
 
+#include "radex/exceptions.hpp"
 #include "radex/handles.hpp"
 
 namespace radex {
@@ -200,6 +201,9 @@ class IClient {
     // <<< End Virtual Methods <<<
 
   private:
+    /// Delete the entry stored under `key` in the backing store.
+    virtual void delete_key(std::string_view key) = 0;
+
     detail::ItemInfo get_item_info(
         std::function<detail::BytesBuffer(std::string_view)> fetch_bytes,
         const data::IncomingHandle &handle);
@@ -211,6 +215,9 @@ class IClient {
     std::unique_ptr<detail::ItemInfo>
     wait_for_item_info_ptr(const data::IncomingHandle &handle,
                            std::chrono::milliseconds timeout);
+
+    /// Delete a typed value and its associated metadata.
+    void delete_item(const data::OutgoingHandle &handle);
 
   public:
     /// Store a scalar value under `handle`.
@@ -302,13 +309,11 @@ class IClient {
     typename std::enable_if<data::is_supported_type<T>::value, T>::type
     assemble_scalar(const detail::ItemInfo &info) {
         if (info.metadata().n_dims() != 0) {
-            // TODO: Better error type/message here
-            throw std::runtime_error(
+            throw RankMismatchError(
                 "Attempted to retrieve scalar at a key with a vector");
         }
         if (info.metadata().type() != data::encode_type<T>()) {
-            // TODO: Better error type/message here
-            throw std::runtime_error(
+            throw DTypeMismatchError(
                 "Attempted to retrieve scalar of mismatched type");
         }
         T converted;
@@ -321,13 +326,11 @@ class IClient {
                             TensorInfo<T>>::type
     assemble_tensor(const detail::ItemInfo &info) {
         if (info.metadata().n_dims() == 0) {
-            // TODO: Better error type/message here
-            throw std::runtime_error(
+            throw RankMismatchError(
                 "Attempted to retrieve vector at a key with a scalar");
         }
         if (info.metadata().type() != data::encode_type<T>()) {
-            // TODO: Better error type/message here
-            throw std::runtime_error(
+            throw DTypeMismatchError(
                 "Attempted to retrieve vector of mismatched type");
         }
 
@@ -340,7 +343,8 @@ class IClient {
 namespace unsupported_backend {
 
 /// Placeholder `IClient` used when a backend was disabled at build time; every
-/// method throws `std::runtime_error` explaining how to rebuild with it enabled.
+/// method throws `radex::BackendUnavailableError` explaining how to rebuild
+/// with it enabled.
 class Client : public IClient {
     private:
         std::string backend_name;
@@ -348,7 +352,7 @@ class Client : public IClient {
 
     protected:
         [[noreturn]] void throw_backend_unavailable() const {
-                throw std::runtime_error(
+                throw BackendUnavailableError(
                         "RaDex was built without " + backend_name + " backend support. "
                         "Rebuild with -D" + enable_option + "=ON to enable this client."
                 );
@@ -363,6 +367,11 @@ class Client : public IClient {
 
         bool contains(std::string_view key) override {
                 throw_backend_unavailable();
+        }
+
+    private:
+        void delete_key(std::string_view key) override {
+            throw_backend_unavailable();
         }
 
         void put_bytes(std::string_view key, const void *bytes, detail::MetaInt length) override {

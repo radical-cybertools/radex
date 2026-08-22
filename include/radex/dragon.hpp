@@ -21,6 +21,8 @@ class Client : public IClient {
 
     Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict);
 
+    void delete_key(std::string_view key) override;
+
     bool dormant_timeout_warning_triggered = false;
 
   public:
