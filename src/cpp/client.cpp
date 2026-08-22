@@ -105,6 +105,13 @@ IClient::wait_for_item_info_ptr(const data::IncomingHandle &handle,
         get_item_info(fetch_bytes, handle));
 }
 
+void IClient::delete_item(const data::OutgoingHandle &handle) {
+    delete_key(handle.key());
+    if (contains(handle.metadata_key())) {
+        delete_key(handle.metadata_key());
+    }
+}
+
 detail::MetaData IClient::get_meta_data(const data::IncomingHandle &handle) {
     return detail::MetaData::from_buffer(get_bytes(handle.metadata_key()));
 }
