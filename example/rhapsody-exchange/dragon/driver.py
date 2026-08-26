@@ -1,7 +1,7 @@
 """RHAPSODY-launched Dragon DDict exchange, executed via RHAPSODY tasks.
 
 Run with:
-    dragon -s -- python3 driver.py
+    dragon -s -- driver.py
 
 RHAPSODY's DragonDataBackend constructs and owns the `dragon.data.ddict.DDict`
 -- this driver never constructs the DDict itself, unlike
