@@ -168,6 +168,7 @@ class DragonExample(Example):
         pytest.param(example, id=example.test_id, marks=example.marks)
         for example in [
             LocalExample(EXAMPLES_DIR / "cpp-exchange/in-mem"),
+            LocalExample(EXAMPLES_DIR / "cpp-exchange/redis"),
             DragonExample(EXAMPLES_DIR / "cpp-exchange/dragon", num_nodes=None),
             DragonExample(
                 EXAMPLES_DIR / "py-cpp-exchange/dragon",
