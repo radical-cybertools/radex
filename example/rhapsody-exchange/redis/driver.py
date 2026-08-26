@@ -17,6 +17,7 @@ no knowledge of this module or anything else defined here.
 
 import asyncio
 import os
+import time
 
 from rhapsody.api import ComputeTask, Session
 from rhapsody.backends import ConcurrentExecutionBackend
@@ -51,6 +52,7 @@ def consume(descriptor):
     os.environ["RADEX_STORE_OPTS"] = "Standalone"
     client = RedisClient()
 
+    time.sleep(2)
     samples = client.wait_for_tensor(IncomingHandle("samples"), 10)
     count = client.wait_for_scalar(IncomingHandle("sample-count"), 10)
     return {
