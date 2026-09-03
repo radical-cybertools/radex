@@ -13,3 +13,7 @@ dependencies = [
     "cloudpickle",
     "numpy",
 ]
+
+[project.optional-dependencies]
+redis = ["redis>=5.0"]
+dragon = []

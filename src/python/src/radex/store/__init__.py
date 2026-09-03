@@ -1,9 +1,5 @@
-from radex.store import (
-    DragonEndpoint,
-    DragonStore,
+from radex.store.base import (
     Endpoint,
-    RedisEndpoint,
-    RedisStore,
     Store,
     StoreError,
     StoreNotReadyError,
@@ -12,6 +8,8 @@ from radex.store import (
     StoreStateError,
     StoreTerminatedError,
 )
+from radex.store.dragon_store import DragonEndpoint, DragonStore
+from radex.store.redis_store import RedisEndpoint, RedisStore
 
 __all__ = [
     "DragonEndpoint",
