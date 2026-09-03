@@ -20,6 +20,8 @@ class Client : public IClient {
     Client(std::unique_ptr<SmartRedis::ConfigOptions> options,
            std::string_view logger_name);
 
+    void delete_key(std::string_view key) override;
+
   public:
     /// Connect using configuration read from the environment.
     Client();
