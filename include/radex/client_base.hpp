@@ -5,11 +5,14 @@
 #include "radex/exceptions.hpp"
 #include "radex/handles.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <future>
+#include <iterator>
 #include <memory>
 #include <numeric>
 #include <string>
@@ -306,10 +309,30 @@ class IClient {
     gather_tensors(const std::vector<data::IncomingHandle> &handles,
                    std::chrono::milliseconds timeout) {
         // TODO: These tensors should be retrieved in parrallel
+
+        auto handle_to_future_tensor =
+            [this, timeout](const data::IncomingHandle &handle) {
+                return wait_for_tensor<T>(handle, timeout);
+                // return std::async(std::launch::async,
+                // &IClient::wait_for_tensor<T>,
+                //                   this, handle, timeout);
+            };
+
+        // std::vector<std::future<TensorInfo<T>>> futures;
+        std::vector<TensorInfo<T>> futures;
+        futures.reserve(handles.size());
+        std::transform(std::make_move_iterator(handles.begin()),
+                       std::make_move_iterator(handles.end()),
+                       std::back_inserter(futures), handle_to_future_tensor);
+
         std::vector<TensorInfo<T>> tensors;
-        for (const auto &handle : handles) {
-            tensors.push_back(wait_for_tensor<T>(handle, timeout));
-        }
+        tensors.reserve(futures.size());
+        std::transform(std::make_move_iterator(futures.begin()),
+                       std::make_move_iterator(futures.end()),
+                       std::back_inserter(tensors),
+                       [](TensorInfo<T> f) { return f; });
+        // [](std::future<TensorInfo<T>> f) { return f.get(); });
+
         return tensors;
     }
 
