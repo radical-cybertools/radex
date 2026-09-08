@@ -4,6 +4,10 @@ import shutil
 import textwrap
 import time
 
+# Needed before importing the smartsim/smartredis loggers
+os.environ["SMARTSIM_LOG_LEVEL"] = "QUIET"
+os.environ["SR_LOG_LEVEL"] = "QUIET"
+
 from smartsim import Experiment
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -18,7 +22,6 @@ def main() -> int:
     producer_name = "producer-{}"
     consumer_name = "consumer"
 
-    os.environ["SR_LOG_LEVEL"] = "QUIET"
     if (HERE / exp_name).exists():
         shutil.rmtree(HERE / exp_name)
 
@@ -53,7 +56,7 @@ def main() -> int:
         exp.stop(db)
 
     for i in range(NUM_PRODUCER_RANKS):
-        print("PRODUCER OUTPUT:")
+        print(f"PRODUCER {i} OUTPUT:")
         with open(
             HERE
             / exp_name
