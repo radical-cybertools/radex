@@ -45,3 +45,17 @@ install(
     TARGETS test-local-client
     DESTINATION ${CMAKE_INSTALL_BINDIR}/tests
 )
+
+# Compile C interface test executable (C++ code calling C interface)
+add_executable(test-c-interface test_c_interface.cpp)
+radex_set_target_install_rpath(
+  test-c-interface
+  smartredis
+  dragon
+)
+target_link_libraries(test-c-interface PRIVATE radex::radex)
+target_include_directories(test-c-interface PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../include)
+install(
+    TARGETS test-c-interface
+    DESTINATION ${CMAKE_INSTALL_BINDIR}/tests
+)
