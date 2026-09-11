@@ -3,6 +3,7 @@
 
 #include "radex/errno.h"
 #include "radex/handles_c.h"
+#include "radex/client_c_declaration_macros.h"
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -33,65 +34,77 @@ int radex_client_destroy(radex_client_t client);
 /// @param client Initialized radex client.
 /// @param handle Outgoing handle for the key.
 /// @param value Value to store.
-int radex_client_put_int32(radex_client_t client,
-                          radex_outgoing_handle_t* handle,
-                          int32_t value);
+RADEX_DECLARE_C_CLIENT_PUT_SCALAR(int32_t, int32)
 
 /// Retrieve an int32_t scalar.
 /// @param client Initialized radex client.
 /// @param handle Incoming handle for the key.
 /// @param out_value Pointer to store the retrieved value.
-int radex_client_get_int32(radex_client_t client,
-                          radex_incoming_handle_t* handle,
-                          int32_t* out_value);
+RADEX_DECLARE_C_CLIENT_GET_SCALAR(int32_t, int32)
+
+/// Block until an int32_t scalar is available, then retrieve it.
+/// @param client Initialized radex client.
+/// @param handle Incoming handle for the key.
+/// @param out_value Pointer to store the retrieved value.
+/// @param timeout_ms Maximum time to wait in milliseconds.
+RADEX_DECLARE_C_CLIENT_WAIT_FOR_SCALAR(int32_t, int32)
 
 /// Store an int64_t scalar.
 /// @param client Initialized radex client.
 /// @param handle Outgoing handle for the key.
 /// @param value Value to store.
-int radex_client_put_int64(radex_client_t client,
-                          radex_outgoing_handle_t* handle,
-                          int64_t value);
+RADEX_DECLARE_C_CLIENT_PUT_SCALAR(int64_t, int64)
 
 /// Retrieve an int64_t scalar.
 /// @param client Initialized radex client.
 /// @param handle Incoming handle for the key.
 /// @param out_value Pointer to store the retrieved value.
-int radex_client_get_int64(radex_client_t client,
-                          radex_incoming_handle_t* handle,
-                          int64_t* out_value);
+RADEX_DECLARE_C_CLIENT_GET_SCALAR(int64_t, int64)
+
+/// Block until an int64_t scalar is available, then retrieve it.
+/// @param client Initialized radex client.
+/// @param handle Incoming handle for the key.
+/// @param out_value Pointer to store the retrieved value.
+/// @param timeout_ms Maximum time to wait in milliseconds.
+RADEX_DECLARE_C_CLIENT_WAIT_FOR_SCALAR(int64_t, int64)
 
 /// Store a float scalar.
 /// @param client Initialized radex client.
 /// @param handle Outgoing handle for the key.
 /// @param value Value to store.
-int radex_client_put_float32(radex_client_t client,
-                            radex_outgoing_handle_t* handle,
-                            float value);
+RADEX_DECLARE_C_CLIENT_PUT_SCALAR(float, float32)
 
 /// Retrieve a float scalar.
 /// @param client Initialized radex client.
 /// @param handle Incoming handle for the key.
 /// @param out_value Pointer to store the retrieved value.
-int radex_client_get_float32(radex_client_t client,
-                            radex_incoming_handle_t* handle,
-                            float* out_value);
+RADEX_DECLARE_C_CLIENT_GET_SCALAR(float, float32)
+
+/// Block until a float scalar is available, then retrieve it.
+/// @param client Initialized radex client.
+/// @param handle Incoming handle for the key.
+/// @param out_value Pointer to store the retrieved value.
+/// @param timeout_ms Maximum time to wait in milliseconds.
+RADEX_DECLARE_C_CLIENT_WAIT_FOR_SCALAR(float, float32)
 
 /// Store a double scalar.
 /// @param client Initialized radex client.
 /// @param handle Outgoing handle for the key.
 /// @param value Value to store.
-int radex_client_put_float64(radex_client_t client,
-                            radex_outgoing_handle_t* handle,
-                            double value);
+RADEX_DECLARE_C_CLIENT_PUT_SCALAR(double, float64)
 
 /// Retrieve a double scalar.
 /// @param client Initialized radex client.
 /// @param handle Incoming handle for the key.
 /// @param out_value Pointer to store the retrieved value.
-int radex_client_get_float64(radex_client_t client,
-                            radex_incoming_handle_t* handle,
-                            double* out_value);
+RADEX_DECLARE_C_CLIENT_GET_SCALAR(double, float64)
+
+/// Block until a double scalar is available, then retrieve it.
+/// @param client Initialized radex client.
+/// @param handle Incoming handle for the key.
+/// @param out_value Pointer to store the retrieved value.
+/// @param timeout_ms Maximum time to wait in milliseconds.
+RADEX_DECLARE_C_CLIENT_WAIT_FOR_SCALAR(double, float64)
 
 // ============================================================================
 // Tensor Operations
@@ -103,9 +116,7 @@ int radex_client_get_float64(radex_client_t client,
 /// @param data Pointer to flattened element data in row-major (C) order.
 /// @param rank Number of dimensions.
 /// @param dims Pointer to rank dimension sizes.
-int radex_client_put_tensor_int32(radex_client_t client,
-                                 radex_outgoing_handle_t* handle,
-                                 const int32_t* data, int rank, const int* dims);
+RADEX_DECLARE_C_CLIENT_PUT_TENSOR(int32_t, int32)
 
 /// Retrieve an int32_t tensor.
 /// @param client Initialized radex client.
@@ -115,115 +126,7 @@ int radex_client_put_tensor_int32(radex_client_t client,
 /// @param out_rank Output: number of dimensions.
 /// @param out_dims Buffer for dimension sizes (caller-allocated).
 /// @param max_dims Maximum capacity of out_dims buffer.
-int radex_client_get_tensor_int32(radex_client_t client,
-                                 radex_incoming_handle_t* handle,
-                                 int32_t* out_data, int max_elements,
-                                 int* out_rank, int* out_dims, int max_dims);
-
-/// Store an int64_t tensor.
-/// @param client Initialized radex client.
-/// @param handle Outgoing handle for the key.
-/// @param data Pointer to flattened element data in row-major (C) order.
-/// @param rank Number of dimensions.
-/// @param dims Pointer to rank dimension sizes.
-int radex_client_put_tensor_int64(radex_client_t client,
-                                 radex_outgoing_handle_t* handle,
-                                 const int64_t* data, int rank, const int* dims);
-
-/// Retrieve an int64_t tensor.
-/// @param client Initialized radex client.
-/// @param handle Incoming handle for the key.
-/// @param out_data Buffer to hold flattened element data (caller-allocated).
-/// @param max_elements Maximum capacity of out_data buffer.
-/// @param out_rank Output: number of dimensions.
-/// @param out_dims Buffer for dimension sizes (caller-allocated).
-/// @param max_dims Maximum capacity of out_dims buffer.
-int radex_client_get_tensor_int64(radex_client_t client,
-                                 radex_incoming_handle_t* handle,
-                                 int64_t* out_data, int max_elements,
-                                 int* out_rank, int* out_dims, int max_dims);
-
-/// Store a float tensor.
-/// @param client Initialized radex client.
-/// @param handle Outgoing handle for the key.
-/// @param data Pointer to flattened element data in row-major (C) order.
-/// @param rank Number of dimensions.
-/// @param dims Pointer to rank dimension sizes.
-int radex_client_put_tensor_float32(radex_client_t client,
-                                   radex_outgoing_handle_t* handle,
-                                   const float* data, int rank, const int* dims);
-
-/// Retrieve a float tensor.
-/// @param client Initialized radex client.
-/// @param handle Incoming handle for the key.
-/// @param out_data Buffer to hold flattened element data (caller-allocated).
-/// @param max_elements Maximum capacity of out_data buffer.
-/// @param out_rank Output: number of dimensions.
-/// @param out_dims Buffer for dimension sizes (caller-allocated).
-/// @param max_dims Maximum capacity of out_dims buffer.
-int radex_client_get_tensor_float32(radex_client_t client,
-                                   radex_incoming_handle_t* handle,
-                                   float* out_data, int max_elements,
-                                   int* out_rank, int* out_dims, int max_dims);
-
-/// Store a double tensor.
-/// @param client Initialized radex client.
-/// @param handle Outgoing handle for the key.
-/// @param data Pointer to flattened element data in row-major (C) order.
-/// @param rank Number of dimensions.
-/// @param dims Pointer to rank dimension sizes.
-int radex_client_put_tensor_float64(radex_client_t client,
-                                   radex_outgoing_handle_t* handle,
-                                   const double* data, int rank, const int* dims);
-
-/// Retrieve a double tensor.
-/// @param client Initialized radex client.
-/// @param handle Incoming handle for the key.
-/// @param out_data Buffer to hold flattened element data (caller-allocated).
-/// @param max_elements Maximum capacity of out_data buffer.
-/// @param out_rank Output: number of dimensions.
-/// @param out_dims Buffer for dimension sizes (caller-allocated).
-/// @param max_dims Maximum capacity of out_dims buffer.
-int radex_client_get_tensor_float64(radex_client_t client,
-                                   radex_incoming_handle_t* handle,
-                                   double* out_data, int max_elements,
-                                   int* out_rank, int* out_dims, int max_dims);
-
-/// Block until an int32_t scalar is available, then retrieve it.
-/// @param client Initialized radex client.
-/// @param handle Incoming handle for the key.
-/// @param out_value Pointer to store the retrieved value.
-/// @param timeout_ms Maximum time to wait in milliseconds.
-int radex_client_wait_for_int32(radex_client_t client,
-                                radex_incoming_handle_t* handle,
-                                int32_t* out_value, int timeout_ms);
-
-/// Block until an int64_t scalar is available, then retrieve it.
-/// @param client Initialized radex client.
-/// @param handle Incoming handle for the key.
-/// @param out_value Pointer to store the retrieved value.
-/// @param timeout_ms Maximum time to wait in milliseconds.
-int radex_client_wait_for_int64(radex_client_t client,
-                                radex_incoming_handle_t* handle,
-                                int64_t* out_value, int timeout_ms);
-
-/// Block until a float scalar is available, then retrieve it.
-/// @param client Initialized radex client.
-/// @param handle Incoming handle for the key.
-/// @param out_value Pointer to store the retrieved value.
-/// @param timeout_ms Maximum time to wait in milliseconds.
-int radex_client_wait_for_float32(radex_client_t client,
-                                  radex_incoming_handle_t* handle,
-                                  float* out_value, int timeout_ms);
-
-/// Block until a double scalar is available, then retrieve it.
-/// @param client Initialized radex client.
-/// @param handle Incoming handle for the key.
-/// @param out_value Pointer to store the retrieved value.
-/// @param timeout_ms Maximum time to wait in milliseconds.
-int radex_client_wait_for_float64(radex_client_t client,
-                                  radex_incoming_handle_t* handle,
-                                  double* out_value, int timeout_ms);
+RADEX_DECLARE_C_CLIENT_GET_TENSOR(int32_t, int32)
 
 /// Block until an int32_t tensor is available, then retrieve it.
 /// @param client Initialized radex client.
@@ -234,11 +137,25 @@ int radex_client_wait_for_float64(radex_client_t client,
 /// @param out_dims Buffer for dimension sizes (caller-allocated).
 /// @param max_dims Maximum capacity of out_dims buffer.
 /// @param timeout_ms Maximum time to wait in milliseconds.
-int radex_client_wait_for_tensor_int32(radex_client_t client,
-                                       radex_incoming_handle_t* handle,
-                                       int32_t* out_data, int max_elements,
-                                       int* out_rank, int* out_dims, int max_dims,
-                                       int timeout_ms);
+RADEX_DECLARE_C_CLIENT_WAIT_FOR_TENSOR(int32_t, int32)
+
+/// Store an int64_t tensor.
+/// @param client Initialized radex client.
+/// @param handle Outgoing handle for the key.
+/// @param data Pointer to flattened element data in row-major (C) order.
+/// @param rank Number of dimensions.
+/// @param dims Pointer to rank dimension sizes.
+RADEX_DECLARE_C_CLIENT_PUT_TENSOR(int64_t, int64)
+
+/// Retrieve an int64_t tensor.
+/// @param client Initialized radex client.
+/// @param handle Incoming handle for the key.
+/// @param out_data Buffer to hold flattened element data (caller-allocated).
+/// @param max_elements Maximum capacity of out_data buffer.
+/// @param out_rank Output: number of dimensions.
+/// @param out_dims Buffer for dimension sizes (caller-allocated).
+/// @param max_dims Maximum capacity of out_dims buffer.
+RADEX_DECLARE_C_CLIENT_GET_TENSOR(int64_t, int64)
 
 /// Block until an int64_t tensor is available, then retrieve it.
 /// @param client Initialized radex client.
@@ -249,11 +166,25 @@ int radex_client_wait_for_tensor_int32(radex_client_t client,
 /// @param out_dims Buffer for dimension sizes (caller-allocated).
 /// @param max_dims Maximum capacity of out_dims buffer.
 /// @param timeout_ms Maximum time to wait in milliseconds.
-int radex_client_wait_for_tensor_int64(radex_client_t client,
-                                       radex_incoming_handle_t* handle,
-                                       int64_t* out_data, int max_elements,
-                                       int* out_rank, int* out_dims, int max_dims,
-                                       int timeout_ms);
+RADEX_DECLARE_C_CLIENT_WAIT_FOR_TENSOR(int64_t, int64)
+
+/// Store a float tensor.
+/// @param client Initialized radex client.
+/// @param handle Outgoing handle for the key.
+/// @param data Pointer to flattened element data in row-major (C) order.
+/// @param rank Number of dimensions.
+/// @param dims Pointer to rank dimension sizes.
+RADEX_DECLARE_C_CLIENT_PUT_TENSOR(float, float32)
+
+/// Retrieve a float tensor.
+/// @param client Initialized radex client.
+/// @param handle Incoming handle for the key.
+/// @param out_data Buffer to hold flattened element data (caller-allocated).
+/// @param max_elements Maximum capacity of out_data buffer.
+/// @param out_rank Output: number of dimensions.
+/// @param out_dims Buffer for dimension sizes (caller-allocated).
+/// @param max_dims Maximum capacity of out_dims buffer.
+RADEX_DECLARE_C_CLIENT_GET_TENSOR(float, float32)
 
 /// Block until a float tensor is available, then retrieve it.
 /// @param client Initialized radex client.
@@ -264,26 +195,36 @@ int radex_client_wait_for_tensor_int64(radex_client_t client,
 /// @param out_dims Buffer for dimension sizes (caller-allocated).
 /// @param max_dims Maximum capacity of out_dims buffer.
 /// @param timeout_ms Maximum time to wait in milliseconds.
-int radex_client_wait_for_tensor_float32(radex_client_t client,
-                                         radex_incoming_handle_t* handle,
-                                         float* out_data, int max_elements,
-                                         int* out_rank, int* out_dims, int max_dims,
-                                         int timeout_ms);
+RADEX_DECLARE_C_CLIENT_WAIT_FOR_TENSOR(float, float32)
+
+/// Store a double tensor.
+/// @param client Initialized radex client.
+/// @param handle Outgoing handle for the key.
+/// @param data Pointer to flattened element data in row-major (C) order.
+/// @param rank Number of dimensions.
+/// @param dims Pointer to rank dimension sizes.
+RADEX_DECLARE_C_CLIENT_PUT_TENSOR(double, float64)
+
+/// Retrieve a double tensor.
+/// @param client Initialized radex client.
+/// @param handle Incoming handle for the key.
+/// @param out_data Buffer to hold flattened element data (caller-allocated).
+/// @param max_elements Maximum capacity of out_data buffer.
+/// @param out_rank Output: number of dimensions.
+/// @param out_dims Buffer for dimension sizes (caller-allocated).
+/// @param max_dims Maximum capacity of out_dims buffer.
+RADEX_DECLARE_C_CLIENT_GET_TENSOR(double, float64)
 
 /// Block until a double tensor is available, then retrieve it.
 /// @param client Initialized radex client.
 /// @param handle Incoming handle for the key.
-/// @param out_data Buffer to hold flattened element data
+/// @param out_data Buffer to hold flattened element data (caller-allocated).
 /// @param max_elements Maximum capacity of out_data buffer.
 /// @param out_rank Output: number of dimensions.
 /// @param out_dims Buffer for dimension sizes (caller-allocated).
 /// @param max_dims Maximum capacity of out_dims buffer.
 /// @param timeout_ms Maximum time to wait in milliseconds.
-int radex_client_wait_for_tensor_float64(radex_client_t client,
-                                         radex_incoming_handle_t* handle,
-                                         double* out_data, int max_elements,
-                                         int* out_rank, int* out_dims, int max_dims,
-                                         int timeout_ms);
+RADEX_DECLARE_C_CLIENT_WAIT_FOR_TENSOR(double, float64)
 
 // ============================================================================
 // Utility Operations
