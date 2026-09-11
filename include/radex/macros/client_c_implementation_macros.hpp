@@ -1,5 +1,5 @@
-#ifndef RADEX_CLIENT_C_MACROS_HPP
-#define RADEX_CLIENT_C_MACROS_HPP
+#ifndef RADEX_CLIENT_C_IMPLEMENTATION_MACROS_HPP
+#define RADEX_CLIENT_C_IMPLEMENTATION_MACROS_HPP
 
 #include "radex/client_base.hpp"
 #include "radex/errno.h"
@@ -168,4 +168,4 @@
     } \
   }
 
-#endif // RADEX_CLIENT_C_MACROS_HPP
+#endif // RADEX_CLIENT_C_IMPLEMENTATION_MACROS_HPP

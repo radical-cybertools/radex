@@ -3,7 +3,7 @@
 
 #include "radex/errno.h"
 #include "radex/handles_c.h"
-#include "radex/client_c_declaration_macros.h"
+#include "radex/macros/client_c_declaration_macros.h"
 #include <stdint.h>
 
 #ifdef __cplusplus

@@ -1,7 +1,6 @@
 #ifndef RADEX_CLIENT_C_DECLARATION_MACROS_H
 #define RADEX_CLIENT_C_DECLARATION_MACROS_H
 
-/// @file client_c_decls_macros.h
 /// Macros for declaring C interface functions (put/get/wait_for scalar and tensor operations)
 
 // Scalar method declaration
@@ -47,4 +46,4 @@
                                               int* out_rank, int* out_dims, int max_dims, \
                                               int timeout_ms);
 
-#endif // RADEX_CLIENT_C_DECLS_MACROS_H
+#endif // RADEX_CLIENT_C_DECLARATION_MACROS_H

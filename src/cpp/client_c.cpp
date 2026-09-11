@@ -1,4 +1,4 @@
-#include "radex/client_c_macros.hpp"
+#include "radex/macros/client_c_implementation_macros.hpp"
 #include "radex/client_base.hpp"
 #include "radex/dragon.hpp"
 #include "radex/smartredis.hpp"
