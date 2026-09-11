@@ -45,6 +45,7 @@ if(ENABLE_CXX)
     file(GLOB_RECURSE RADEX_PUBLIC_HEADERS
         RELATIVE ${RADEX_PUBLIC_INCLUDE_DIR}
         ${RADEX_PUBLIC_INCLUDE_DIR}/*.hpp
+        ${RADEX_PUBLIC_INCLUDE_DIR}/*.h
     )
     foreach(header IN LISTS RADEX_PUBLIC_HEADERS)
         configure_file(
@@ -66,6 +67,7 @@ if(ENABLE_CXX)
     list(APPEND RADEX_SOURCES cpp/handles.cpp)
     list(APPEND RADEX_SOURCES cpp/smartredis.cpp)
     list(APPEND RADEX_SOURCES cpp/dragon.cpp)
+    list(APPEND RADEX_SOURCES cpp/client_c.cpp)
 
     add_library(objlib OBJECT ${RADEX_SOURCES})
     target_compile_options(objlib PRIVATE -Wpedantic -Wall)
