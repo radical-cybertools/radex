@@ -7,10 +7,6 @@
 #include <cstdio>
 #include <cstdlib>
 
-// ============================================================================
-// Client Lifecycle Functions
-// ============================================================================
-
 extern "C" {
 
 void* radex_client_dragon_create(void) {
@@ -50,11 +46,8 @@ int radex_client_destroy(void* client) {
   }
 }
 
-// ============================================================================
-// Utility functions
-// ============================================================================
+/// Utility functions
 
-//
 int radex_client_contains(void* client_ptr, void* handle_ptr) {
   if (!client_ptr || !handle_ptr) return RADEX_ERR_UNKNOWN;
   auto* client = static_cast<radex::IClient*>(client_ptr);
@@ -68,10 +61,7 @@ int radex_client_contains(void* client_ptr, void* handle_ptr) {
 
 } // extern "C"
 
-// ============================================================================
-// Macro Instantiation for Typed Functions
-// ============================================================================
-
+// Macro instantiation for typed functions
 // int32_t
 RADEX_DEFINE_C_CLIENT_PUT_SCALAR(int32_t, int32)
 RADEX_DEFINE_C_CLIENT_GET_SCALAR(int32_t, int32)
