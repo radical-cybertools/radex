@@ -11,9 +11,8 @@
 #include <memory>
 #include <algorithm>
 
-// ============================================================================
-// In-Memory Client Implementation (UnorderedMap) - Test Only
-// ============================================================================
+// In-Memory Client Implementation
+// TODO: Encapsulate in main code for reusability in examples and tests
 
 namespace {
 
@@ -63,10 +62,7 @@ class UnorderedMapClient : public radex::IClient {
 
 } // anonymous namespace
 
-// ============================================================================
-// Factory function for in-memory client (test only)
-// ============================================================================
-
+// Factory function for in-memory client
 extern "C" {
 
 void* radex_client_local_create(void) {
@@ -81,10 +77,6 @@ void* radex_client_local_create(void) {
 
 } // extern "C"
 
-// ============================================================================
-// C Interface Test
-// ============================================================================
-
 int main(int argc, char* argv[]) {
   printf("Testing RaDex C Interface...\n");
 
@@ -95,6 +87,8 @@ int main(int argc, char* argv[]) {
   // Define test values
   const char* key_int32 = "test_key_int32";
   const int32_t test_value_int32 = 42;
+  const char* key_int64 = "test_key_int64";
+  const int64_t test_value_int64 = 1234567890123LL;
   const char* key_float32 = "test_key_float32";
   const float test_value_float32 = 2.71828f;
   const char* key_float64 = "test_key_float64";
@@ -119,6 +113,26 @@ int main(int argc, char* argv[]) {
   assert(value_int32 == test_value_int32 && "get_int32 returned wrong value");
   printf("  get_int32 succeeded, value=%d\n", value_int32);
   radex_incoming_handle_destroy((radex_incoming_handle_t*)handle_get_int32);
+
+  // Test put_int64 with handle
+  printf("\nTesting put_int64...\n");
+  void* handle_put_int64 = radex_outgoing_handle_create(key_int64);
+  assert(handle_put_int64 && "handle creation failed");
+  stat = radex_client_put_int64(client, (radex_outgoing_handle_t*)handle_put_int64, test_value_int64);
+  assert(stat == RADEX_OK && "put_int64 failed");
+  printf("  put_int64 succeeded\n");
+  radex_outgoing_handle_destroy((radex_outgoing_handle_t*)handle_put_int64);
+
+  // Test get_int64 with handle
+  printf("\nTesting get_int64...\n");
+  void* handle_get_int64 = radex_incoming_handle_create(key_int64);
+  assert(handle_get_int64 && "handle creation failed");
+  int64_t value_int64 = 0;
+  stat = radex_client_get_int64(client, (radex_incoming_handle_t*)handle_get_int64, &value_int64);
+  assert(stat == RADEX_OK && "get_int64 failed");
+  assert(value_int64 == test_value_int64 && "get_int64 returned wrong value");
+  printf("  get_int64 succeeded, value=%lld\n", (long long)value_int64);
+  radex_incoming_handle_destroy((radex_incoming_handle_t*)handle_get_int64);
 
   // Test put_float32 with handle
   printf("\nTesting put_float32...\n");
@@ -166,8 +180,15 @@ int main(int argc, char* argv[]) {
   assert(handle_contains_exists && "handle creation failed");
   stat = radex_client_contains(client, (radex_incoming_handle_t*)handle_contains_exists);
   assert(stat == 1 && "contains should return 1 for existing key");
-  printf("  contains succeeded for existing key\n");
+  printf("  contains succeeded for int32 key\n");
   radex_incoming_handle_destroy((radex_incoming_handle_t*)handle_contains_exists);
+
+  void* handle_contains_int64 = radex_incoming_handle_create(key_int64);
+  assert(handle_contains_int64 && "handle creation failed");
+  stat = radex_client_contains(client, (radex_incoming_handle_t*)handle_contains_int64);
+  assert(stat == 1 && "contains should return 1 for existing int64 key");
+  printf("  contains succeeded for int64 key\n");
+  radex_incoming_handle_destroy((radex_incoming_handle_t*)handle_contains_int64);
 
   void* handle_contains_missing = radex_incoming_handle_create("nonexistent_key");
   assert(handle_contains_missing && "handle creation failed");
@@ -176,6 +197,50 @@ int main(int argc, char* argv[]) {
   assert(stat != 1 && "contains should not return 1 for nonexistent key");
   printf("  contains correctly returned false for nonexistent key\n");
   radex_incoming_handle_destroy((radex_incoming_handle_t*)handle_contains_missing);
+
+  // Test wait_for_int32
+  printf("\nTesting wait_for_int32...\n");
+  void* handle_wait_int32 = radex_incoming_handle_create(key_int32);
+  assert(handle_wait_int32 && "handle creation failed");
+  int32_t wait_value_int32 = 0;
+  stat = radex_client_wait_for_int32(client, (radex_incoming_handle_t*)handle_wait_int32, &wait_value_int32, 1000);
+  assert(stat == RADEX_OK && "wait_for_int32 failed");
+  assert(wait_value_int32 == test_value_int32 && "wait_for_int32 returned wrong value");
+  printf("  wait_for_int32 succeeded, value=%d\n", wait_value_int32);
+  radex_incoming_handle_destroy((radex_incoming_handle_t*)handle_wait_int32);
+
+  // Test wait_for_int64
+  printf("\nTesting wait_for_int64...\n");
+  void* handle_wait_int64 = radex_incoming_handle_create(key_int64);
+  assert(handle_wait_int64 && "handle creation failed");
+  int64_t wait_value_int64 = 0;
+  stat = radex_client_wait_for_int64(client, (radex_incoming_handle_t*)handle_wait_int64, &wait_value_int64, 1000);
+  assert(stat == RADEX_OK && "wait_for_int64 failed");
+  assert(wait_value_int64 == test_value_int64 && "wait_for_int64 returned wrong value");
+  printf("  wait_for_int64 succeeded, value=%lld\n", (long long)wait_value_int64);
+  radex_incoming_handle_destroy((radex_incoming_handle_t*)handle_wait_int64);
+
+  // Test wait_for_float32
+  printf("\nTesting wait_for_float32...\n");
+  void* handle_wait_float32 = radex_incoming_handle_create(key_float32);
+  assert(handle_wait_float32 && "handle creation failed");
+  float wait_value_float32 = 0.0f;
+  stat = radex_client_wait_for_float32(client, (radex_incoming_handle_t*)handle_wait_float32, &wait_value_float32, 1000);
+  assert(stat == RADEX_OK && "wait_for_float32 failed");
+  assert(wait_value_float32 == test_value_float32 && "wait_for_float32 returned wrong value");
+  printf("  wait_for_float32 succeeded, value=%f\n", wait_value_float32);
+  radex_incoming_handle_destroy((radex_incoming_handle_t*)handle_wait_float32);
+
+  // Test wait_for_float64
+  printf("\nTesting wait_for_float64...\n");
+  void* handle_wait_float64 = radex_incoming_handle_create(key_float64);
+  assert(handle_wait_float64 && "handle creation failed");
+  double wait_value_float64 = 0.0;
+  stat = radex_client_wait_for_float64(client, (radex_incoming_handle_t*)handle_wait_float64, &wait_value_float64, 1000);
+  assert(stat == RADEX_OK && "wait_for_float64 failed");
+  assert(wait_value_float64 == test_value_float64 && "wait_for_float64 returned wrong value");
+  printf("  wait_for_float64 succeeded, value=%lf\n", wait_value_float64);
+  radex_incoming_handle_destroy((radex_incoming_handle_t*)handle_wait_float64);
 
   // Test error handling - get nonexistent key
   printf("\nTesting error handling...\n");
