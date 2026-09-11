@@ -116,6 +116,7 @@ nav:
       - Python/C++ Data Exchange: examples/py-cpp-exchange.md
   - API Reference:
       - Overview: api/index.md
+      - C API: api/c-api.md
       - Python: api/
       - C++: radexCpp/annotated.md
   - About: about.md
