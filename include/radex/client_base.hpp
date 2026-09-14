@@ -262,13 +262,11 @@ class IClient {
                    std::chrono::milliseconds timeout) {
         auto handle_to_future_scalar = [this, timeout](
                                            const data::IncomingHandle &handle) {
-            // return std::async(std::launch::async, &IClient::wait_for_scalar<T>,
-            //                   this, handle, timeout);
-            return wait_for_scalar<T>(handle, timeout);
+            return std::async(std::launch::async, &IClient::wait_for_scalar<T>,
+                              this, handle, timeout);
         };
 
-        // std::vector<std::future<T>> futures;
-        std::vector<T> futures;
+        std::vector<std::future<T>> futures;
         futures.reserve(handles.size());
         std::transform(handles.begin(), handles.end(),
                        std::back_inserter(futures), handle_to_future_scalar);
@@ -278,8 +276,7 @@ class IClient {
         std::transform(std::make_move_iterator(futures.begin()),
                        std::make_move_iterator(futures.end()),
                        std::back_inserter(scalars),
-                       // [](std::future<T> f) { return f.get(); });
-                       [](T f) { return f; });
+                       [](std::future<T> f) { return f.get(); });
 
         return scalars;
     }
@@ -345,13 +342,11 @@ class IClient {
                    std::chrono::milliseconds timeout) {
         auto handle_to_future_tensor = [this, timeout](
                                            const data::IncomingHandle &handle) {
-            // return std::async(std::launch::async, &IClient::wait_for_tensor<T>,
-            //                   this, handle, timeout);
-            return wait_for_tensor<T>(handle, timeout);
+            return std::async(std::launch::async, &IClient::wait_for_tensor<T>,
+                              this, handle, timeout);
         };
 
-        // std::vector<std::future<TensorInfo<T>>> futures;
-        std::vector<TensorInfo<T>> futures;
+        std::vector<std::future<TensorInfo<T>>> futures;
         futures.reserve(handles.size());
         std::transform(handles.begin(), handles.end(),
                        std::back_inserter(futures), handle_to_future_tensor);
@@ -361,8 +356,7 @@ class IClient {
         std::transform(std::make_move_iterator(futures.begin()),
                        std::make_move_iterator(futures.end()),
                        std::back_inserter(tensors),
-                       // [](std::future<TensorInfo<T>> f) { return f.get(); });
-                       [](TensorInfo<T> f) { return f; });
+                       [](std::future<TensorInfo<T>> f) { return f.get(); });
 
         return tensors;
     }
