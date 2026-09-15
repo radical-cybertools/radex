@@ -11,7 +11,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
-#include <future>
+// #include <future>
 #include <iterator>
 #include <memory>
 #include <numeric>
@@ -260,13 +260,17 @@ class IClient {
                             std::vector<T>>::type
     gather_scalars(const std::vector<data::IncomingHandle> &handles,
                    std::chrono::milliseconds timeout) {
-        auto handle_to_future_scalar = [this, timeout](
-                                           const data::IncomingHandle &handle) {
-            return std::async(std::launch::async, &IClient::wait_for_scalar<T>,
-                              this, handle, timeout);
-        };
+        auto handle_to_future_scalar =
+            [this, timeout](const data::IncomingHandle &handle) {
+                // return std::async(std::launch::async,
+                //                   &IClient::wait_for_scalar<T>,
+                //                   this, handle, timeout);
+                return wait_for_scalar<T>(handle, timeout);
+            };
 
-        std::vector<std::future<T>> futures;
+        // TODO: This should be made parallel when it does not break dragon
+        // std::vector<std::future<T>> futures;
+        std::vector<T> futures;
         futures.reserve(handles.size());
         std::transform(handles.begin(), handles.end(),
                        std::back_inserter(futures), handle_to_future_scalar);
@@ -276,7 +280,8 @@ class IClient {
         std::transform(std::make_move_iterator(futures.begin()),
                        std::make_move_iterator(futures.end()),
                        std::back_inserter(scalars),
-                       [](std::future<T> f) { return f.get(); });
+                       // [](std::future<T> f) { return f.get(); });
+                       [](T f) { return f; });
 
         return scalars;
     }
@@ -340,13 +345,18 @@ class IClient {
                             std::vector<TensorInfo<T>>>::type
     gather_tensors(const std::vector<data::IncomingHandle> &handles,
                    std::chrono::milliseconds timeout) {
-        auto handle_to_future_tensor = [this, timeout](
-                                           const data::IncomingHandle &handle) {
-            return std::async(std::launch::async, &IClient::wait_for_tensor<T>,
-                              this, handle, timeout);
-        };
+        auto handle_to_future_tensor =
+            [this, timeout](const data::IncomingHandle &handle) {
+                // return std::async(std::launch::async,
+                //                   &IClient::wait_for_tensor<T>,
+                //                   this, handle, timeout);
 
-        std::vector<std::future<TensorInfo<T>>> futures;
+                return wait_for_tensor<T>(handle, timeout);
+            };
+
+        // TODO: This should be made parallel when it does not break dragon
+        // std::vector<std::future<TensorInfo<T>>> futures;
+        std::vector<TensorInfo<T>> futures;
         futures.reserve(handles.size());
         std::transform(handles.begin(), handles.end(),
                        std::back_inserter(futures), handle_to_future_tensor);
@@ -356,7 +366,8 @@ class IClient {
         std::transform(std::make_move_iterator(futures.begin()),
                        std::make_move_iterator(futures.end()),
                        std::back_inserter(tensors),
-                       [](std::future<TensorInfo<T>> f) { return f.get(); });
+                       // [](std::future<TensorInfo<T>> f) { return f.get(); });
+                       [](TensorInfo<T> f) { return f; });
 
         return tensors;
     }
