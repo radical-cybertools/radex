@@ -213,6 +213,9 @@ class IClient {
     std::unique_ptr<detail::ItemInfo>
     wait_for_item_info_ptr(const data::IncomingHandle &handle,
                            std::chrono::milliseconds timeout);
+    std::vector<std::unique_ptr<detail::ItemInfo>>
+    gather_item_info_ptrs(const std::vector<data::IncomingHandle> &handles,
+                          std::chrono::milliseconds timeout);
 
     /// Delete a typed value and its associated metadata.
     void delete_item(const data::OutgoingHandle &handle);
