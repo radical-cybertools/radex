@@ -5,6 +5,7 @@
 #include "radex/handles_c.h"
 #include "radex/macros/client_c_declaration_macros.h"
 #include <stdint.h>
+#include <cstddef>
 
 #ifdef __cplusplus
 extern "C" {
@@ -235,7 +236,7 @@ RADEX_DECLARE_C_CLIENT_WAIT_FOR_TENSOR(double, float64)
 /// @param handle Incoming handle for the key.
 /// @return 1 if key exists, 0 if not, error code (<0) on error.
 int radex_client_contains(radex_client_t client,
-                         radex_incoming_handle_t* handle);
+                          radex_incoming_handle_t* handle);
 
 #ifdef __cplusplus
 }

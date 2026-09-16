@@ -3,13 +3,15 @@
 #include "radex/dragon.hpp"
 #include "radex/smartredis.hpp"
 #include "radex/errno.h"
+#include "radex/client_c.h"
+#include "radex/handles_c.h"
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
 
 extern "C" {
 
-void* radex_client_dragon_create(void) {
+radex_client_t radex_client_dragon_create(void) {
   try {
     auto* client = new radex::drg::ddict::Client();
     return static_cast<void*>(client);
@@ -22,7 +24,7 @@ void* radex_client_dragon_create(void) {
   }
 }
 
-void* radex_client_smartredis_create(void) {
+radex_client_t radex_client_smartredis_create(void) {
   try {
     auto* client = new radex::redis::smartredis::Client();
     return static_cast<void*>(client);
@@ -35,7 +37,7 @@ void* radex_client_smartredis_create(void) {
   }
 }
 
-int radex_client_destroy(void* client) {
+int radex_client_destroy(radex_client_t client) {
   if (!client) return RADEX_ERR_UNKNOWN;
   try {
     auto* c = static_cast<radex::IClient*>(client);
@@ -48,10 +50,10 @@ int radex_client_destroy(void* client) {
 
 /// Utility functions
 
-int radex_client_contains(void* client_ptr, void* handle_ptr) {
+int radex_client_contains(radex_client_t client_ptr, radex_incoming_handle_t* handle_ptr) {
   if (!client_ptr || !handle_ptr) return RADEX_ERR_UNKNOWN;
   auto* client = static_cast<radex::IClient*>(client_ptr);
-  auto* handle = static_cast<radex::data::IncomingHandle*>(handle_ptr);
+  auto* handle = reinterpret_cast<radex::data::IncomingHandle*>(handle_ptr);
   try {
     bool result = client->contains(handle->key());
     return result ? 1 : 0;
