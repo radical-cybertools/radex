@@ -1,7 +1,9 @@
 #include "radex/handles.hpp"
 #include "radex/handles_c.h"
+#include "radex/macros/radex_c_error_macros.h"
 
 #include <cstring>
+#include <new>
 #include <sstream>
 #include <string>
 
@@ -36,34 +38,34 @@ auto OutgoingHandle::metadata_key() const -> std::string {
 /* C API implementations */
 extern "C" {
 
-radex_incoming_handle* radex_incoming_handle_create(const char* name) {
+int radex_incoming_handle_create(const char* name,
+                                 radex_incoming_handle_t** out_handle) {
+    *out_handle = nullptr;
     try {
-        return reinterpret_cast<radex_incoming_handle*>(
+        *out_handle = reinterpret_cast<radex_incoming_handle_t*>(
             new radex::data::IncomingHandle(name));
-    } catch (...) {
-        return nullptr;
-    }
+        return RADEX_OK;
+    } RADEX_C_CATCH_EXCEPTIONS(RADEX_ERR_UNKNOWN)
 }
 
-void radex_incoming_handle_destroy(radex_incoming_handle* handle) {
-    if (handle != nullptr) {
-        delete reinterpret_cast<radex::data::IncomingHandle*>(handle);
-    }
+int radex_incoming_handle_destroy(radex_incoming_handle_t* handle) {
+    delete reinterpret_cast<radex::data::IncomingHandle*>(handle);
+    return RADEX_OK;
 }
 
-radex_outgoing_handle* radex_outgoing_handle_create(const char* name) {
+int radex_outgoing_handle_create(const char* name,
+                                 radex_outgoing_handle_t** out_handle) {
+    *out_handle = nullptr;
     try {
-        return reinterpret_cast<radex_outgoing_handle*>(
+        *out_handle = reinterpret_cast<radex_outgoing_handle_t*>(
             new radex::data::OutgoingHandle(name));
-    } catch (...) {
-        return nullptr;
-    }
+        return RADEX_OK;
+    } RADEX_C_CATCH_EXCEPTIONS(RADEX_ERR_UNKNOWN)
 }
 
-void radex_outgoing_handle_destroy(radex_outgoing_handle* handle) {
-    if (handle != nullptr) {
-        delete reinterpret_cast<radex::data::OutgoingHandle*>(handle);
-    }
+int radex_outgoing_handle_destroy(radex_outgoing_handle_t* handle) {
+    delete reinterpret_cast<radex::data::OutgoingHandle*>(handle);
+    return RADEX_OK;
 }
 
 } // extern "C"

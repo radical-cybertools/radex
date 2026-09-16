@@ -16,7 +16,7 @@ enum radex_errno {
   RADEX_ERR_METADATA = 6,              // Metadata decode error
   RADEX_ERR_BACKEND_UNAVAILABLE = 7,   // Backend not available
   RADEX_ERR_BUFFER_TOO_SMALL = 8,      // Tensor is larger than the provided buffer
-  RADEX_ERR_NULL_ARGS = 9,             // Some input arguments are null when they must exist
+  RADEX_ERR_ALLOCATION = 9,           // Memory allocation failed
   RADEX_ERR_UNKNOWN = 99               // Unknown/unexpected error
 };
 

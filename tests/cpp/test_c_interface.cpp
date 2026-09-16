@@ -96,17 +96,19 @@ int main(int argc, char* argv[]) {
 
   // Test put_int32 with handle
   printf("\nTesting put_int32...\n");
-  radex_outgoing_handle_t* handle_put_int32 = radex_outgoing_handle_create(key_int32);
-  assert(handle_put_int32 && "handle creation failed");
-  int stat = radex_client_put_int32(client, handle_put_int32, test_value_int32);
+  radex_outgoing_handle_t* handle_put_int32;
+  int stat = radex_outgoing_handle_create(key_int32, &handle_put_int32);
+  assert(stat == RADEX_OK && handle_put_int32 && "handle creation failed");
+  stat = radex_client_put_int32(client, handle_put_int32, test_value_int32);
   assert(stat == RADEX_OK && "put_int32 failed");
   printf("  put_int32 succeeded\n");
   radex_outgoing_handle_destroy(handle_put_int32);
 
   // Test get_int32 with handle
   printf("\nTesting get_int32...\n");
-  radex_incoming_handle_t* handle_get_int32 = radex_incoming_handle_create(key_int32);
-  assert(handle_get_int32 && "handle creation failed");
+  radex_incoming_handle_t* handle_get_int32;
+  stat = radex_incoming_handle_create(key_int32, &handle_get_int32);
+  assert(stat == RADEX_OK && handle_get_int32 && "handle creation failed");
   int32_t value_int32 = 0;
   stat = radex_client_get_int32(client, handle_get_int32, &value_int32);
   assert(stat == RADEX_OK && "get_int32 failed");
@@ -116,8 +118,9 @@ int main(int argc, char* argv[]) {
 
   // Test put_int64 with handle
   printf("\nTesting put_int64...\n");
-  radex_outgoing_handle_t* handle_put_int64 = radex_outgoing_handle_create(key_int64);
-  assert(handle_put_int64 && "handle creation failed");
+  radex_outgoing_handle_t* handle_put_int64;
+  stat = radex_outgoing_handle_create(key_int64, &handle_put_int64);
+  assert(stat == RADEX_OK && handle_put_int64 && "handle creation failed");
   stat = radex_client_put_int64(client, handle_put_int64, test_value_int64);
   assert(stat == RADEX_OK && "put_int64 failed");
   printf("  put_int64 succeeded\n");
@@ -125,8 +128,9 @@ int main(int argc, char* argv[]) {
 
   // Test get_int64 with handle
   printf("\nTesting get_int64...\n");
-  radex_incoming_handle_t* handle_get_int64 = radex_incoming_handle_create(key_int64);
-  assert(handle_get_int64 && "handle creation failed");
+  radex_incoming_handle_t* handle_get_int64;
+  stat = radex_incoming_handle_create(key_int64, &handle_get_int64);
+  assert(stat == RADEX_OK && handle_get_int64 && "handle creation failed");
   int64_t value_int64 = 0;
   stat = radex_client_get_int64(client, handle_get_int64, &value_int64);
   assert(stat == RADEX_OK && "get_int64 failed");
@@ -136,8 +140,9 @@ int main(int argc, char* argv[]) {
 
   // Test put_float32 with handle
   printf("\nTesting put_float32...\n");
-  radex_outgoing_handle_t* handle_put_float32 = radex_outgoing_handle_create(key_float32);
-  assert(handle_put_float32 && "handle creation failed");
+  radex_outgoing_handle_t* handle_put_float32;
+  stat = radex_outgoing_handle_create(key_float32, &handle_put_float32);
+  assert(stat == RADEX_OK && handle_put_float32 && "handle creation failed");
   stat = radex_client_put_float32(client, handle_put_float32, test_value_float32);
   assert(stat == RADEX_OK && "put_float32 failed");
   printf("  put_float32 succeeded\n");
@@ -145,8 +150,9 @@ int main(int argc, char* argv[]) {
 
   // Test get_float32 with handle
   printf("\nTesting get_float32...\n");
-  radex_incoming_handle_t* handle_get_float32 = radex_incoming_handle_create(key_float32);
-  assert(handle_get_float32 && "handle creation failed");
+  radex_incoming_handle_t* handle_get_float32;
+  stat = radex_incoming_handle_create(key_float32, &handle_get_float32);
+  assert(stat == RADEX_OK && handle_get_float32 && "handle creation failed");
   float value_float32 = 0.0f;
   stat = radex_client_get_float32(client, handle_get_float32, &value_float32);
   assert(stat == RADEX_OK && "get_float32 failed");
@@ -156,8 +162,9 @@ int main(int argc, char* argv[]) {
 
   // Test put_float64 with handle
   printf("\nTesting put_float64...\n");
-  radex_outgoing_handle_t* handle_put_float64 = radex_outgoing_handle_create(key_float64);
-  assert(handle_put_float64 && "handle creation failed");
+  radex_outgoing_handle_t* handle_put_float64;
+  stat = radex_outgoing_handle_create(key_float64, &handle_put_float64);
+  assert(stat == RADEX_OK && handle_put_float64 && "handle creation failed");
   stat = radex_client_put_float64(client, handle_put_float64, test_value_float64);
   assert(stat == RADEX_OK && "put_float64 failed");
   printf("  put_float64 succeeded\n");
@@ -165,8 +172,9 @@ int main(int argc, char* argv[]) {
 
   // Test get_float64 with handle
   printf("\nTesting get_float64...\n");
-  radex_incoming_handle_t* handle_get_float64 = radex_incoming_handle_create(key_float64);
-  assert(handle_get_float64 && "handle creation failed");
+  radex_incoming_handle_t* handle_get_float64;
+  stat = radex_incoming_handle_create(key_float64, &handle_get_float64);
+  assert(stat == RADEX_OK && handle_get_float64 && "handle creation failed");
   double value_float64 = 0.0;
   stat = radex_client_get_float64(client, handle_get_float64, &value_float64);
   assert(stat == RADEX_OK && "get_float64 failed");
@@ -176,22 +184,25 @@ int main(int argc, char* argv[]) {
 
   // Test contains with handle
   printf("\nTesting contains...\n");
-  radex_incoming_handle_t* handle_contains_exists = radex_incoming_handle_create(key_int32);
-  assert(handle_contains_exists && "handle creation failed");
+  radex_incoming_handle_t* handle_contains_exists;
+  stat = radex_incoming_handle_create(key_int32, &handle_contains_exists);
+  assert(stat == RADEX_OK && handle_contains_exists && "handle creation failed");
   stat = radex_client_contains(client, handle_contains_exists);
   assert(stat == 1 && "contains should return 1 for existing key");
   printf("  contains succeeded for int32 key\n");
   radex_incoming_handle_destroy(handle_contains_exists);
 
-  radex_incoming_handle_t* handle_contains_int64 = radex_incoming_handle_create(key_int64);
-  assert(handle_contains_int64 && "handle creation failed");
+  radex_incoming_handle_t* handle_contains_int64;
+  stat = radex_incoming_handle_create(key_int64, &handle_contains_int64);
+  assert(stat == RADEX_OK && handle_contains_int64 && "handle creation failed");
   stat = radex_client_contains(client, handle_contains_int64);
   assert(stat == 1 && "contains should return 1 for existing int64 key");
   printf("  contains succeeded for int64 key\n");
   radex_incoming_handle_destroy(handle_contains_int64);
 
-  radex_incoming_handle_t* handle_contains_missing = radex_incoming_handle_create("nonexistent_key");
-  assert(handle_contains_missing && "handle creation failed");
+  radex_incoming_handle_t* handle_contains_missing;
+  stat = radex_incoming_handle_create("nonexistent_key", &handle_contains_missing);
+  assert(stat == RADEX_OK && handle_contains_missing && "handle creation failed");
   stat = radex_client_contains(client, handle_contains_missing);
   // Should be 0 or error, not 1
   assert(stat != 1 && "contains should not return 1 for nonexistent key");
@@ -200,8 +211,9 @@ int main(int argc, char* argv[]) {
 
   // Test wait_for_int32
   printf("\nTesting wait_for_int32...\n");
-  radex_incoming_handle_t* handle_wait_int32 = radex_incoming_handle_create(key_int32);
-  assert(handle_wait_int32 && "handle creation failed");
+  radex_incoming_handle_t* handle_wait_int32;
+  stat = radex_incoming_handle_create(key_int32, &handle_wait_int32);
+  assert(stat == RADEX_OK && handle_wait_int32 && "handle creation failed");
   int32_t wait_value_int32 = 0;
   stat = radex_client_wait_for_int32(client, handle_wait_int32, &wait_value_int32, 1000);
   assert(stat == RADEX_OK && "wait_for_int32 failed");
@@ -211,8 +223,9 @@ int main(int argc, char* argv[]) {
 
   // Test wait_for_int64
   printf("\nTesting wait_for_int64...\n");
-  radex_incoming_handle_t* handle_wait_int64 = radex_incoming_handle_create(key_int64);
-  assert(handle_wait_int64 && "handle creation failed");
+  radex_incoming_handle_t* handle_wait_int64;
+  stat = radex_incoming_handle_create(key_int64, &handle_wait_int64);
+  assert(stat == RADEX_OK && handle_wait_int64 && "handle creation failed");
   int64_t wait_value_int64 = 0;
   stat = radex_client_wait_for_int64(client, handle_wait_int64, &wait_value_int64, 1000);
   assert(stat == RADEX_OK && "wait_for_int64 failed");
@@ -222,8 +235,9 @@ int main(int argc, char* argv[]) {
 
   // Test wait_for_float32
   printf("\nTesting wait_for_float32...\n");
-  radex_incoming_handle_t* handle_wait_float32 = radex_incoming_handle_create(key_float32);
-  assert(handle_wait_float32 && "handle creation failed");
+  radex_incoming_handle_t* handle_wait_float32;
+  stat = radex_incoming_handle_create(key_float32, &handle_wait_float32);
+  assert(stat == RADEX_OK && handle_wait_float32 && "handle creation failed");
   float wait_value_float32 = 0.0f;
   stat = radex_client_wait_for_float32(client, handle_wait_float32, &wait_value_float32, 1000);
   assert(stat == RADEX_OK && "wait_for_float32 failed");
@@ -233,8 +247,9 @@ int main(int argc, char* argv[]) {
 
   // Test wait_for_float64
   printf("\nTesting wait_for_float64...\n");
-  radex_incoming_handle_t* handle_wait_float64 = radex_incoming_handle_create(key_float64);
-  assert(handle_wait_float64 && "handle creation failed");
+  radex_incoming_handle_t* handle_wait_float64;
+  stat = radex_incoming_handle_create(key_float64, &handle_wait_float64);
+  assert(stat == RADEX_OK && handle_wait_float64 && "handle creation failed");
   double wait_value_float64 = 0.0;
   stat = radex_client_wait_for_float64(client, handle_wait_float64, &wait_value_float64, 1000);
   assert(stat == RADEX_OK && "wait_for_float64 failed");
@@ -244,8 +259,9 @@ int main(int argc, char* argv[]) {
 
   // Test error handling - get nonexistent key
   printf("\nTesting error handling...\n");
-  radex_incoming_handle_t* handle_error = radex_incoming_handle_create("truly_nonexistent_key_12345");
-  assert(handle_error && "handle creation failed");
+  radex_incoming_handle_t* handle_error;
+  stat = radex_incoming_handle_create("truly_nonexistent_key_12345", &handle_error);
+  assert(stat == RADEX_OK && handle_error && "handle creation failed");
   int32_t dummy = 0;
   stat = radex_client_get_int32(client, handle_error, &dummy);
   assert(stat != RADEX_OK && "should return error for nonexistent key");

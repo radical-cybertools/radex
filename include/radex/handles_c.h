@@ -1,6 +1,8 @@
 #ifndef __RADEX_HANDLES_C_H__
 #define __RADEX_HANDLES_C_H__
 
+#include "radex/errno.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -12,28 +14,32 @@ typedef struct radex_outgoing_handle radex_outgoing_handle_t;
 /**
  * Create an incoming handle for reading from the store.
  * @param name The key name to read from (null-terminated string).
- * @return A new incoming handle, or NULL on error.
+ * @param out_handle Receives the new handle on success.
+ * @return RADEX_OK on success, an error code otherwise.
  */
-radex_incoming_handle_t* radex_incoming_handle_create(const char* name);
+int radex_incoming_handle_create(const char* name,
+								 radex_incoming_handle_t** out_handle);
 
 /**
  * Destroy an incoming handle and free its resources.
  * @param handle The handle to destroy.
  */
-void radex_incoming_handle_destroy(radex_incoming_handle_t* handle);
+int radex_incoming_handle_destroy(radex_incoming_handle_t* handle);
 
 /**
  * Create an outgoing handle for writing to the store.
  * @param name The key name to write to (null-terminated string).
- * @return A new outgoing handle, or NULL on error.
+ * @param out_handle Receives the new handle on success.
+ * @return RADEX_OK on success, an error code otherwise.
  */
-radex_outgoing_handle_t* radex_outgoing_handle_create(const char* name);
+int radex_outgoing_handle_create(const char* name,
+								 radex_outgoing_handle_t** out_handle);
 
 /**
  * Destroy an outgoing handle and free its resources.
  * @param handle The handle to destroy.
  */
-void radex_outgoing_handle_destroy(radex_outgoing_handle_t* handle);
+int radex_outgoing_handle_destroy(radex_outgoing_handle_t* handle);
 
 #ifdef __cplusplus
 }
