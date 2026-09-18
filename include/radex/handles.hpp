@@ -1,8 +1,11 @@
 #ifndef __RADEX_HANDLES_HPP__
 #define __RADEX_HANDLES_HPP__
 
+#include "radex/detail.hpp"
+
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace radex::data {
 

@@ -1,9 +1,11 @@
 import cython
+from cython.operator cimport dereference as deref, preincrement as inc
 
 from libc.stdint cimport uint64_t, int32_t, int64_t
 from libc.time cimport timespec
 from libcpp.memory cimport unique_ptr
 from libcpp.string cimport string
+from libcpp.vector cimport vector
 
 from radex.clients.core cimport IClient
 from radex.clients.dragon cimport Client as _CXXDragonClient
@@ -20,7 +22,11 @@ from radex.utils.data cimport (
 )
 from radex.utils.utils cimport EncodedStr, encode_str
 from radex.utils.libcpp_chrono cimport milliseconds
-from radex.handles.handles cimport IncomingHandle, OutgoingHandle
+from radex.handles.handles cimport (
+    IncomingHandle,
+    OutgoingHandle,
+    CXXIncomingHandle as _CXXIncomingHandle,
+)
 
 import cloudpickle
 
@@ -114,6 +120,49 @@ cdef class PyClient:
                 handle.unwrap()[0], timeout_)
         return construct_scalar(info.get()[0])
 
+    def gather_scalars(self, list handles, float timeout):
+        """Block until a collection of scalar values are available under a
+        given set of handles.
+
+        Args:
+            handle (list[IncomingHandle]): The handle naming the key to read.
+            timeout (float): Maximum time to wait, in seconds.
+
+        Returns:
+            list[numpy.int32 | numpy.int64 | numpy.float32 | numpy.float64]: The
+                scalar values, once they become available.
+        """
+        cdef milliseconds timeout_ = milliseconds(<int64_t>(timeout * 1000))
+        cdef vector[_CXXIncomingHandle] handles_
+
+        handles_.reserve(len(handles))
+        for handle in handles:
+            if not isinstance(handle, IncomingHandle):
+                raise TypeError(
+                    f"Expected handle of type `{IncomingHandle.__name__}`, but "
+                    f"got type `{type(handle).__name__}`"
+                )
+            handles_.push_back((<IncomingHandle>handle).unwrap()[0])
+
+        cdef vector[unique_ptr[ItemInfo]] items = self._client.gather_item_info_ptrs(
+            handles_, timeout_
+        )
+        cdef vector[unique_ptr[ItemInfo]].iterator it = items.begin()
+        cdef ItemInfo *raw_info_ptr = NULL
+        cdef list scalars = []
+
+        # Use this awkward iteration remove temp variables from C++ to help
+        # Cython compile with out null constructors or ambiguous moves
+        while it != items.end():
+            raw_info_ptr = deref(it).get()
+            if raw_info_ptr == NULL:
+                raise ValueError("Expected item info but got NULL")
+            scalars.append(construct_scalar(raw_info_ptr[0]))
+            inc(it)
+
+        return scalars
+
+
     def put_tensor(self, OutgoingHandle handle, np.ndarray tensor not None):
         """Store an n-dimensional tensor under the given handle.
 
@@ -166,6 +215,49 @@ cdef class PyClient:
         cdef unique_ptr[ItemInfo] info = self._client.wait_for_item_info_ptr(
                 handle.unwrap()[0], timeout_)
         return construct_tensor(info.get()[0])
+
+    def gather_tensors(self, list handles, float timeout):
+        """Block until a collection of tensor values are available under a
+        given set of handles.
+
+        Args:
+            handle (list[IncomingHandle]): The handle naming the key to read.
+            timeout (float): Maximum time to wait, in seconds.
+
+        Returns:
+            list[numpy.ndarray]: A collection of arrays with the shape and
+                dtype with which it was written to the key value store, when
+                they are all available.
+        """
+        cdef milliseconds timeout_ = milliseconds(<int64_t>(timeout * 1000))
+        cdef vector[_CXXIncomingHandle] handles_
+
+        handles_.reserve(len(handles))
+        for handle in handles:
+            if not isinstance(handle, IncomingHandle):
+                raise TypeError(
+                    f"Expected handle of type `{IncomingHandle.__name__}`, but "
+                    f"got type `{type(handle).__name__}`"
+                )
+            handles_.push_back((<IncomingHandle>handle).unwrap()[0])
+
+        cdef vector[unique_ptr[ItemInfo]] items = self._client.gather_item_info_ptrs(
+            handles_, timeout_
+        )
+        cdef vector[unique_ptr[ItemInfo]].iterator it = items.begin()
+        cdef ItemInfo *raw_info_ptr = NULL
+        cdef list tensors = []
+
+        # Use this awkward iteration remove temp variables from C++ to help
+        # Cython compile with out null constructors or ambiguous moves
+        while it != items.end():
+            raw_info_ptr = deref(it).get()
+            if raw_info_ptr == NULL:
+                raise ValueError("Expected item info but got NULL")
+            tensors.append(construct_tensor(raw_info_ptr[0]))
+            inc(it)
+
+        return tensors
 
     def put_picklable(self, str key, object picklable):
         cdef string key_ = encode_str(key)

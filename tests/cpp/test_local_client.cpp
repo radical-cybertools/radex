@@ -1,15 +1,19 @@
 #include "radex/client.hpp"
 #include "radex/handles.hpp"
 
+#include <algorithm>
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+#include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace test_utils {
@@ -27,12 +31,12 @@ class UnorderedMapClient : public radex::IClient {
         return true;
     }
 
-    private:
-        void delete_key(std::string_view key) override {
+  private:
+    void delete_key(std::string_view key) override {
         _map.erase(std::string{key});
     }
 
-    public:
+  public:
     void put_bytes(std::string_view key, const void *bytes,
                    radex::detail::MetaInt length) override {
         auto ptr = static_cast<const std::uint8_t *>(bytes);
@@ -57,7 +61,7 @@ class UnorderedMapClient : public radex::IClient {
 } // namespace test_utils
 
 TEMPLATE_TEST_CASE("In memory client test cases", "[in-mem]", std::int32_t,
-                   std::int64_t, double) {
+                   std::int64_t, float, double) {
 
     test_utils::UnorderedMapClient client{};
 
@@ -96,7 +100,8 @@ TEMPLATE_TEST_CASE("In memory client test cases", "[in-mem]", std::int32_t,
 
     SECTION("Client can delete a tensor value and its metadata") {
         const radex::data::OutgoingHandle outgoing{"my-tensor-to-delete"};
-        const radex::data::OutgoingHandle deletion_handle{"my-tensor-to-delete"};
+        const radex::data::OutgoingHandle deletion_handle{
+            "my-tensor-to-delete"};
         const std::vector<radex::detail::MetaInt> dims{2};
         const std::vector<TestType> data{TestType{1}, TestType{2}};
         client.put_tensor(outgoing, dims, data);
@@ -134,7 +139,107 @@ TEMPLATE_TEST_CASE("In memory client test cases", "[in-mem]", std::int32_t,
             if constexpr (std::is_integral<TestType>::value) {
                 REQUIRE(y == x);
             } else {
-                REQUIRE_THAT(y, Catch::Matchers::WithinRel(x, 0.001));
+                REQUIRE_THAT(y, Catch::Matchers::WithinRel(
+                                    x, static_cast<TestType>(0.001)));
+            }
+        }
+    }
+
+    SECTION("Client can gather several scalar items") {
+
+        std::vector<TestType> expected_elements{0, 123, 36};
+        std::size_t idx = 0;
+        std::vector<radex::data::IncomingHandle> in_handles{};
+
+        for (const auto &e : expected_elements) {
+            std::string key = std::string{"scalar-"} + std::to_string(idx++);
+            client.put_scalar<TestType>(radex::data::OutgoingHandle{key}, e);
+            in_handles.push_back(radex::data::IncomingHandle{key});
+        }
+
+        const auto scalars = client.gather_scalars<TestType>(
+            in_handles, std::chrono::seconds(3));
+
+        REQUIRE(in_handles.size() == scalars.size());
+        REQUIRE(expected_elements.size() == scalars.size());
+
+        for (int i = 0; i < scalars.size(); i++) {
+            auto got = scalars[i];
+            auto x = expected_elements[i];
+
+            if constexpr (std::is_integral<TestType>::value) {
+                REQUIRE(got == x);
+            } else {
+                REQUIRE_THAT(got, Catch::Matchers::WithinRel(
+                                      x, static_cast<TestType>(0.001)));
+            }
+        }
+    }
+
+    SECTION("Client can gather several tensor items") {
+        // Tensor 0
+        const int t0_size = 12;
+        std::vector<TestType> t0_data(t0_size);
+        std::iota(t0_data.begin(), t0_data.end(), 0);
+        std::vector<radex::detail::MetaInt> t0_dims{t0_size};
+
+        // Tensor 1
+        const int t1_size = 12;
+        std::vector<TestType> t1_data(t1_size);
+        std::iota(t1_data.begin(), t1_data.end(), 0);
+        std::reverse(t1_data.begin(), t1_data.end());
+        std::vector<radex::detail::MetaInt> t1_dims{3, 4};
+
+        // Tensor 2
+        const int t2_size = 400;
+        std::vector<TestType> t2_data(t2_size, 0);
+        std::vector<radex::detail::MetaInt> t2_dims{10, 5, 8};
+
+        // Place tensors
+        std::vector<std::pair<std::vector<radex::detail::MetaInt>,
+                              std::vector<TestType>>>
+            expected_vectors{std::make_pair(t0_dims, t0_data),
+                             std::make_pair(t1_dims, t1_data),
+                             std::make_pair(t2_dims, t2_data)};
+        std::size_t idx = 0;
+        std::vector<radex::data::IncomingHandle> in_handles{};
+
+        for (const auto &[dims, data] : expected_vectors) {
+            std::string key = std::string("my-tensor-") + std::to_string(idx++);
+            client.put_tensor(radex::data::OutgoingHandle{key}, dims, data);
+            in_handles.push_back(radex::data::IncomingHandle{key});
+        }
+
+        // Gather tensors
+        const auto got_tensors = client.gather_tensors<TestType>(
+            in_handles, std::chrono::seconds(3));
+
+        // Assert equal
+        REQUIRE(in_handles.size() == got_tensors.size());
+        REQUIRE(expected_vectors.size() == got_tensors.size());
+
+        for (int i = 0; i < in_handles.size(); i++) {
+            const auto &[got_dims, got_data] = got_tensors[i];
+            const auto &[x_dims, x_data] = expected_vectors[i];
+
+            REQUIRE(got_dims.size() == x_dims.size());
+            REQUIRE(got_data.size() == x_data.size());
+
+            for (int i = 0; i < got_dims.size(); i++) {
+                REQUIRE(got_dims[i] == x_dims[i]);
+            }
+
+            for (int i = 0; i < got_data.size(); i++) {
+                TestType got_element = got_data[i];
+                TestType x_element = x_data[i];
+
+                if constexpr (std::is_integral<TestType>::value) {
+                    REQUIRE(got_element == x_element);
+                } else {
+                    REQUIRE_THAT(got_element,
+                                 Catch::Matchers::WithinRel(
+                                     x_element, static_cast<TestType>(0.001)));
+                }
             }
         }
     }
