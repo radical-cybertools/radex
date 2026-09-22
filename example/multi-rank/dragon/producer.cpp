@@ -1,6 +1,7 @@
 #include "radex/dragon.hpp"
 #include "radex/handles.hpp"
 
+#include <cstdint>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
@@ -20,7 +21,7 @@ int main(int argc, char *argv[]) {
     timespec timeout{5, 0};
     radex::drg::ddict::Client client{serialized_dd, &timeout};
 
-    std::vector<int> data(4);
+    std::vector<int32_t> data(4);
     std::iota(data.begin(), data.end(), rank * world_size);
 
     std::string scalar_key{"scalar-part-"};
@@ -28,7 +29,7 @@ int main(int argc, char *argv[]) {
     std::string suffix{std::to_string(rank) + "-of-" +
                        std::to_string(world_size)};
 
-    client.put_scalar<long>(radex::data::OutgoingHandle{scalar_key + suffix},
+    client.put_scalar<int64_t>(radex::data::OutgoingHandle{scalar_key + suffix},
                             (rank + 1) * world_size);
     client.put_tensor(radex::data::OutgoingHandle{tensor_key + suffix},
                       {data.size()}, data);

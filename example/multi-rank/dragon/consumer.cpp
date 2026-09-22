@@ -2,6 +2,7 @@
 #include "radex/handles.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
@@ -45,10 +46,10 @@ int main(int argc, char *argv[]) {
     }
 
     auto scalars =
-        client.gather_scalars<long>(scalar_handles, std::chrono::seconds(10));
+        client.gather_scalars<int64_t>(scalar_handles, std::chrono::seconds(10));
     std::cout << "Consumer gathered scalars: " << vec_to_str(scalars) << "\n";
     auto tensors =
-        client.gather_tensors<int>(tensor_handles, std::chrono::seconds(10));
+        client.gather_tensors<int32_t>(tensor_handles, std::chrono::seconds(10));
     std::cout << "Consumer gathered tensors:" << "\n";
     for (const auto &tensor : tensors) {
         std::cout << "  |-- Part:" << "\n"
