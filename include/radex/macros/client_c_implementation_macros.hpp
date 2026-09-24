@@ -90,7 +90,7 @@
             }                                                                  \
             if (out_dims && tensor.dims.size() > 0) {                          \
                 std::memcpy(out_dims, tensor.dims.data(),                      \
-                            tensor.data.size() * sizeof(size_t));              \
+                            tensor.dims.size() * sizeof(size_t));              \
             }                                                                  \
             *out_rank = tensor.dims.size();                                    \
             return RADEX_OK;                                                   \
@@ -143,7 +143,7 @@
             }                                                                  \
             if (out_dims && tensor.dims.size() > 0) {                          \
                 std::memcpy(out_dims, tensor.dims.data(),                      \
-                            tensor.data.size() * sizeof(size_t));              \
+                            tensor.dims.size() * sizeof(size_t));              \
             }                                                                  \
             *out_rank = static_cast<int>(tensor.dims.size());                  \
             return RADEX_OK;                                                   \
