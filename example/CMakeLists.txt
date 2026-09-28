@@ -44,6 +44,12 @@ if(BUILD_SMARTREDIS)
     add_executable(redis-cpp-consumer cpp-exchange/redis/consumer.cpp)
     list(APPEND SMARTREDIS_EXAMPLES redis-cpp-consumer)
 
+    add_executable(redis-multi-rank-producer multi-rank/redis/producer.cpp)
+    list(APPEND SMARTREDIS_EXAMPLES redis-multi-rank-producer)
+
+    add_executable(redis-multi-rank-consumer multi-rank/redis/consumer.cpp)
+    list(APPEND SMARTREDIS_EXAMPLES redis-multi-rank-consumer)
+
     list(APPEND EXAMPLES ${SMARTREDIS_EXAMPLES})
 
 endif()
@@ -65,6 +71,17 @@ if(BUILD_DRAGON)
         py-cpp-exchange/dragon/app.cpp
     )
     list(APPEND DRAGON_EXAMPLES dragon-cpp-with-py)
+
+    # Dragon Multi-rank exmples
+    add_executable(dragon-multi-rank-producer
+        multi-rank/dragon/producer.cpp
+    )
+    list(APPEND DRAGON_EXAMPLES dragon-multi-rank-producer)
+
+    add_executable(dragon-multi-rank-consumer
+        multi-rank/dragon/consumer.cpp
+    )
+    list(APPEND DRAGON_EXAMPLES dragon-multi-rank-consumer)
 
     # Simulation example
     find_package(MPI)
