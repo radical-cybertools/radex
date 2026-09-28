@@ -45,11 +45,11 @@ int main(int argc, char *argv[]) {
             radex::data::IncomingHandle{tensor_key + suffix});
     }
 
-    auto scalars =
-        client.gather_scalars<int64_t>(scalar_handles, std::chrono::seconds(10));
+    auto scalars = client.gather_scalars<int64_t>(scalar_handles,
+                                                  std::chrono::seconds(10));
     std::cout << "Consumer gathered scalars: " << vec_to_str(scalars) << "\n";
-    auto tensors =
-        client.gather_tensors<int32_t>(tensor_handles, std::chrono::seconds(10));
+    auto tensors = client.gather_tensors<int32_t>(tensor_handles,
+                                                  std::chrono::seconds(10));
     std::cout << "Consumer gathered tensors:" << "\n";
     for (const auto &tensor : tensors) {
         std::cout << "  |-- Part:" << "\n"

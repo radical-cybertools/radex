@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
                        std::to_string(world_size)};
 
     client.put_scalar<int64_t>(radex::data::OutgoingHandle{scalar_key + suffix},
-                            (rank + 1) * world_size);
+                               (rank + 1) * world_size);
     std::cout << "Producer rank set a scalar in the orchestrator" << std::endl;
     client.put_tensor(radex::data::OutgoingHandle{tensor_key + suffix},
                       {data.size()}, data);
