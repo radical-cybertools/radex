@@ -10,8 +10,8 @@
 #include "radex/build_config.hpp"
 
 #include "radex/client_base.hpp"
-#include "radex/handles.hpp"
 #include "radex/dragon.hpp"
+#include "radex/handles.hpp"
 #include "radex/smartredis.hpp"
 
 #endif
