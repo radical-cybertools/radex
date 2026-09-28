@@ -17,14 +17,14 @@ typedef struct radex_outgoing_handle radex_outgoing_handle_t;
  * @param out_handle Receives the new handle on success.
  * @return RADEX_OK on success, an error code otherwise.
  */
-int radex_incoming_handle_create(const char* name,
-								 radex_incoming_handle_t** out_handle);
+int radex_incoming_handle_create(const char *name,
+                                 radex_incoming_handle_t **out_handle);
 
 /**
  * Destroy an incoming handle and free its resources.
  * @param handle The handle to destroy.
  */
-int radex_incoming_handle_destroy(radex_incoming_handle_t* handle);
+int radex_incoming_handle_destroy(radex_incoming_handle_t *handle);
 
 /**
  * Create an outgoing handle for writing to the store.
@@ -32,14 +32,14 @@ int radex_incoming_handle_destroy(radex_incoming_handle_t* handle);
  * @param out_handle Receives the new handle on success.
  * @return RADEX_OK on success, an error code otherwise.
  */
-int radex_outgoing_handle_create(const char* name,
-								 radex_outgoing_handle_t** out_handle);
+int radex_outgoing_handle_create(const char *name,
+                                 radex_outgoing_handle_t **out_handle);
 
 /**
  * Destroy an outgoing handle and free its resources.
  * @param handle The handle to destroy.
  */
-int radex_outgoing_handle_destroy(radex_outgoing_handle_t* handle);
+int radex_outgoing_handle_destroy(radex_outgoing_handle_t *handle);
 
 #ifdef __cplusplus
 }

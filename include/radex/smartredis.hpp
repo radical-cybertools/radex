@@ -1,8 +1,8 @@
 #ifndef __RADEX_SMARTREDIS_HPP__
 #define __RADEX_SMARTREDIS_HPP__
 
-#include "radex/client_base.hpp"
 #include "radex/build_config.hpp"
+#include "radex/client_base.hpp"
 
 #ifdef RADEX_HAS_SMARTREDIS
 #include <client.h>
@@ -40,10 +40,11 @@ class Client : public IClient {
     radex::detail::BytesBuffer get_bytes(std::string_view key) override;
     radex::detail::BytesBuffer
     wait_for_bytes(std::string_view key,
-             std::chrono::milliseconds timeout) override;
+                   std::chrono::milliseconds timeout) override;
 };
 #else
-/// Placeholder used when RaDex was built without SmartRedis support (`BUILD_SMARTREDIS=OFF`).
+/// Placeholder used when RaDex was built without SmartRedis support
+/// (`BUILD_SMARTREDIS=OFF`).
 class Client : public radex::unsupported_backend::Client {
   public:
     Client();

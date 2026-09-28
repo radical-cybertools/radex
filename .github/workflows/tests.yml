@@ -31,7 +31,8 @@ jobs:
       run: |
             make -f dev-resources/Makefile black-check; BLACK_RC=$?
             make -f dev-resources/Makefile isort-check; ISORT_RC=$?
-            exit $((BLACK_RC || ISORT_RC))
+            make -f dev-resources/Makefile clang-format-check; CLANG_FMT_RC=$?
+            exit $((BLACK_RC || ISORT_RC || CLANG_FMT_RC))
 
   tests:
     name: Tests on ${{ matrix.os }}

@@ -27,12 +27,12 @@ class UnorderedMapClient : public radex::IClient {
         return true;
     }
 
-    private:
-        void delete_key(std::string_view key) override {
+  private:
+    void delete_key(std::string_view key) override {
         _map.erase(std::string{key});
     }
 
-    public:
+  public:
     void put_bytes(std::string_view key, const void *bytes,
                    radex::detail::MetaInt length) override {
         auto ptr = static_cast<const std::uint8_t *>(bytes);
@@ -96,7 +96,8 @@ TEMPLATE_TEST_CASE("In memory client test cases", "[in-mem]", std::int32_t,
 
     SECTION("Client can delete a tensor value and its metadata") {
         const radex::data::OutgoingHandle outgoing{"my-tensor-to-delete"};
-        const radex::data::OutgoingHandle deletion_handle{"my-tensor-to-delete"};
+        const radex::data::OutgoingHandle deletion_handle{
+            "my-tensor-to-delete"};
         const std::vector<radex::detail::MetaInt> dims{2};
         const std::vector<TestType> data{TestType{1}, TestType{2}};
         client.put_tensor(outgoing, dims, data);

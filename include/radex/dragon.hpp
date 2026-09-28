@@ -1,8 +1,8 @@
 #ifndef __RADEX_DRAGON_HPP__
 #define __RADEX_DRAGON_HPP__
 
-#include "radex/client_base.hpp"
 #include "radex/build_config.hpp"
+#include "radex/client_base.hpp"
 
 #ifdef RADEX_HAS_DRAGON
 #include <dragon/dictionary.hpp>
@@ -39,14 +39,16 @@ class Client : public IClient {
     ~Client() = default;
 
     bool contains(std::string_view key) override;
-    detail::BytesBuffer wait_for_bytes(std::string_view key,
-                                       std::chrono::milliseconds timeout) override;
+    detail::BytesBuffer
+    wait_for_bytes(std::string_view key,
+                   std::chrono::milliseconds timeout) override;
     void put_bytes(std::string_view key, const void *bytes,
                    detail::MetaInt length) override;
     radex::detail::BytesBuffer get_bytes(std::string_view key) override;
 };
 #else
-/// Placeholder used when RaDex was built without Dragon support (`BUILD_DRAGON=OFF`).
+/// Placeholder used when RaDex was built without Dragon support
+/// (`BUILD_DRAGON=OFF`).
 class Client : public radex::unsupported_backend::Client {
   public:
     Client();
