@@ -2,11 +2,19 @@ ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 DIRS := $(ROOT)/../example \
         $(ROOT)/../tests \
         $(ROOT)/../include \
-        $(ROOT)/../src/cpp \
+        $(ROOT)/../src
 
-HEADER_FILES = $(shell find $(DIRS) -name '*.h' -o -name '*.hh' -o -name '*.hpp')
-CPP_SRC = $(shell find $(DIRS) -name '*.cpp' -o -name '*.cc')
-C_SRC = $(shell find $(DIRS) -name '*.c')
+HEADER_FILES = $(shell find $(DIRS) \
+    -path './src/python/*' -prune \
+    -name '*.h' -o -name '*.hh' -o -name '*.hpp')
+
+CPP_SRC = $(shell find $(DIRS) \
+    -path './src/python/*' -prune \
+    -name '*.cpp' -o -name '*.cc')
+
+C_SRC = $(shell find $(DIRS) \
+    -path './src/python/*' \
+    -prune -name '*.c')
 
 PYTEST_ARGS ?=
 PYTHON ?= python3
