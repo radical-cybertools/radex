@@ -11,5 +11,7 @@ name = "radex"
 version = "0.0.0"
 dependencies = [
     "cloudpickle",
+    "flask",
     "numpy",
+    "requests",
 ]
