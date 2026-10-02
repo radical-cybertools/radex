@@ -5,16 +5,16 @@ DIRS := $(ROOT)/../example \
         $(ROOT)/../src
 
 HEADER_FILES = $(shell find $(DIRS) \
-    -path './src/python/*' -prune \
+    -path '$(ROOT)/../src/python/build/*' -prune \
     -name '*.h' -o -name '*.hh' -o -name '*.hpp')
 
 CPP_SRC = $(shell find $(DIRS) \
-    -path './src/python/*' -prune \
+    -path '$(ROOT)/../src/python/build/*' -prune \
     -name '*.cpp' -o -name '*.cc')
 
 C_SRC = $(shell find $(DIRS) \
-    -path './src/python/*' \
-    -prune -name '*.c')
+    -path '$(ROOT)/../src/python/build/*' -prune \
+    -name '*.c')
 
 PYTEST_ARGS ?=
 PYTHON ?= python3

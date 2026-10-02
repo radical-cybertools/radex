@@ -123,5 +123,5 @@ if __name__ == "__main__":
                 "share/**/*",
             ]
         },
-        ext_modules=cythonize(make_extensions()),
+        ext_modules=cythonize(make_extensions(), build_dir="build"),
     )
