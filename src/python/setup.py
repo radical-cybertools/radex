@@ -8,7 +8,6 @@ from Cython.Build import build_ext, cythonize
 from setuptools import Extension, find_packages, setup
 from setuptools.command.build_py import build_py
 
-
 HERE = pathlib.Path(__file__).parent
 ROOT = HERE.parent.parent
 PY_SRC = HERE / "src"
@@ -17,9 +16,7 @@ RADEX_INSTALL_DIR = pathlib.Path(
     os.environ.get("RADEX_INSTALL_DIR", os.fspath(ROOT / "install"))
 )
 RADEX_INCLUDE_DIR = pathlib.Path(
-    os.environ.get(
-        "RADEX_INCLUDE_DIR", os.fspath(RADEX_INSTALL_DIR / "include")
-    )
+    os.environ.get("RADEX_INCLUDE_DIR", os.fspath(RADEX_INSTALL_DIR / "include"))
 )
 RADEX_LIB_DIR = pathlib.Path(
     os.environ.get("RADEX_LIB_DIR", os.fspath(next(RADEX_INSTALL_DIR.glob("lib*"))))
@@ -67,9 +64,7 @@ def make_extensions():
         include_dirs.append(_required_env("SMARTREDIS_INCLUDE_DIR", "SmartRedis"))
         library_dirs.append(_required_env("SMARTREDIS_LIB_DIR", "SmartRedis"))
         libraries.append("smartredis")
-        runtime_library_dirs.append(
-            _required_env("SMARTREDIS_LIB_DIR", "SmartRedis")
-        )
+        runtime_library_dirs.append(_required_env("SMARTREDIS_LIB_DIR", "SmartRedis"))
 
     common = {
         "include_dirs": include_dirs,

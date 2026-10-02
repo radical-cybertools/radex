@@ -1,5 +1,4 @@
-"""Python mirror of the C++ exception hierarchy in ``radex/exceptions.hpp``.
-"""
+"""Python mirror of the C++ exception hierarchy in ``radex/exceptions.hpp``."""
 
 __all__ = [
     "RadexError",

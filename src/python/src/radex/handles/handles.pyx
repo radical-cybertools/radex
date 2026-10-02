@@ -1,9 +1,9 @@
 import cython
 
-from libcpp.memory cimport unique_ptr, make_unique
+from libcpp.memory cimport make_unique, unique_ptr
 
-from radex.utils.utils cimport encode_str, EncodedStr
 from radex.handles.handles cimport CXXIncomingHandle, CXXOutgoingHandle
+from radex.utils.utils cimport EncodedStr, encode_str
 
 
 cdef class IncomingHandle:
