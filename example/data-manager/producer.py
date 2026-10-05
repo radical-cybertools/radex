@@ -7,10 +7,7 @@ from mpi4py import MPI
 def main() -> int:
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
-    this_proc = DataManager.init_process(application="producer",
-                                        supplies=[
-            {"handle": f"some-data-{rank}", "dtype": "float32", "dims": "tensor"}
-        ], requires=[])
+    this_proc = DataManager.register_process(application="producer")
     return 0
 
 
