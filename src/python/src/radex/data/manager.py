@@ -82,8 +82,7 @@ class DataManager(contextlib.AbstractContextManager):
         info = _DataManagerInfo(hostname="127.0.0.1", port=13254)
         self_ = cls(info=info)
 
-        # TODO: POST the init route with the `application` attr
-        res = requests.post(info.endpoint("/init/workflow"), json={"hello": "world"})
+        res = requests.post(info.endpoint("/init/workflow"), json=applications)
         if not res.ok:
             self_.stop()
             raise RuntimeError("Failed to initailize the data manager")
