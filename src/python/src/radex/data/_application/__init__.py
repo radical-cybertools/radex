@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import typing as t
+import logging
 
 from flask import Flask, jsonify, request
 from radex.data._types import ApplicationName, ProcessDescription
@@ -9,6 +10,7 @@ from radex.data._types import ApplicationName, ProcessDescription
 if t.TYPE_CHECKING:
     from flask import Response
 
+_LOGGER = logging.Logger(__name__)
 app = Flask(__name__)
 
 
@@ -28,9 +30,13 @@ def register_workflow() -> tuple[Response, int]:
     if HANDLE_REGISTRY:
         return jsonify({"error": "workflow already registered"}), 409
     HANDLE_REGISTRY = request.get_json()
-    print("Registered:")
-    print("-----------")
-    print(HANDLE_REGISTRY)
+    _LOGGER.info("Registered:", HANDLE_REGISTRY)
+    return jsonify(HANDLE_REGISTRY), 200
+
+@app.route("/spec/workflow", methods=["GET"])
+def get_workflow_spec() -> tuple[Response, int]:
+    if not HANDLE_REGISTRY:
+        return jsonify({"error": "Handle registry has not been initialized"}), 404
     return jsonify(HANDLE_REGISTRY), 200
 
 
