@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import dataclasses
-import typing as t
 import logging
+import typing as t
 
 from flask import Flask, jsonify, request
 from radex.data._types import ApplicationName, ProcessDescription
@@ -28,10 +28,12 @@ def heartbeat() -> tuple[str, int]:
 def register_workflow() -> tuple[Response, int]:
     global HANDLE_REGISTRY
     if HANDLE_REGISTRY:
+        _LOGGER.error("A process attempted to provide a second handle registry")
         return jsonify({"error": "workflow already registered"}), 409
     HANDLE_REGISTRY = request.get_json()
     _LOGGER.info("Registered:", HANDLE_REGISTRY)
     return jsonify(HANDLE_REGISTRY), 200
+
 
 @app.route("/spec/workflow", methods=["GET"])
 def get_workflow_spec() -> tuple[Response, int]:

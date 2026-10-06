@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from radex.data.manager import DataManager
 from mpi4py import MPI
+from radex.data.manager import DataManager
 
 
 def main() -> int:
