@@ -1,30 +1,37 @@
 from __future__ import annotations
 
 import atexit
-from radex.data.manager import DataManager
 import time
+
+from radex.data.manager import DataManager
 
 
 def main() -> int:
     with DataManager.initailize(
         applications={
             "producer": {
-                "incoming": [],
-                "outgoing": [
-                    {"handle": "some-data-0", "dtype": "float32", "dims": "tensor"},
-                    {"handle": "some-data-1", "dtype": "float32", "dims": "tensor"},
-                    {"handle": "some-data-2", "dtype": "float32", "dims": "tensor"},
-                    {"handle": "some-data-3", "dtype": "float32", "dims": "tensor"},
-                ],
+                "scalars": {"incoming": [], "outgoing": []},
+                "tensors": {
+                    "incoming": [],
+                    "outgoing": [
+                        {"handle": "some-data-0", "dtype": "float32"},
+                        {"handle": "some-data-1", "dtype": "float32"},
+                        {"handle": "some-data-2", "dtype": "float32"},
+                        {"handle": "some-data-3", "dtype": "float32"},
+                    ],
+                },
             },
             "consumer": {
-                "incoming": [
-                    {"handle": "some-data-0", "dtype": "float32", "dims": "tensor"},
-                    {"handle": "some-data-1", "dtype": "float32", "dims": "tensor"},
-                    {"handle": "some-data-2", "dtype": "float32", "dims": "tensor"},
-                    {"handle": "some-data-3", "dtype": "float32", "dims": "tensor"},
-                ],
-                "outgoing": [],
+                "scalars": {"incoming": [], "outgoing": []},
+                "tensors": {
+                    "incoming": [
+                        {"handle": "some-data-0", "dtype": "float32"},
+                        {"handle": "some-data-1", "dtype": "float32"},
+                        {"handle": "some-data-2", "dtype": "float32"},
+                        {"handle": "some-data-3", "dtype": "float32"},
+                    ],
+                    "outgoing": [],
+                },
             },
         }
     ) as data_manager:
