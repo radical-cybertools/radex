@@ -14,22 +14,27 @@ def main() -> int:
                 "tensors": {
                     "incoming": [],
                     "outgoing": [
-                        {"handle": "some-data-0", "dtype": "float32"},
-                        {"handle": "some-data-1", "dtype": "float32"},
-                        {"handle": "some-data-2", "dtype": "float32"},
-                        {"handle": "some-data-3", "dtype": "float32"},
+                        {"short-name": "some-data-0", "dtype": "float32"},
+                        {"short-name": "some-data-1", "dtype": "float32"},
+                        {"short-name": "some-data-2", "dtype": "float32"},
+                        {
+                            "short-name": "some-data-3",
+                            "dtype": "float32",
+                            # TODO: user defined kwargs
+                            "metadata": {},
+                        },
                     ],
                 },
             },
             "consumer": {
                 "scalars": {"incoming": [], "outgoing": []},
                 "tensors": {
-                    "incoming": [
-                        {"handle": "some-data-0", "dtype": "float32"},
-                        {"handle": "some-data-1", "dtype": "float32"},
-                        {"handle": "some-data-2", "dtype": "float32"},
-                        {"handle": "some-data-3", "dtype": "float32"},
-                    ],
+                    # TODO: do consumers need to register what handles they
+                    # would consume?? It would help with a "dry run" option,
+                    # but it is not striclty need to know who is requesting
+                    # what, just that it can be fullfilled an dtheis can be
+                    # done at run time. Potentailly just need to know what each
+                    # app produces
                     "outgoing": [],
                 },
             },
