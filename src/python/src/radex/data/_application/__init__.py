@@ -42,6 +42,19 @@ def get_workflow_spec() -> tuple[Response, int]:
     return jsonify(HANDLE_REGISTRY), 200
 
 
+# TODO: We only really care about
+
+# 1) Getting all of the keys that an app can write to and
+# 2) Getting all of the keys that can be read from matching on some subset of
+#    metadata
+
+# Back of the envelope math says this is simply two routes, in theory don't
+# need anything below this comment If multiple processes claim to be the same
+# app, with the same name, give them both the writeable key set, that is a user
+# issue. We should log PIDs in some output file with this happens for easier
+# debugging on the user's end.
+
+
 @app.route("/init/<string:application_id>/outgoing", methods=["POST"])
 def register_outgoing_handles(application_id: str) -> str:
     return f"Process {application_id} is registering outgoing handles"
