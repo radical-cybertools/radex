@@ -4,6 +4,7 @@ import collections.abc as c_abc
 import contextlib
 import dataclasses
 import logging
+import os
 import subprocess
 import sys
 import time
@@ -91,10 +92,8 @@ class DataManager(contextlib.AbstractContextManager):
 
     @classmethod
     def register_process(cls, application: str) -> DataManagedProcess:
-        # TODO: what does this return
-        # TODO: phone home to the data manager process so that it knows a
-        #       process was started
-        raise NotImplementedError("TODO: need to register a new proc")
+        info = _DataManagerInfo.from_environment()
+        return DataManagedProcess(ApplicationName(application), info)
 
     def stop(self, timeout: int | None = None) -> int:
         ret_code = self._application.poll()
@@ -120,6 +119,34 @@ class _DataManagerInfo:
     def endpoint(self, route: str) -> str:
         sep = "" if route[0] == "/" else "/"
         return f"{self.address}{sep}{route}"
+
+    def to_env_vars(self) -> dict[str, str]:
+        return {
+            "RADEX_DATA_MANAGER_HOST": self.hostname,
+            "RADEX_DATA_MANAGER_PORT": str(self.port),
+        }
+
+    @classmethod
+    def _from_str_mapping(cls, mapping: t.Mapping[str, str]) -> t.Self:
+        def get_val(key: str, cast: c_abc.Callable[[str], _T] = str) -> _T:
+            try:
+                val = mapping[key]
+            except KeyError as e:
+                raise ValueError(
+                    f"Failed to find a value for `{key}` in provided mapping"
+                ) from e
+            return cast(val)
+
+        self_ = cls(
+            hostname=get_val("RADEX_DATA_MANAGER_HOST"),
+            port=get_val("RADEX_DATA_MANAGER_PORT", cast=int),
+        )
+
+        return self_
+
+    @classmethod
+    def from_environment(cls) -> t.Self:
+        return cls._from_str_mapping(os.environ)
 
 
 @dataclasses.dataclass(frozen=True)
