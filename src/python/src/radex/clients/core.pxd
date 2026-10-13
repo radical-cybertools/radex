@@ -1,21 +1,19 @@
+cimport numpy as np
 from libcpp.memory cimport unique_ptr
 from libcpp.string cimport string
 from libcpp.string_view cimport string_view
 
-from radex.utils.libcpp_chrono cimport milliseconds
+from radex.handles.handles cimport CXXIncomingHandle as IncomingHandle
+from radex.handles.handles cimport CXXOutgoingHandle as OutgoingHandle
 from radex.utils.data cimport (
     BytesBuffer,
     DType,
     ItemInfo,
-    MetaInt as size_t,
 )
-from radex.handles.handles cimport (
-    CXXIncomingHandle as IncomingHandle,
-    CXXOutgoingHandle as OutgoingHandle,
-)
+from radex.utils.data cimport MetaInt as size_t
 from radex.utils.exceptions cimport raise_py_error
+from radex.utils.libcpp_chrono cimport milliseconds
 
-cimport numpy as np
 np.import_array()
 
 cdef extern from "radex/client.hpp" namespace "radex":

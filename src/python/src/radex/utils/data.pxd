@@ -1,9 +1,10 @@
+cimport numpy as np
 from libc.stddef cimport size_t
 from libc.stdint cimport int32_t, int64_t
 from libcpp.memory cimport unique_ptr
 
-cimport numpy as np
 import numpy as np
+
 np.import_array()
 
 ctypedef fused SupportedType:
