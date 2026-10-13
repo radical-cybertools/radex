@@ -13,3 +13,11 @@ dependencies = [
     "cloudpickle",
     "numpy",
 ]
+
+[project.optional-dependencies]
+orbit = [
+    "radical.orbit",
+]
+
+[project.entry-points."radical.orbit.plugins"]
+radex = "radex.orbit.plugin"
