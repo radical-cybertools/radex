@@ -12,19 +12,18 @@ import typing as t
 
 import requests
 import requests.exceptions
-from radex.data._types import ApplicationName, HandleDescription, ProcessDescription
+from radex.data._types import ApplicationName, ProcessDescription
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 if t.TYPE_CHECKING:
     from types import TracebackType
 
-    _T = t.TypeVar("_T")
     _EnvVarMapping = t.Mapping[str, str]
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class DataManager(contextlib.AbstractContextManager):
+class DataManager(contextlib.AbstractContextManager["DataManagerDriver"]):
     def __init__(
         self, info: _DataManagerInfo, *, max_connection_attempts: int = 60
     ) -> None:
@@ -128,18 +127,18 @@ class _DataManagerInfo:
 
     @classmethod
     def _from_str_mapping(cls, mapping: t.Mapping[str, str]) -> t.Self:
-        def get_val(key: str, cast: c_abc.Callable[[str], _T] = str) -> _T:
+        def get_val[T](key: str, as_type: c_abc.Callable[[str], T]) -> T:
             try:
                 val = mapping[key]
             except KeyError as e:
                 raise ValueError(
                     f"Failed to find a value for `{key}` in provided mapping"
                 ) from e
-            return cast(val)
+            return as_type(val)
 
         self_ = cls(
-            hostname=get_val("RADEX_DATA_MANAGER_HOST"),
-            port=get_val("RADEX_DATA_MANAGER_PORT", cast=int),
+            hostname=get_val("RADEX_DATA_MANAGER_HOST", as_type=str),
+            port=get_val("RADEX_DATA_MANAGER_PORT", as_type=int),
         )
 
         return self_
@@ -153,7 +152,9 @@ class _DataManagerInfo:
 class DataManagerDriver:
     info: _DataManagerInfo
 
-    def start_process(self, name: str, how: c_abc.Callable[[_EnvVarMapping], _T]) -> _T:
+    def start_process[T](
+        self, name: str, how: c_abc.Callable[[_EnvVarMapping], T]
+    ) -> T:
         # TODO: What happens here?? What is reported to the server
         raise NotImplementedError("TODO")
 
