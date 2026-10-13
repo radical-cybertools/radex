@@ -5,8 +5,12 @@ import logging
 import typing as t
 
 from flask import Flask, jsonify, request
-from radex.data._application.handle_registry import HandleRegistry, requires_registry
-from radex.data._types import ApplicationName, ProcessDescription
+from radex.data._application.handle_registry import (
+    HandleRegistry,
+    requires_registry,
+    initializes_registry,
+)
+from radex.data._types import ApplicationName, ProcessDescription, WorkflowSpecType
 
 if t.TYPE_CHECKING:
     from flask import Response
@@ -21,9 +25,10 @@ def heartbeat() -> tuple[str, int]:
 
 
 @app.route("/init/workflow", methods=["POST"])
-def register_workflow() -> tuple[Response, int]:
-    spec = request.get_json()
-    return jsonify(spec), 200
+@initializes_registry
+def register_workflow() -> HandleRegistry:
+    spec: WorkflowSpecType = request.get_json()
+    return HandleRegistry.from_spec(spec)
 
 
 @app.route("/spec/workflow", methods=["GET"])
