@@ -27,8 +27,29 @@ def register_workflow() -> tuple[Response, int]:
 
 
 @app.route("/spec/workflow", methods=["GET"])
-def get_workflow_spec() -> tuple[Response, int]:
+@requires_registry
+def get_workflow_spec(registry: HandleRegistry) -> tuple[Response, int]:
     return jsonify(registry), 200
+
+
+@app.route("key/writeable/<appname:string>", methods=["GET"])
+@requires_registry
+def get_writable_keys(registry: HandleRegistry, appname: str):
+    handles = registry.find().from_app(appname)
+    # TODO: need to decide to how to convert this so that it typeable in C++
+
+
+@app.route("/key/readable", methods=["GET"])
+@requires_registry
+def get_readable_keys(registry: HandleRegistry):
+    handles = (
+        registry.find()
+        .from_app(request.args.get("appname"))
+        .with_dtype(request.args.get("dtype"))
+        .with_metadata(request.args.get("metadata"))
+        .collect_or(None)
+    )
+    # TODO: need to decide to how to convert this so that it typeable in C++
 
 
 # TODO: We only really care about
@@ -37,18 +58,9 @@ def get_workflow_spec() -> tuple[Response, int]:
 # 2) Getting all of the keys that can be read from matching on some subset of
 #    metadata
 
-# Back of the envelope math says this is simply two routes, in theory don't
-# need anything below this comment If multiple processes claim to be the same
-# app, with the same name, give them both the writeable key set, that is a user
-# issue. We should log PIDs in some output file with this happens for easier
-# debugging on the user's end.
-
-
-@app.route("/init/<string:application_id>/outgoing", methods=["POST"])
-def register_outgoing_handles(application_id: str) -> str:
-    return f"Process {application_id} is registering outgoing handles"
-
-
-@app.route("/init/<string:application_id>/incoming", methods=["POST"])
-def register_incoming_handles(application_id: str) -> str:
-    return f"Process {application_id} is registering incoming handles"
+# Back of the envelope math says this is simply two routes (get keys writeable
+# and search all keys readable), and in theory that is what is being prototyped
+# above. If multiple processes claim to be the same app, with the same name,
+# give them both the writeable key set, that is a user issue. We should log
+# PIDs in some output file with this happens for easier debugging on the user's
+# end.
