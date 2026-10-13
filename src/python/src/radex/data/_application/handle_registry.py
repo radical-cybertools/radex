@@ -3,10 +3,17 @@ from __future__ import annotations
 import collections.abc as c_abc
 import dataclasses
 import functools
+import itertools
 import typing as t
 
 from flask import Response, jsonify, make_response
-from radex.data._types import WorkflowSpecType, WorkflowIterableType
+from radex.data._types import (
+    ApplicationName,
+    ScalarHandleDescription,
+    TensorHandleDescription,
+    WorkflowIterableType,
+    WorkflowSpecType,
+)
 
 type _RequiresHandleRegistryFnType[**P, T] = c_abc.Callable[
     t.Concatenate["HandleRegistry", P], T
@@ -20,20 +27,59 @@ type _RequiresHandleRegistryFactoryType[**P, T] = c_abc.Callable[
 
 @dataclasses.dataclass(frozen=True)
 class HandleRegistry:
-    handles: t.Collection[t.Any]
+    scalars: t.Collection[ScalarHandleRegistryEntry]
+    tensors: t.Collection[TensorHandleRegistryEntry]
+
+    @property
+    def handles(self) -> c_abc.Iterable[_HandleRegistryEntry]:
+        return itertools.chain(self.scalars, self.tensors)
 
     @classmethod
     def from_spec(cls, spec: WorkflowSpecType) -> t.Self:
-        return cls._from_iterable(self, spec.items())
+        return cls._from_iterable(spec.items())
 
     @classmethod
-    def _from_iterable(cls, iterable: WorkflowIterableType) -> t.Self: ...
+    def _from_iterable(cls, iterable: WorkflowIterableType) -> t.Self:
+        iter1, iter2 = itertools.tee(iterable)
+        scalars = [
+            ScalarHandleRegistryEntry.from_spec(from_app=app, spec=desc)
+            for app, proc_desc in iter1
+            for desc in proc_desc["scalars"]["outgoing"]
+        ]
+        tensors = [
+            TensorHandleRegistryEntry.from_spec(from_app=app, spec=desc)
+            for app, proc_desc in iter2
+            for desc in proc_desc["tensors"]["outgoing"]
+        ]
 
-    def find(self) -> _ChainedIterable[t.Any]:
-        return _filter(iter(self._items))
+        return cls(scalars, tensors)
 
-    def as_spec(self) -> WorkflowSpecType:
-        ...
+    def find(self) -> _HandleRegistryEntryIterable:
+        return _HandleRegistryEntryIterable(iter(self.handles))
+
+
+@dataclasses.dataclass(frozen=True)
+class _HandleRegistryEntry:
+    name: str
+    from_app: ApplicationName
+    dtype: str
+    metadata: dict[str, str]
+
+
+class ScalarHandleRegistryEntry(_HandleRegistryEntry):
+    @classmethod
+    def from_spec(
+        cls, from_app: ApplicationName, spec: ScalarHandleDescription
+    ) -> t.Self:
+        return cls(from_app=from_app, **spec)
+
+
+class TensorHandleRegistryEntry(_HandleRegistryEntry):
+    @classmethod
+    def from_spec(
+        cls, from_app: ApplicationName, spec: TensorHandleDescription
+    ) -> t.Self:
+        return cls(from_app=from_app, **spec)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -43,17 +89,38 @@ class _ChainedIterable[T]:
     def collect(self) -> list[T]:
         return list(self.as_iterable())
 
-    def as_iterable() -> t.Iterable[T]:
+    def collect_or[U](self, fallback: U) -> list[T] | U:
+        try:
+            return self.collect()
+        except Exception:
+            return fallback
+
+    def as_iterable(self) -> t.Iterable[T]:
         return self._items
 
     def filter(self, predicate: c_abc.Callable[[T], bool]) -> t.Self:
         return type(self)(item for item in self.as_iterable() if predicate(item))
 
     def map[U](self, fn: c_abc.Callable[[T], U]) -> _ChainedIterable[U]:
-        return type(self)(fn(item) for item in self.as_iterable())
+        return _ChainedIterable(fn(item) for item in self.as_iterable())
 
 
+class _HandleRegistryEntryIterable(_ChainedIterable[_HandleRegistryEntry]):
+    def from_app(self, app: str) -> t.Self:
+        return self.filter(lambda entry: entry.from_app == app)
 
+    def with_dtype(self, dtype: str) -> t.Self:
+        return self.filter(lambda entry: entry.dtype == dtype)
+
+    def with_metadata(self, metadata: dict[str, str]) -> t.Self:
+        def cmp(entry: _HandleRegistryEntry) -> bool:
+            meta = entry.metadata
+            return all(meta.get(key) == val for key, val in metadata.items())
+
+        return self.filter(cmp)
+
+
+# TODO: Still need to decide how to init this
 _GLOBAL_REGISTRY: t.Final = HandleRegistry()
 
 
