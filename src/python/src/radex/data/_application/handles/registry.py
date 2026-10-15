@@ -7,6 +7,10 @@ import itertools
 import typing as t
 
 from flask import Response, jsonify, make_response
+from radex.data._application.handles._types import HandleRegistryEntry
+from radex.data._application.handles.metadata import Metadata
+from radex.data._application.handles.scalar import ScalarHandleRegistryEntry
+from radex.data._application.handles.tensor import TensorHandleRegistryEntry
 from radex.data._types import (
     ApplicationName,
     ScalarHandleDescription,
@@ -22,7 +26,7 @@ class HandleRegistry:
     tensors: t.Collection[TensorHandleRegistryEntry]
 
     @property
-    def handles(self) -> c_abc.Iterable[_HandleRegistryEntry]:
+    def handles(self) -> c_abc.Iterable[HandleRegistryEntry]:
         return itertools.chain(self.scalars, self.tensors)
 
     @classmethod
@@ -50,41 +54,11 @@ class HandleRegistry:
 
 
 @dataclasses.dataclass(frozen=True)
-class _HandleRegistryEntry:
-    name: str
-    from_app: ApplicationName
-    dtype: str
-    metadata: dict[str, str]
-
-
-class ScalarHandleRegistryEntry(_HandleRegistryEntry):
-    @classmethod
-    def from_spec(
-        cls, from_app: ApplicationName, spec: ScalarHandleDescription
-    ) -> t.Self:
-        return cls(from_app=from_app, **spec)
-
-
-class TensorHandleRegistryEntry(_HandleRegistryEntry):
-    @classmethod
-    def from_spec(
-        cls, from_app: ApplicationName, spec: TensorHandleDescription
-    ) -> t.Self:
-        return cls(from_app=from_app, **spec)
-
-
-@dataclasses.dataclass(frozen=True)
 class _ChainedIterable[T]:
     _items: t.Iterable[T]
 
     def collect(self) -> list[T]:
         return list(self.as_iterable())
-
-    def collect_or[U](self, fallback: U) -> list[T] | U:
-        try:
-            return self.collect()
-        except Exception:
-            return fallback
 
     def as_iterable(self) -> t.Iterable[T]:
         return self._items
@@ -96,17 +70,67 @@ class _ChainedIterable[T]:
         return _ChainedIterable(fn(item) for item in self.as_iterable())
 
 
-class _HandleRegistryEntryIterable(_ChainedIterable[_HandleRegistryEntry]):
-    def from_app(self, app: str) -> t.Self:
+@dataclasses.dataclass(frozen=True)
+class _ChainableMethodImpl[InstT, ArgT]:
+    instance: InstT
+    fn: c_abc.Callable[[InstT, ArgT], InstT]
+
+    def __call__(self, val: ArgT) -> InstT:
+        return self.fn(self.instance, val)
+
+    def from_value[T](
+        self, conversion: c_abc.Callable[[T], ArgT]
+    ) -> _ChainableMethodImpl[InstT, T]:
+        def with_mapped_val(inst: InstT, arg: T) -> InstT:
+            converted_arg = conversion(arg)
+            return self.fn(inst, converted_arg)
+
+        return _ChainableMethodImpl(self.instance, with_mapped_val)
+
+    def if_not_none(self, val: ArgT | None) -> InstT:
+        if val is None:
+            return self.instance
+        return self(val)
+
+
+@dataclasses.dataclass(frozen=True)
+class _chainablemethod[U]:
+    fn: c_abc.Callable[[_HandleRegistryEntryIterable, U], _HandleRegistryEntryIterable]
+
+    @t.overload
+    def __get__(
+        self, obj: None, objtype: type[_HandleRegistryEntryIterable] | None = ...
+    ) -> t.Self: ...
+    @t.overload
+    def __get__(
+        self,
+        obj: _HandleRegistryEntryIterable,
+        objtype: type[_HandleRegistryEntryIterable],
+    ) -> _ChainableMethodImpl[_HandleRegistryEntryIterable, U]: ...
+    def __get__(
+        self,
+        obj: _HandleRegistryEntryIterable | None,
+        objtype: type[_HandleRegistryEntryIterable] | None = None,
+    ) -> _ChainableMethodImpl[_HandleRegistryEntryIterable, U] | t.Self:
+        if obj is None:
+            return self
+        return _ChainableMethodImpl(obj, self.fn)
+
+
+class _HandleRegistryEntryIterable(_ChainedIterable[HandleRegistryEntry]):
+    @_chainablemethod
+    def from_origin(self, app: str) -> t.Self:
         return self.filter(lambda entry: entry.from_app == app)
 
+    @_chainablemethod
     def with_dtype(self, dtype: str) -> t.Self:
         return self.filter(lambda entry: entry.dtype == dtype)
 
-    def with_metadata(self, metadata: dict[str, str]) -> t.Self:
-        def cmp(entry: _HandleRegistryEntry) -> bool:
+    @_chainablemethod
+    def with_metadata(self, metadata: c_abc.Mapping[str, str]) -> t.Self:
+        def cmp(entry: HandleRegistryEntry) -> bool:
             meta = entry.metadata
-            return all(meta.get(key) == val for key, val in metadata.items())
+            return meta.matches_values(metadata)
 
         return self.filter(cmp)
 
