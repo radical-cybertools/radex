@@ -4,11 +4,12 @@ import dataclasses
 import logging
 import typing as t
 
-from flask import Flask, jsonify, request
-from radex.data._application.handle_registry import (
+from flask import Flask, jsonify, make_response, request
+from radex.data._application.handles.metadata import Metadata
+from radex.data._application.handles.registry import (
     HandleRegistry,
-    requires_registry,
     initializes_registry,
+    requires_registry,
 )
 from radex.data._types import ApplicationName, ProcessDescription, WorkflowSpecType
 
@@ -20,8 +21,8 @@ app = Flask(__name__)
 
 
 @app.route("/ping", methods=["GET"])
-def heartbeat() -> tuple[str, int]:
-    return "pong", 200
+def heartbeat() -> Response:
+    return make_response("pong", 200)
 
 
 @app.route("/init/workflow", methods=["POST"])
@@ -33,26 +34,27 @@ def register_workflow() -> HandleRegistry:
 
 @app.route("/spec/workflow", methods=["GET"])
 @requires_registry
-def get_workflow_spec(registry: HandleRegistry) -> tuple[Response, int]:
-    return jsonify(registry), 200
+def get_workflow_spec(registry: HandleRegistry) -> Response:
+    return make_response(jsonify(registry), 200)
 
 
 @app.route("key/writeable/<appname:string>", methods=["GET"])
 @requires_registry
-def get_writable_keys(registry: HandleRegistry, appname: str):
-    handles = registry.find().from_app(appname)
+def get_writable_keys(registry: HandleRegistry, appname: str) -> Response:
+    handles = registry.find().from_origin(appname)
     # TODO: need to decide to how to convert this so that it typeable in C++
 
 
 @app.route("/key/readable", methods=["GET"])
 @requires_registry
-def get_readable_keys(registry: HandleRegistry):
+def get_readable_keys(registry: HandleRegistry) -> Response:
     handles = (
         registry.find()
-        .from_app(request.args.get("appname"))
-        .with_dtype(request.args.get("dtype"))
-        .with_metadata(request.args.get("metadata"))
-        .collect_or(None)
+        .from_origin.if_not_none(request.args.get("origin"))
+        .with_dtype.if_not_none(request.args.get("dtype"))
+        .with_metadata.from_value(Metadata.from_string)
+        .if_not_none(request.args.get("metadata"))
+        .collect()
     )
     # TODO: need to decide to how to convert this so that it typeable in C++
 
