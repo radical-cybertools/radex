@@ -1,19 +1,29 @@
 from __future__ import annotations
 
 import atexit
+import os
+import subprocess as sp
 import time
+import collections.abc as c_abc
+import pathlib
+
 
 from radex.data.manager import DataManager
 
+HERE = pathlib.Path(__file__).parent
+
 
 def main() -> int:
-    with DataManager.initailize(
+    dm_cmd, dm_env = DataManager.configure(
         applications={
             "producer": {
-                "scalars": {"incoming": [], "outgoing": []},
+                "scalars": {"outgoing": []},
                 "tensors": {
-                    "incoming": [],
                     "outgoing": [
+                        # Handles should be collected in the the root proc of
+                        # an MPI app, don't assume that every rank is
+                        # communicating with the DM. Not incorrect, but not
+                        # needed to be performant
                         {"short-name": "some-data-0", "dtype": "float32"},
                         {"short-name": "some-data-1", "dtype": "float32"},
                         {"short-name": "some-data-2", "dtype": "float32"},
@@ -27,7 +37,7 @@ def main() -> int:
                 },
             },
             "consumer": {
-                "scalars": {"incoming": [], "outgoing": []},
+                "scalars": {"outgoing": []},
                 "tensors": {
                     # TODO: do consumers need to register what handles they
                     # would consume?? It would help with a "dry run" option,
@@ -39,10 +49,14 @@ def main() -> int:
                 },
             },
         }
-    ) as data_manager:
-        for i in range(10):
-            print("Doing work!! -> iter", i)
-            time.sleep(1)
+    )
+
+    with sp.Popen(dm_cmd, env={**os.environ, dm_env}) as dm_proc:
+        with sp.Popen(["mpirun", "my_cool_app"], env={
+            "DM_HOST": ..., "DM_PORT": ...
+        }) as mpi_app:
+            ...
+
 
     return 0
 

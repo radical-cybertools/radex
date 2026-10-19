@@ -29,6 +29,7 @@ class DataManager(contextlib.AbstractContextManager["DataManagerDriver"]):
         self, info: _DataManagerInfo, *, max_connection_attempts: int = 60
     ) -> None:
         # TODO: use the info object to run the API on the correct port/host/etc
+        # TODO: this does not own the DM proc, we can turn this ino a static class/namespace/etc/whatever
         self._application = subprocess.Popen(
             [
                 sys.executable,
@@ -172,7 +173,7 @@ class DataManagedProcess:
     def _endpoint_safe_appname(self) -> str:
         return escape.url(self.application)
 
-    def get_outgoing_handles(self, metadtaa) -> list[OutgoingHandle]:
+    def get_outgoing_handles(self, metadata) -> list[OutgoingHandle]:
         endpoint = self.info.endpoint(f"/key/writeable/{self._endpoint_safe_appname}")
         res = requests.get(endpoint)
         # TODO: What does `res` look like??
@@ -180,6 +181,6 @@ class DataManagedProcess:
         #       specific type/dtype/shape/etc. Maybe return a handle registry??
         return [OutgoingHandle(key) for key in []]
 
-    def get_incoming_handles(self, keys: c_abc.Sequence[str]) -> list[IncomingHandle]:
+    def get_incoming_handles(self, metadata: c_abc.Sequence[str]) -> list[IncomingHandle]:
         # TODO: this
         raise NotImplementedError("TODO")
