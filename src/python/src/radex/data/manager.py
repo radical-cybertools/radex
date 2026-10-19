@@ -13,6 +13,7 @@ import typing as t
 import requests
 import requests.exceptions
 from radex.data._types import ApplicationName, ProcessDescription
+from radex.data._utils import consts, escape
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 if t.TYPE_CHECKING:
@@ -32,7 +33,7 @@ class DataManager(contextlib.AbstractContextManager["DataManagerDriver"]):
             [
                 sys.executable,
                 "-m",
-                "radex.data._entrypoint",
+                consts.MNGR_ENTRYPOINT_MODULE,
                 "--host",
                 info.hostname,
                 "--port",
@@ -121,8 +122,8 @@ class _DataManagerInfo:
 
     def to_env_vars(self) -> dict[str, str]:
         return {
-            "RADEX_DATA_MANAGER_HOST": self.hostname,
-            "RADEX_DATA_MANAGER_PORT": str(self.port),
+            consts.MNGR_HOST_ENV_VAR: self.hostname,
+            consts.MNGR_PORT_ENV_VAR: str(self.port),
         }
 
     @classmethod
@@ -164,9 +165,17 @@ class DataManagedProcess:
     application: ApplicationName
     info: _DataManagerInfo
 
-    def get_outgoing_handles(self, keys: c_abc.Sequence[str]) -> list[OutgoingHandle]:
-        # TODO: this
-        raise NotImplementedError("TODO")
+    @property
+    def _endpoint_safe_appname(self) -> str:
+        return escape.url(self.application)
+
+    def get_outgoing_handles(self, metadtaa) -> list[OutgoingHandle]:
+        endpoint = self.info.endpoint(f"/key/writeable/{self._endpoint_safe_appname}")
+        res = requests.get(endpoint)
+        # TODO: What does `res` look like??
+        # TODO: We probably need a way to search the outgoing handles for
+        #       specific type/dtype/shape/etc. Maybe return a handle registry??
+        return [OutgoingHandle(key) for key in []]
 
     def get_incoming_handles(self, keys: c_abc.Sequence[str]) -> list[IncomingHandle]:
         # TODO: this

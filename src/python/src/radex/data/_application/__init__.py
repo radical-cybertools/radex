@@ -6,8 +6,8 @@ import typing as t
 
 from flask import Flask, jsonify, make_response, request
 from radex.data._application.handles.metadata import Metadata
-from radex.data._application.handles.registry import (
-    HandleRegistry,
+from radex.data._application.handles.registry import HandleRegistry
+from radex.data._application.middleware.handles import (
     initializes_registry,
     requires_registry,
 )
