@@ -2,6 +2,8 @@ import argparse
 import subprocess
 import sys
 
+from radex.data._utils import consts
+
 
 def main() -> int:
     args = _parse_args()
@@ -11,7 +13,7 @@ def main() -> int:
             "-m",
             "flask",
             "--app",
-            "radex.data._application:app",
+            consts.MNGR_APPLICATION,
             "run",
             "--host",
             args.host,
