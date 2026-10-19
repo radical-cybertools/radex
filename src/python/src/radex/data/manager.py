@@ -91,7 +91,11 @@ class DataManager(contextlib.AbstractContextManager["DataManagerDriver"]):
         return self_
 
     @classmethod
-    def register_process(cls, application: str) -> DataManagedProcess:
+    def register_process(cls, application: str | None = None) -> DataManagedProcess:
+        if application is None:
+            application = os.environ.get(consts.MNGR_MANAGED_APP_NAME, None)
+        if application is None:
+            raise ValueError("Could not find application name")
         info = _DataManagerInfo.from_environment()
         return DataManagedProcess(ApplicationName(application), info)
 
@@ -138,8 +142,8 @@ class _DataManagerInfo:
             return as_type(val)
 
         self_ = cls(
-            hostname=get_val("RADEX_DATA_MANAGER_HOST", as_type=str),
-            port=get_val("RADEX_DATA_MANAGER_PORT", as_type=int),
+            hostname=get_val(consts.MNGR_HOST_ENV_VAR, as_type=str),
+            port=get_val(consts.MNGR_PORT_ENV_VAR, as_type=int),
         )
 
         return self_
@@ -156,8 +160,7 @@ class DataManagerDriver:
     def start_process[T](
         self, name: str, how: c_abc.Callable[[_EnvVarMapping], T]
     ) -> T:
-        # TODO: What happens here?? What is reported to the server
-        raise NotImplementedError("TODO")
+        return how({consts.MNGR_MANAGED_APP_NAME: name, **self.info.to_env_vars()})
 
 
 @dataclasses.dataclass(frozen=True)

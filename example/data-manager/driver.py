@@ -46,6 +46,10 @@ def main() -> int:
 
     return 0
 
+def launch_app(cmd: c_abc.Sequence[str]) -> c_abc.Callable[[dict[str, str]], sp.Popen]:
+    def _luanch_app(env: dict[str, str]) -> sp.Popen:
+        return sp.Popen(cmd, env={**os.environ, **env})
+    return _launch_app
 
 if __name__ == "__main__":
     raise SystemExit(main())
