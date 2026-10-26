@@ -14,7 +14,7 @@ import typing as t
 import requests
 import requests.exceptions
 from radex.data._types import ApplicationName, ProcessDescription, WorkflowSpecType
-from radex.data._utils import consts, escape
+from radex.data._utils import consts, parse
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 if t.TYPE_CHECKING:
@@ -37,11 +37,12 @@ class Configuration:
         parser.add_argument("--host", type=str, required=True)
         parser.add_argument("--port", type=int, required=True)
         parser.add_argument("--timeout", type=int, required=True)
+        parser.add_argument("--spec", type=parse.spec_from_str, required=True)
 
         args = parser.parse_args()
         return cls(
             location=Locator(hostname=args.host, port=args.port),
-            spec={},
+            spec=args.spec,
             timeout=args.timeout,
         )
 
@@ -52,6 +53,10 @@ class Configuration:
             self.location.hostname,
             "--port",
             str(self.location.port),
+            "--timeout",
+            str(self.timeout),
+            "--spec",
+            parse.spec_to_str(self.spec),
         )
 
     @property
@@ -114,7 +119,7 @@ class ManagedApplication:
 
     @property
     def _endpoint_safe_appname(self) -> str:
-        return escape.url(self.application)
+        return parse.esacpe_for_url(self.application)
 
     def get_outgoing_handles(self) -> list[OutgoingHandle]:
         endpoint = self.info.endpoint(f"/key/writeable/{self._endpoint_safe_appname}")
