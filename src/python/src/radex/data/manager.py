@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import collections.abc as c_abc
 import contextlib
 import dataclasses
@@ -12,7 +13,7 @@ import typing as t
 
 import requests
 import requests.exceptions
-from radex.data._types import ApplicationName, ProcessDescription
+from radex.data._types import ApplicationName, ProcessDescription, WorkflowSpecType
 from radex.data._utils import consts, escape
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 
@@ -24,96 +25,48 @@ if t.TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 
-class DataManager(contextlib.AbstractContextManager["DataManagerDriver"]):
-    def __init__(
-        self, info: _DataManagerInfo, *, max_connection_attempts: int = 60
-    ) -> None:
-        # TODO: use the info object to run the API on the correct port/host/etc
-        # TODO: this does not own the DM proc, we can turn this ino a static class/namespace/etc/whatever
-        self._application = subprocess.Popen(
-            [
-                sys.executable,
-                "-m",
-                consts.MNGR_ENTRYPOINT_MODULE,
-                "--host",
-                info.hostname,
-                "--port",
-                str(info.port),
-            ]
-        )
-        self._driver = DataManagerDriver(info)
+@dataclasses.dataclass(frozen=True)
+class Configuration:
+    location: Locator
+    spec: WorkflowSpecType
+    timeout: int
 
-        waiting_for_server = True
-        remaining_connection_attempts = max_connection_attempts
-        failed_to_connect = RuntimeError("Failed to set up data manager server")
-        while waiting_for_server and remaining_connection_attempts:
-            try:
-                res = requests.get(info.endpoint("/ping"))
-            except requests.exceptions.ConnectionError:
-                # Server not set up yet, try again
-                _LOGGER.debug("Waiting for data manager server to start")
-                remaining_connection_attempts -= 1
-                time.sleep(1)
-            else:
-                if not res.ok:
-                    self.stop()
-                    raise failed_to_connect
-                waiting_for_server = False
-        if remaining_connection_attempts == 0:
-            raise failed_to_connect
+    @classmethod
+    def from_cli_args(cls) -> t.Self:
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--host", type=str, required=True)
+        parser.add_argument("--port", type=int, required=True)
+        parser.add_argument("--timeout", type=int, required=True)
+
+        args = parser.parse_args()
+        return cls(
+            location=Locator(hostname=args.host, port=args.port),
+            spec={},
+            timeout=args.timeout,
+        )
 
     @property
-    def driver(self) -> DataManagerDriver:
-        return self._driver
+    def cli_args(self) -> tuple[str, ...]:
+        return (
+            "--host",
+            self.location.hostname,
+            "--port",
+            str(self.location.port),
+        )
 
-    def __enter__(self) -> DataManagerDriver:
-        return self.driver
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
-        self.stop(timeout=None)
-
-    @classmethod
-    def initailize(
-        cls, applications: dict[ApplicationName, ProcessDescription]
-    ) -> t.Self:
-        info = _DataManagerInfo(hostname="127.0.0.1", port=13254)
-        self_ = cls(info=info)
-
-        res = requests.post(info.endpoint("/init/workflow"), json=applications)
-        if not res.ok:
-            self_.stop()
-            raise RuntimeError("Failed to initailize the data manager")
-
-        return self_
-
-    @classmethod
-    def register_process(cls, application: str | None = None) -> DataManagedProcess:
-        if application is None:
-            application = os.environ.get(consts.MNGR_MANAGED_APP_NAME, None)
-        if application is None:
-            raise ValueError("Could not find application name")
-        info = _DataManagerInfo.from_environment()
-        return DataManagedProcess(ApplicationName(application), info)
-
-    def stop(self, timeout: int | None = None) -> int:
-        ret_code = self._application.poll()
-        if ret_code is None:
-            _LOGGER.debug("Attempting to kill the data manager server")
-            self._application.kill()
-            self._application.wait(timeout=timeout)
-            ret_code = self._application.poll()
-        if ret_code is None:
-            raise ValueError("Data Manager return code was not set")
-        return ret_code
+    @property
+    def commnad(self) -> tuple[str, ...]:
+        return (
+            sys.executable,
+            "-m",
+            consts.MNGR_ENTRYPOINT_MODULE,
+            "--",
+            *self.cli_args,
+        )
 
 
 @dataclasses.dataclass(frozen=True)
-class _DataManagerInfo:
+class Locator:
     hostname: str
     port: int
 
@@ -155,32 +108,24 @@ class _DataManagerInfo:
 
 
 @dataclasses.dataclass(frozen=True)
-class DataManagerDriver:
-    info: _DataManagerInfo
-
-    def start_process[T](
-        self, name: str, how: c_abc.Callable[[_EnvVarMapping], T]
-    ) -> T:
-        return how({consts.MNGR_MANAGED_APP_NAME: name, **self.info.to_env_vars()})
-
-
-@dataclasses.dataclass(frozen=True)
-class DataManagedProcess:
+class ManagedApplication:
     application: ApplicationName
-    info: _DataManagerInfo
+    info: Locator
 
     @property
     def _endpoint_safe_appname(self) -> str:
         return escape.url(self.application)
 
-    def get_outgoing_handles(self, metadata) -> list[OutgoingHandle]:
+    def get_outgoing_handles(self) -> list[OutgoingHandle]:
         endpoint = self.info.endpoint(f"/key/writeable/{self._endpoint_safe_appname}")
         res = requests.get(endpoint)
         # TODO: What does `res` look like??
         # TODO: We probably need a way to search the outgoing handles for
         #       specific type/dtype/shape/etc. Maybe return a handle registry??
-        return [OutgoingHandle(key) for key in []]
+        return []
 
-    def get_incoming_handles(self, metadata: c_abc.Sequence[str]) -> list[IncomingHandle]:
+    def get_incoming_handles(
+        self, metadata: c_abc.Sequence[str]
+    ) -> list[IncomingHandle]:
         # TODO: this
         raise NotImplementedError("TODO")

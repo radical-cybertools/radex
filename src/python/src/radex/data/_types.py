@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections.abc as c_abc
 import typing as t
 
 type _SupportedDtypeType = t.Literal["int32", "int64", "float32", "float64"]

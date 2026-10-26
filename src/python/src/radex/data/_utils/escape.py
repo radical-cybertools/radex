@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import requests.utils
+import urllib.parse
 
 
 def url(value: str, /) -> str:
-    return requests.url.quote(value)
+    return urllib.parse.quote(value)
