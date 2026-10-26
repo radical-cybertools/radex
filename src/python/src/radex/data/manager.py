@@ -18,11 +18,19 @@ from radex.data._utils import consts, parse
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 
 if t.TYPE_CHECKING:
-    from types import TracebackType
-
     _EnvVarMapping = t.Mapping[str, str]
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def make_configuration(
+    spec: WorkflowSpecType, where: Locator | None = None, timeout: int = 60
+) -> Configuration:
+    return Configuration(
+        location=where if where is not None else Locator.default(),
+        spec=spec,
+        timeout=timeout,
+    )
 
 
 @dataclasses.dataclass(frozen=True)
@@ -32,30 +40,34 @@ class Configuration:
     timeout: int
 
     @classmethod
-    def from_cli_args(cls) -> t.Self:
+    def from_cli_args(cls, args: c_abc.Sequence[str] | None = None) -> t.Self:
         parser = argparse.ArgumentParser()
-        parser.add_argument("--host", type=str, required=True)
-        parser.add_argument("--port", type=int, required=True)
-        parser.add_argument("--timeout", type=int, required=True)
-        parser.add_argument("--spec", type=parse.spec_from_str, required=True)
+        parser.add_argument(*consts.MNGR_ENTRYPOINT_ARGS_HOST, type=str, required=True)
+        parser.add_argument(*consts.MNGR_ENTRYPOINT_ARGS_PORT, type=int, required=True)
+        parser.add_argument(
+            *consts.MNGR_ENTRYPOINT_ARGS_INIT_API_TIMEOUT, type=int, required=True
+        )
+        parser.add_argument(
+            *consts.MNGR_ENTRYPOINT_ARGS_SPEC, type=parse.spec_from_str, required=True
+        )
 
-        args = parser.parse_args()
+        ns = parser.parse_args(args)
         return cls(
-            location=Locator(hostname=args.host, port=args.port),
-            spec=args.spec,
-            timeout=args.timeout,
+            location=Locator(hostname=ns.host, port=ns.port),
+            spec=ns.spec,
+            timeout=ns.timeout,
         )
 
     @property
     def cli_args(self) -> tuple[str, ...]:
         return (
-            "--host",
+            consts.MNGR_ENTRYPOINT_ARGS_HOST[0],
             self.location.hostname,
-            "--port",
+            consts.MNGR_ENTRYPOINT_ARGS_PORT[0],
             str(self.location.port),
-            "--timeout",
+            consts.MNGR_ENTRYPOINT_ARGS_INIT_API_TIMEOUT[0],
             str(self.timeout),
-            "--spec",
+            consts.MNGR_ENTRYPOINT_ARGS_SPEC[0],
             parse.spec_to_str(self.spec),
         )
 
@@ -74,6 +86,10 @@ class Configuration:
 class Locator:
     hostname: str
     port: int
+
+    @classmethod
+    def default(cls) -> t.Self:
+        return cls(hostname="127.0.0.1", port=27072)
 
     @property
     def address(self) -> str:

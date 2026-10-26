@@ -7,7 +7,7 @@ import pathlib
 import subprocess as sp
 import time
 
-from radex.data.manager import configure_data_manager_cmd
+from radex.data.manager import make_configuration as make_data_manager_configuration
 
 HERE = pathlib.Path(__file__).parent
 
@@ -16,10 +16,12 @@ def main() -> int:
     dm_config = configure_data_manager_cmd()
 
     with sp.Popen(dm_config.command) as dm_proc:
-        with sp.Popen(
-            ["mpirun", "my_cool_app"], env={"DM_HOST": ..., "DM_PORT": ...}
-        ) as mpi_app:
-            ...
+        # with sp.Popen(
+        #     ["mpirun", "my_cool_app"], env={"DM_HOST": ..., "DM_PORT": ...}
+        # ) as mpi_app:
+        #     ...
+        time.sleep(120)
+        proc.kill()
 
     return 0
 
