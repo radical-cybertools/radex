@@ -36,7 +36,7 @@ def main() -> int:
     # TODO: make this one handle per request
     # have this take in a full set of metadata
     handle: IncomingHandle = this_proc.get_incoming_handle(
-            descrition={"dtype": "float32", "metadata": {"what-is": "temperateue"}}
+        descrition={"dtype": "float32", "metadata": {"what-is": "temperateue"}}
     )
 
     return 0
