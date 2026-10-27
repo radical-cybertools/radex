@@ -18,6 +18,10 @@ if t.TYPE_CHECKING:
     from flask import Response
 
 _LOGGER = logging.Logger(__name__)
+
+# TODO: make this dynamic
+_LOGGER.setLevel(logging.DEBUG)
+
 app = Flask(__name__)
 
 

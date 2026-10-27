@@ -39,7 +39,7 @@ def main() -> int:
         # ) as mpi_app:
         #     ...
         time.sleep(120)
-        proc.kill()
+        dm_proc.kill()
 
     return 0
 
