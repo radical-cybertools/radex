@@ -31,7 +31,7 @@ def heartbeat() -> Response:
 def register_workflow() -> HandleRegistry:
     # TODO: come up with a better way to parse this
     spec: WorkflowSpecType = request.get_json()
-    _LOGGER.error("Initializing with spec `%s`", json.dumps(spec))
+    _LOGGER.debug("Initializing with spec `%s`", json.dumps(spec))
     return HandleRegistry.from_spec(spec)
 
 
@@ -44,8 +44,15 @@ def get_workflow_spec(registry: HandleRegistry) -> Response:
 @app.route("/key/writeable/<string:appname>", methods=["GET"])
 @requires_registry
 def get_writable_keys(registry: HandleRegistry, appname: str) -> Response:
-    handles = registry.find().from_origin(appname)
-    # TODO: need to decide to how to convert this so that it typeable in C++
+    handles = (
+        registry.find()
+        .from_origin(appname)
+        .with_dtype.if_not_none(request.args.get("dtype"))
+        .with_metadata.from_value(Metadata.from_query_string)
+        .if_not_none(request.args.get("metadata"))
+        .collect()
+    )
+    return make_response(jsonify(handles), 200)
 
 
 @app.route("/key/readable", methods=["GET"])
@@ -55,7 +62,7 @@ def get_readable_keys(registry: HandleRegistry) -> Response:
         registry.find()
         .from_origin.if_not_none(request.args.get("origin"))
         .with_dtype.if_not_none(request.args.get("dtype"))
-        .with_metadata.from_value(Metadata.from_string)
+        .with_metadata.from_value(Metadata.from_query_string)
         .if_not_none(request.args.get("metadata"))
         .collect()
     )

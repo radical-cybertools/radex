@@ -141,18 +141,29 @@ class Locator:
 @dataclasses.dataclass(frozen=True)
 class ManagedApplication:
     application: ApplicationName
-    info: Locator
+    manager: Locator
 
     @property
     def _endpoint_safe_appname(self) -> str:
         return parse.esacpe_for_url(self.application)
 
-    def get_outgoing_handles(self) -> list[OutgoingHandle]:
-        endpoint = self.info.endpoint(f"/key/writeable/{self._endpoint_safe_appname}")
-        res = requests.get(endpoint)
-        # TODO: What does `res` look like??
+    def get_outgoing_handle(self, desc) -> OutgoingHandle:
+        handles = self._get_outgoing_handles(desc)
+        num_handles = len(handles)
+        if num_handles > 1:
+            raise ValueError("Handle description was not unique")
+        if num_handles == 0:
+            raise ValueError("Handle description did not match any handle")
+        return handles[0]
+
+    def _get_outgoing_handles(self, desc) -> list[OutgoingHandle]:
+        # TODO: Need to use this!!  ^^^^
         # TODO: We probably need a way to search the outgoing handles for
-        #       specific type/dtype/shape/etc. Maybe return a handle registry??
+        #       specific type/dtype/shape/etc.
+        endpoint = self.manager.endpoint(
+            f"/key/writeable/{self._endpoint_safe_appname}"
+        )
+        res = requests.get(endpoint)
         return []
 
     def get_incoming_handles(

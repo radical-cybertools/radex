@@ -88,11 +88,7 @@ class APIProcess(contextlib.AbstractContextManager["APIProcess"]):
                 raise failed_to_initialize
 
     def initialize_handle_spec(self, spec: WorkflowSpecType) -> None:
-        res = requests.post(
-            self._locator.endpoint("/init/workflow"),
-            json={"some-app": {"name": "some-name", "metadata": {"spam": "eggs"}}},
-        )
-        # TODO: What is this json?? ^^
+        res = requests.post(self._locator.endpoint("/init/workflow"), json=spec)
         if not res.ok:
             self.stop()
             raise RuntimeError("Failed to initailize the data manager")
