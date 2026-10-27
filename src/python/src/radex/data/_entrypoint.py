@@ -19,6 +19,9 @@ if t.TYPE_CHECKING:
 
 _LOGGER: t.Final = logging.Logger(__name__)
 
+# TODO: make this dynamic
+_LOGGER.setLevel(logging.DEBUG)
+
 
 def main() -> int:
     config = Configuration.from_cli_args()
