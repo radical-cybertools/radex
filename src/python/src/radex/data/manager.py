@@ -51,11 +51,22 @@ class Configuration:
             *consts.MNGR_ENTRYPOINT_ARGS_SPEC, type=parse.spec_from_str, required=True
         )
 
-        ns = parser.parse_args(args)
+        def bind_namespace(
+            namespace: argparse.Namespace,
+        ) -> c_abc.Callable[[tuple[str, ...]], t.Any]:
+            def _bound(flags: tuple[str, ...]) -> t.Any:
+                return getattr(namespace, flags[0].lstrip("-"))
+
+            return _bound
+
+        get_val = bind_namespace(parser.parse_args(args))
         return cls(
-            location=Locator(hostname=ns.host, port=ns.port),
-            spec=ns.spec,
-            timeout=ns.timeout,
+            location=Locator(
+                hostname=get_val(consts.MNGR_ENTRYPOINT_ARGS_HOST),
+                port=get_val(consts.MNGR_ENTRYPOINT_ARGS_PORT),
+            ),
+            spec=get_val(consts.MNGR_ENTRYPOINT_ARGS_SPEC),
+            timeout=get_val(consts.MNGR_ENTRYPOINT_ARGS_INIT_API_TIMEOUT),
         )
 
     @property
@@ -72,12 +83,11 @@ class Configuration:
         )
 
     @property
-    def commnad(self) -> tuple[str, ...]:
+    def command(self) -> tuple[str, ...]:
         return (
             sys.executable,
             "-m",
             consts.MNGR_ENTRYPOINT_MODULE,
-            "--",
             *self.cli_args,
         )
 
