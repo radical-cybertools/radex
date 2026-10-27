@@ -2,6 +2,7 @@ cimport numpy as np
 from libcpp.memory cimport unique_ptr
 from libcpp.string cimport string
 from libcpp.string_view cimport string_view
+from libcpp.vector cimport vector
 
 from radex.handles.handles cimport CXXIncomingHandle as IncomingHandle
 from radex.handles.handles cimport CXXOutgoingHandle as OutgoingHandle
@@ -34,4 +35,6 @@ cdef extern from "radex/client.hpp" namespace "radex":
         unique_ptr[ItemInfo] get_item_info_ptr(const IncomingHandle&) except +raise_py_error
         unique_ptr[ItemInfo] wait_for_item_info_ptr(
                 const IncomingHandle&, milliseconds) except +raise_py_error
+        vector[unique_ptr[ItemInfo]] gather_item_info_ptrs(
+                const vector[IncomingHandle]&, milliseconds) except +raise_py_error
         void delete_item(const OutgoingHandle&) except +raise_py_error

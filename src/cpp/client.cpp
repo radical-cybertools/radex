@@ -2,14 +2,17 @@
 #include "radex/constants.hpp"
 #include "radex/handles.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cstring>
+// #include <future>
+#include <iterator>
 #include <memory>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <thread>
+#include <vector>
 
 namespace radex {
 namespace detail {
@@ -103,6 +106,36 @@ IClient::wait_for_item_info_ptr(const data::IncomingHandle &handle,
                                        std::placeholders::_1, timeout);
     return std::make_unique<detail::ItemInfo>(
         get_item_info(fetch_bytes, handle));
+}
+
+std::vector<std::unique_ptr<detail::ItemInfo>>
+IClient::gather_item_info_ptrs(const std::vector<data::IncomingHandle> &handles,
+                               std::chrono::milliseconds timeout) {
+    using InfoPtr = std::unique_ptr<detail::ItemInfo>;
+    auto handle_to_future = [this,
+                             timeout](const data::IncomingHandle &handle) {
+        // return std::async(std::launch::async,
+        //                   &IClient::wait_for_item_info_ptr,
+        //                   this, handle, timeout);
+        return wait_for_item_info_ptr(handle, timeout);
+    };
+
+    // TODO: This should be made parallel when it does not break dragon
+    // std::vector<std::future<InfoPtr>> futures;
+    std::vector<InfoPtr> futures;
+    futures.reserve(handles.size());
+    std::transform(handles.begin(), handles.end(), std::back_inserter(futures),
+                   handle_to_future);
+
+    std::vector<InfoPtr> results;
+    results.reserve(futures.size());
+    std::transform(std::make_move_iterator(futures.begin()),
+                   std::make_move_iterator(futures.end()),
+                   std::back_inserter(results),
+                   // [](std::future<InfoPtr> f) { return f.get(); });
+                   [](InfoPtr f) { return f; });
+
+    return results;
 }
 
 void IClient::delete_item(const data::OutgoingHandle &handle) {
