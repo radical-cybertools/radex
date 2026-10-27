@@ -13,7 +13,31 @@ HERE = pathlib.Path(__file__).parent
 
 
 def main() -> int:
-    dm_config = configure_data_manager_cmd()
+    dm_config = make_data_manager_configuration(
+        {
+            "producer": {
+                "scalars": {"outgoing": []},
+                "tensors": {
+                    "outgoing": [
+                        {"name": "some-data-0", "dtype": "float32"},
+                        {"name": "some-data-1", "dtype": "float32"},
+                        {"name": "some-data-2", "dtype": "float32"},
+                        {
+                            "short-name": "some-data-3",
+                            "dtype": "float32",
+                            "metadata": {},
+                        },
+                    ],
+                },
+            },
+            "consumer": {
+                "scalars": {"outgoing": []},
+                "tensors": {"outgoing": []},
+            },
+        }
+    )
+
+    print("Command:", " ".join(dm_config.command))
 
     with sp.Popen(dm_config.command) as dm_proc:
         # with sp.Popen(
