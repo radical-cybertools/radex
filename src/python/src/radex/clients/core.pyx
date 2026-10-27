@@ -1,7 +1,8 @@
 import cython
-from cython.operator cimport dereference as deref, preincrement as inc
 
-from libc.stdint cimport uint64_t, int32_t, int64_t
+from cython.operator cimport dereference as deref
+from cython.operator cimport preincrement as inc
+from libc.stdint cimport int32_t, int64_t, uint64_t
 from libc.time cimport timespec
 from libcpp.memory cimport unique_ptr
 from libcpp.string cimport string
@@ -10,28 +11,29 @@ from libcpp.vector cimport vector
 from radex.clients.core cimport IClient
 from radex.clients.dragon cimport Client as _CXXDragonClient
 from radex.clients.redis cimport Client as _CXXSRClient
+from radex.handles.handles cimport CXXIncomingHandle as _CXXIncomingHandle
+from radex.handles.handles cimport IncomingHandle, OutgoingHandle
 from radex.utils.data cimport (
     BytesBuffer,
     DType,
     ItemInfo,
-    MetaInt as size_t,
+)
+from radex.utils.data cimport MetaInt as size_t
+from radex.utils.data cimport (
     SupportedType,
     coerce_py_objects_to_np_numbers,
     construct_scalar,
     construct_tensor,
 )
-from radex.utils.utils cimport EncodedStr, encode_str
 from radex.utils.libcpp_chrono cimport milliseconds
-from radex.handles.handles cimport (
-    IncomingHandle,
-    OutgoingHandle,
-    CXXIncomingHandle as _CXXIncomingHandle,
-)
+from radex.utils.utils cimport EncodedStr, encode_str
 
 import cloudpickle
 
 cimport numpy as np
+
 import numpy as np
+
 np.import_array()
 
 
