@@ -118,16 +118,22 @@ class _chainablemethod[U]:
 class _HandleRegistryEntryIterable(_ChainedIterable[HandleRegistryEntry]):
     @_chainablemethod
     def from_origin(self, app: str) -> t.Self:
-        return self.filter(lambda entry: entry.from_app == app)
+        def _predicate(entry: HandleRegistryEntry) -> bool:
+            return entry.from_app == app
+
+        return self.filter(_predicate)
 
     @_chainablemethod
     def with_dtype(self, dtype: str) -> t.Self:
-        return self.filter(lambda entry: entry.dtype == dtype)
+        def _predicate(entry: HandleRegistryEntry) -> bool:
+            return entry.dtype == dtype
+
+        return self.filter(_predicate)
 
     @_chainablemethod
     def with_metadata(self, metadata: c_abc.Mapping[str, str]) -> t.Self:
-        def cmp(entry: HandleRegistryEntry) -> bool:
+        def _prediacte(entry: HandleRegistryEntry) -> bool:
             meta = entry.metadata
-            return meta.matches_values(metadata)
+            return meta.has_values(metadata)
 
-        return self.filter(cmp)
+        return self.filter(_prediacte)

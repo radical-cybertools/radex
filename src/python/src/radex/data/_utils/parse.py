@@ -7,9 +7,15 @@ import urllib.parse
 
 from radex.data._types import WorkflowSpecType
 
+_URL_STR_ENCODING: t.Final = "utf-8"
+
 
 def esacpe_for_url(value: str, /) -> str:
-    return urllib.parse.quote(value, safe="")
+    return urllib.parse.quote(value, safe="", encoding=_URL_STR_ENCODING)
+
+
+def unesacpe_url_val(val: str, /) -> str:
+    return urllib.parse.unquote(val, encoding=_URL_STR_ENCODING)
 
 
 _SPEC_JSON_ENCODING: t.Final = "utf-8"
@@ -17,7 +23,7 @@ _SPEC_B64_BLOB_ENCODING: t.Final = "utf-8"
 
 
 def encode_spec(spec: WorkflowSpecType, /) -> bytes:
-    bytes_ = json.dumps(spec).encode(_SPEC_JSON_ENCODING)
+    bytes_ = json.dumps(spec, separators=(",", ":")).encode(_SPEC_JSON_ENCODING)
     return base64.b64encode(bytes_)
 
 

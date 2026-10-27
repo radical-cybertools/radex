@@ -19,4 +19,9 @@ class TensorHandleRegistryEntry(HandleRegistryEntry):
     def from_spec(
         cls, from_app: ApplicationName, spec: TensorHandleDescription
     ) -> t.Self:
-        return cls(from_app=from_app, **spec)
+        return cls(
+            from_app=from_app,
+            name=spec["name"],
+            dtype=spec["dtype"],
+            metadata=Metadata.from_mapping(spec["metadata"]),
+        )

@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 from mpi4py import MPI
-from radex.data.manager import DataManager
+from radex.data.manager import Locator, ManagedApplication
 
 
 def main() -> int:
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
 
-    dm_client = DataManagerClient(hostname=os.enviorn[...], port=os.enviorn[...])
+    dm_client = ManagedApplication(
+        application="producer", manager=Locator.from_environment()
+    )
 
     # on the producer side
     # TODO: make this one handle per req
