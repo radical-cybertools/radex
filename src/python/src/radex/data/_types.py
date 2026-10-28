@@ -3,6 +3,16 @@ from __future__ import annotations
 import collections.abc as c_abc
 import typing as t
 
+type JsonType = (
+    None
+    | bool
+    | int
+    | float
+    | str
+    | c_abc.Sequence["JsonType"]
+    | c_abc.Mapping[str, "JsonType"]
+)
+
 type _SupportedDtypeType = t.Literal["int32", "int64", "float32", "float64"]
 type _MetadataType = dict[str, str]
 
@@ -37,3 +47,7 @@ class ProcessDescription(t.TypedDict):
 
 type WorkflowSpecType = dict[ApplicationName, ProcessDescription]
 type WorkflowIterableType = t.Iterable[tuple[ApplicationName, ProcessDescription]]
+
+
+class HandleResponseType(t.TypedDict):
+    uuid: str

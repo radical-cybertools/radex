@@ -10,8 +10,8 @@ import time
 import typing as t
 
 import requests
-from radex.data._types import WorkflowSpecType
-from radex.data._utils import consts
+from radex.data._types import JsonType, WorkflowSpecType
+from radex.data._utils import consts, parse
 from radex.data.manager import Configuration, Locator
 
 if t.TYPE_CHECKING:
@@ -91,7 +91,9 @@ class APIProcess(contextlib.AbstractContextManager["APIProcess"]):
                 raise failed_to_initialize
 
     def initialize_handle_spec(self, spec: WorkflowSpecType) -> None:
-        res = requests.post(self._locator.endpoint("/init/workflow"), json=spec)
+        res = requests.post(
+            self._locator.endpoint("/init/workflow"), json=parse.spec_to_json(spec)
+        )
         if not res.ok:
             self.stop()
             raise RuntimeError("Failed to initailize the data manager")
