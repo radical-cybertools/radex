@@ -13,6 +13,7 @@ from radex.data._application.middleware.handles import (
     requires_registry,
 )
 from radex.data._types import ApplicationName, ProcessDescription, WorkflowSpecType
+from radex.data._utils import parse
 
 if t.TYPE_CHECKING:
     from flask import Response
@@ -33,8 +34,7 @@ def heartbeat() -> Response:
 @app.route("/init/workflow", methods=["POST"])
 @initializes_registry
 def register_workflow() -> HandleRegistry:
-    # TODO: come up with a better way to parse this
-    spec: WorkflowSpecType = request.get_json()
+    spec = parse.json_to_spec(request.get_json())
     _LOGGER.debug("Initializing with spec `%s`", json.dumps(spec))
     return HandleRegistry.from_spec(spec)
 
@@ -54,8 +54,11 @@ def get_writable_keys(registry: HandleRegistry, appname: str) -> Response:
         .with_dtype.if_not_none(request.args.get("dtype"))
         .with_metadata.from_value(Metadata.from_query_string)
         .if_not_none(request.args.get("metadata"))
+        .map(parse.handle_to_response)
         .collect()
     )
+
+    # TODO: need to decide to how to convert this so that it typeable in C++
     return make_response(jsonify(handles), 200)
 
 
@@ -68,9 +71,12 @@ def get_readable_keys(registry: HandleRegistry) -> Response:
         .with_dtype.if_not_none(request.args.get("dtype"))
         .with_metadata.from_value(Metadata.from_query_string)
         .if_not_none(request.args.get("metadata"))
+        .map(parse.handle_to_response)
         .collect()
     )
+
     # TODO: need to decide to how to convert this so that it typeable in C++
+    return make_response(jsonify(handles), 200)
 
 
 # TODO: We only really care about

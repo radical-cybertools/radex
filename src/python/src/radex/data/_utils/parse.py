@@ -5,7 +5,12 @@ import json
 import typing as t
 import urllib.parse
 
-from radex.data._types import WorkflowSpecType
+from radex.data._types import HandleResponseType, JsonType, WorkflowSpecType
+from radex.handles.handles import IncomingHandle, OutgoingHandle
+
+if t.TYPE_CHECKING:
+    from radex.data._application.handles._types import HandleRegistryEntry
+
 
 _URL_STR_ENCODING: t.Final = "utf-8"
 
@@ -23,17 +28,16 @@ _SPEC_B64_BLOB_ENCODING: t.Final = "utf-8"
 
 
 def encode_spec(spec: WorkflowSpecType, /) -> bytes:
-    bytes_ = json.dumps(spec, separators=(",", ":")).encode(_SPEC_JSON_ENCODING)
+    bytes_ = json.dumps(spec_to_json(spec), separators=(",", ":")).encode(
+        _SPEC_JSON_ENCODING
+    )
     return base64.b64encode(bytes_)
 
 
 def decode_spec(bytes_: bytes, /) -> WorkflowSpecType:
     string = base64.b64decode(bytes_).decode(_SPEC_JSON_ENCODING)
     spec = json.loads(string)
-    if not isinstance(spec, dict):
-        raise ValueError("Loaded spec did not match a valid shape")
-    # TODO: validate more here??
-    return t.cast(WorkflowSpecType, spec)
+    return json_to_spec(spec)
 
 
 def spec_from_str(string: str, /) -> WorkflowSpecType:
@@ -44,3 +48,34 @@ def spec_from_str(string: str, /) -> WorkflowSpecType:
 def spec_to_str(spec: WorkflowSpecType, /) -> str:
     dump = encode_spec(spec)
     return dump.decode(_SPEC_B64_BLOB_ENCODING)
+
+
+def spec_to_json(spec: WorkflowSpecType, /) -> JsonType:
+    # We know this is true, but we should probably validate has we are changing
+    # the the `WorkflowSepcType` in case this changes in future and no longer
+    # trivially jsonable
+    return t.cast(JsonType, spec)
+
+
+def json_to_spec(json_: JsonType) -> WorkflowSpecType:
+    if not isinstance(json_, dict):
+        raise ValueError("Loaded spec did not match a valid shape")
+    # TODO: parse more here if we care
+    return t.cast(WorkflowSpecType, json_)
+
+
+def handle_to_response(entry: HandleRegistryEntry) -> HandleResponseType:
+    # TODO: what more infromation should we put in this response
+    return {
+        # FIXME: This is not really a uuid (though it will be unique if only
+        #        one spec is ever initialized)
+        "uuid": f"{entry.from_app}-{entry.name}"
+    }
+
+
+def registry_entry_to_outgoing_handle(res: HandleResponseType) -> OutgoingHandle:
+    return OutgoingHandle(res["uuid"])
+
+
+def registry_entry_to_incoming_handle(res: HandleResponseType) -> IncomingHandle:
+    return IncomingHandle(res["uuid"])
