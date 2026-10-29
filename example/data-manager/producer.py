@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from mpi4py import MPI
+
 from radex.data.manager import Locator, ManagedApplication
 
 
