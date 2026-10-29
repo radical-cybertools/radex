@@ -59,7 +59,7 @@ def spec_to_json(spec: WorkflowSpecType, /) -> JsonType:
 
 def json_to_spec(json_: JsonType) -> WorkflowSpecType:
     if not isinstance(json_, dict):
-        raise ValueError("Loaded spec did not match a valid shape")
+        raise TypeError("Loaded json is not of object type")
     # TODO: parse more here if we care
     return t.cast(WorkflowSpecType, json_)
 
@@ -73,9 +73,18 @@ def handle_to_response(entry: HandleRegistryEntry) -> HandleResponseType:
     }
 
 
-def registry_entry_to_outgoing_handle(res: HandleResponseType) -> OutgoingHandle:
+def json_to_handle_response(json_: JsonType, /) -> HandleResponseType:
+    if not isinstance(json_, dict):
+        raise TypeError("Loaded json is not of obejct type")
+    if not "uuid" in json_:
+        raise ValueError("Missing `uuid` key from json object")
+    # TODO: parse more here if we care
+    return t.cast(HandleResponseType, json_)
+
+
+def response_to_outgoing_handle(res: HandleResponseType) -> OutgoingHandle:
     return OutgoingHandle(res["uuid"])
 
 
-def registry_entry_to_incoming_handle(res: HandleResponseType) -> IncomingHandle:
+def response_to_incoming_handle(res: HandleResponseType) -> IncomingHandle:
     return IncomingHandle(res["uuid"])
