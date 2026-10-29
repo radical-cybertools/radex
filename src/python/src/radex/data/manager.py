@@ -164,7 +164,10 @@ class ManagedApplication:
             f"/key/writeable/{self._endpoint_safe_appname}"
         )
         res = requests.get(endpoint)
-        return []
+        return [
+            parse.response_to_outgoing_handle(parse.json_to_handle_response(item))
+            for item in res.json()
+        ]
 
     def get_incoming_handles(
         self, metadata: c_abc.Sequence[str]
