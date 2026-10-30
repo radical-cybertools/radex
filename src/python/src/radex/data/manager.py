@@ -14,7 +14,13 @@ import typing as t
 import requests
 import requests.exceptions
 
-from radex.data._types import ApplicationName, ProcessDescription, WorkflowSpecType
+from radex.data._application.handles.metadata import Metadata
+from radex.data._types import (
+    ApplicationName,
+    HandleDescriptionType,
+    ProcessDescription,
+    WorkflowSpecType,
+)
 from radex.data._utils import consts, parse
 from radex.handles.handles import IncomingHandle, OutgoingHandle
 
@@ -165,6 +171,10 @@ class Locator:
             if remaining_connection_attempts == 0:
                 raise RuntimeError("Failed to connect to Data Manager before timeout")
 
+    def is_initialized(self) -> bool:
+        res = requests.get(self.endpoint("/spec/workflow"))
+        return res.ok
+
 
 @dataclasses.dataclass(frozen=True)
 class ManagedApplication:
@@ -175,8 +185,8 @@ class ManagedApplication:
     def _endpoint_safe_appname(self) -> str:
         return parse.esacpe_for_url(self.application)
 
-    def get_outgoing_handle(self, desc) -> OutgoingHandle:
-        handles = self._get_outgoing_handles(desc)
+    def get_outgoing_handle(self, description: HandleDescriptionType) -> OutgoingHandle:
+        handles = self._get_outgoing_handles(description)
         num_handles = len(handles)
         if num_handles > 1:
             raise ValueError("Handle description was not unique")
@@ -184,21 +194,34 @@ class ManagedApplication:
             raise ValueError("Handle description did not match any handle")
         return handles[0]
 
-    def _get_outgoing_handles(self, desc) -> list[OutgoingHandle]:
-        # TODO: Need to use this!!  ^^^^
-        # TODO: We probably need a way to search the outgoing handles for
-        #       specific type/dtype/shape/etc.
+    def _get_outgoing_handles(
+        self, description: HandleDescriptionType
+    ) -> list[OutgoingHandle]:
         endpoint = self.manager.endpoint(
             f"/key/writeable/{self._endpoint_safe_appname}"
         )
-        res = requests.get(endpoint)
+
+        payload: dict[str, str] = {}
+        if (dtype := description.get("dtype")) is not None:
+            payload["dtype"] = dtype
+        if (metadata := description.get("metadata")) is not None:
+            payload["metadata"] = Metadata(metadata).to_query_string()
+
+        res = requests.get(endpoint, params=payload)
+        if not res.ok:
+            raise RuntimeError(
+                "Got a bad response from the data manager: "
+                f"Status code: {res.status_code} "
+                f"Request body: {res.json()} "
+            )
+
         return [
             parse.response_to_outgoing_handle(parse.json_to_handle_response(item))
             for item in res.json()
         ]
 
     def get_incoming_handles(
-        self, metadata: c_abc.Sequence[str]
+        self, description: HandleDescriptionType
     ) -> list[IncomingHandle]:
         # TODO: this
-        raise NotImplementedError("TODO")
+        raise NotImplementedError("TODO: Impl this method")
