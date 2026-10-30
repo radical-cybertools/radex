@@ -5,10 +5,10 @@ import collections.abc as c_abc
 import contextlib
 import os
 import pathlib
+import shutil
 import subprocess as sp
 import sys
 import time
-import shutil
 
 from dragon.data.ddict import DDict
 from dragon.native.process import Process, ProcessTemplate
@@ -70,8 +70,12 @@ def main() -> int:
     }
 
     with sp.Popen(dm_config.command) as data_manager:
-        producer = Process(target=sys.executable, args=[os.fspath(HERE / "producer.py")], env=env)
-        consumer = Process(target=sys.executable, args=[os.fspath(HERE / "consumer.py")], env=env)
+        producer = Process(
+            target=sys.executable, args=[os.fspath(HERE / "producer.py")], env=env
+        )
+        consumer = Process(
+            target=sys.executable, args=[os.fspath(HERE / "consumer.py")], env=env
+        )
 
         try:
             print("PRODUCER: starting procs")
