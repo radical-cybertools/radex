@@ -181,10 +181,6 @@ class ManagedApplication:
     application: ApplicationName
     manager: Locator
 
-    @property
-    def _endpoint_safe_appname(self) -> str:
-        return parse.esacpe_for_url(self.application)
-
     def get_outgoing_handle(self, description: HandleDescriptionType) -> OutgoingHandle:
         handles = self._get_outgoing_handles(description)
         num_handles = len(handles)
@@ -198,7 +194,7 @@ class ManagedApplication:
         self, description: HandleDescriptionType
     ) -> list[OutgoingHandle]:
         endpoint = self.manager.endpoint(
-            f"/key/writeable/{self._endpoint_safe_appname}"
+            f"/key/writeable/{parse.esacpe_for_url(self.application)}"
         )
 
         payload: dict[str, str] = {}
@@ -220,8 +216,37 @@ class ManagedApplication:
             for item in res.json()
         ]
 
-    def get_incoming_handles(
+    def get_incoming_handle(self, description: HandleDescriptionType) -> IncomingHandle:
+        handles = self._get_incoming_handles(description)
+        num_handles = len(handles)
+        if num_handles > 1:
+            raise ValueError("Handle description was not unique")
+        if num_handles == 0:
+            raise ValueError("Handle description did not match any handle")
+        return handles[0]
+
+    def _get_incoming_handles(
         self, description: HandleDescriptionType
     ) -> list[IncomingHandle]:
-        # TODO: this
-        raise NotImplementedError("TODO: Impl this method")
+        endpoint = self.manager.endpoint("/key/readable")
+
+        payload: dict[str, str] = {}
+        if (origin := description.get("origin")) is not None:
+            payload["origin"] = parse.esacpe_for_url(origin)
+        if (dtype := description.get("dtype")) is not None:
+            payload["dtype"] = dtype
+        if (metadata := description.get("metadata")) is not None:
+            payload["metadata"] = Metadata(metadata).to_query_string()
+
+        res = requests.get(endpoint, params=payload)
+        if not res.ok:
+            raise RuntimeError(
+                "Got a bad response from the data manager: "
+                f"Status code: {res.status_code} "
+                f"Request body: {res.json()} "
+            )
+
+        return [
+            parse.response_to_incoming_handle(parse.json_to_handle_response(item))
+            for item in res.json()
+        ]
