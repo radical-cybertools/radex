@@ -42,7 +42,7 @@ def initializes_registry[**P](
             if _GLOBAL_REGISTRY is not None:
                 return make_response(
                     jsonify(
-                        {"error", "A handle registry has already been initialized"}
+                        {"error": "A handle registry has already been initialized"}
                     ),
                     409,
                 )
