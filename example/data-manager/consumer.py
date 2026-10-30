@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import pprint
-import time
 import os
-import numpy as np
+import pprint
 import textwrap
+import time
+
+import numpy as np
 
 from radex.clients.core import DragonClient as Client
 from radex.data.manager import Locator, ManagedApplication

@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-import time
 import os
+import time
 
 import numpy as np
-# from mpi4py import MPI
 
 from radex.clients.core import DragonClient as Client
 from radex.data.manager import Locator, ManagedApplication
+
+# from mpi4py import MPI
+
 
 
 def main() -> int:
@@ -53,12 +55,7 @@ def main() -> int:
     data_len = 5
     data = np.arange(data_len)
 
-    for i, handle in enumerate((
-            handle_0,
-            handle_1,
-            handle_2,
-            handle_3
-            )):
+    for i, handle in enumerate((handle_0, handle_1, handle_2, handle_3)):
         print(f"Producer placed tensor {i}")
         client.put_tensor(handle, data + (i * data_len))
 
