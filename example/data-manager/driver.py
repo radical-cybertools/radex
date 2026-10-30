@@ -8,6 +8,10 @@ import pathlib
 import subprocess as sp
 import sys
 import time
+import shutil
+
+from dragon.data.ddict import DDict
+from dragon.native.process import Process, ProcessTemplate
 
 from radex.data.manager import make_configuration as make_data_manager_configuration
 
@@ -51,32 +55,40 @@ def main() -> int:
         }
     )
 
+    dd = DDict(
+        managers_per_node=1,
+        n_nodes=1,
+        trace=False,
+        wait_for_keys=True,
+        working_set_size=3,
+    )
+
+    env = {
+        **os.environ,
+        **dm_config.location.to_env_vars(),
+        "SERIALIZED_DDICT": dd.serialize(),
+    }
+
     with sp.Popen(dm_config.command) as data_manager:
-        with contextlib.ExitStack() as ctx:
-            producer = ctx.enter_context(
-                sp.Popen(
-                    [sys.executable, os.fspath(HERE / "producer.py")],
-                    env={**os.environ, **dm_config.location.to_env_vars()},
-                )
-            )
+        producer = Process(target=sys.executable, args=[os.fspath(HERE / "producer.py")], env=env)
+        consumer = Process(target=sys.executable, args=[os.fspath(HERE / "consumer.py")], env=env)
 
-            consumer = ctx.enter_context(
-                sp.Popen(
-                    [sys.executable, os.fspath(HERE / "consumer.py")],
-                    env={**os.environ, **dm_config.location.to_env_vars()},
-                )
-            )
+        try:
+            print("PRODUCER: starting procs")
+            producer.start()
+            consumer.start()
+            print("PRODUCER: procs started")
+        finally:
+            print("PRODUCER: awaiting procs")
+            producer.join()
+            consumer.join()
+            print("PRODUCER: procs joined")
 
+        print("PRODUCER: terminateing server")
         data_manager.terminate()
+        print("PRODUCER: server terminated")
 
     return 0
-
-
-def launch_app(cmd: c_abc.Sequence[str]) -> c_abc.Callable[[dict[str, str]], sp.Popen]:
-    def _luanch_app(env: dict[str, str]) -> sp.Popen:
-        return sp.Popen(cmd, env={**os.environ, **env})
-
-    return _launch_app
 
 
 if __name__ == "__main__":

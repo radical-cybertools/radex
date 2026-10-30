@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-import pprint
 import time
+import os
 
-from radex.data.manager import Locator, ManagedApplication
-
+import numpy as np
 # from mpi4py import MPI
+
+from radex.clients.core import DragonClient as Client
+from radex.data.manager import Locator, ManagedApplication
 
 
 def main() -> int:
@@ -21,7 +23,11 @@ def main() -> int:
     while not my_app.manager.is_initialized():
         time.sleep(1)
 
-    # on the producer side
+    serial_dd = os.environ.get("SERIALIZED_DDICT", None)
+    if serial_dd is None:
+        raise ValueError("Failed to get serialized ddict")
+    client = Client(serial_dd, 5)
+
     # TODO: start with this and profile, see how many keys can be fetched
     #       before one minute, then optimize
     handle_0 = my_app.get_outgoing_handle({"metadata": {"which-rank": "0"}})
@@ -44,9 +50,17 @@ def main() -> int:
     #       it is actually used to set tensor v scalar, correct dtpye, etc.
     #       That we will make the responsibility of the client
 
-    print("Producer is writing:")
-    print("--------------------")
-    pprint.pprint([handle_0, handle_1, handle_2, handle_3])
+    data_len = 5
+    data = np.arange(data_len)
+
+    for i, handle in enumerate((
+            handle_0,
+            handle_1,
+            handle_2,
+            handle_3
+            )):
+        print(f"Producer placed tensor {i}")
+        client.put_tensor(handle, data + (i * data_len))
 
     return 0
 
