@@ -46,11 +46,16 @@ def register_workflow() -> HandleRegistry:
 @app.route("/spec/workflow", methods=["GET"])
 @requires_registry
 def get_workflow_spec(registry: HandleRegistry) -> Response:
-    return make_response(jsonify({
-        # TODO: This should return a fully formed spec in future, not just a
-        #       'is ready' or 'is not ready' message
-        "message": "Spec is ready"
-        }), 200)
+    return make_response(
+        jsonify(
+            {
+                # TODO: This should return a fully formed spec in future, not just a
+                #       'is ready' or 'is not ready' message
+                "message": "Spec is ready"
+            }
+        ),
+        200,
+    )
 
 
 @app.route("/key/writeable/<string:appname>", methods=["GET"])
