@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pprint
 import time
 
 from radex.data.manager import Locator, ManagedApplication
@@ -42,6 +43,10 @@ def main() -> int:
     # TODO: We want these handles to be rich. We should not need to check that
     #       it is actually used to set tensor v scalar, correct dtpye, etc.
     #       That we will make the responsibility of the client
+
+    print("Producer is writing:")
+    print("--------------------")
+    pprint.pprint([handle_0, handle_1, handle_2, handle_3])
 
     return 0
 
