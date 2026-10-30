@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import atexit
 import collections.abc as c_abc
+import contextlib
 import os
 import pathlib
 import subprocess as sp
+import sys
 import time
 
 from radex.data.manager import make_configuration as make_data_manager_configuration
@@ -19,10 +21,26 @@ def main() -> int:
                 "scalars": {"outgoing": []},
                 "tensors": {
                     "outgoing": [
-                        {"name": "some-data-0", "dtype": "float32", "metadata": {}},
-                        {"name": "some-data-1", "dtype": "float32", "metadata": {}},
-                        {"name": "some-data-2", "dtype": "float32", "metadata": {}},
-                        {"name": "some-data-3", "dtype": "float32", "metadata": {}},
+                        {
+                            "name": "some-data-0",
+                            "dtype": "float32",
+                            "metadata": {"which-rank": "0"},
+                        },
+                        {
+                            "name": "some-data-1",
+                            "dtype": "float32",
+                            "metadata": {"which-rank": "1"},
+                        },
+                        {
+                            "name": "some-data-2",
+                            "dtype": "float32",
+                            "metadata": {"which-rank": "2"},
+                        },
+                        {
+                            "name": "some-data-3",
+                            "dtype": "float32",
+                            "metadata": {"which-rank": "3"},
+                        },
                     ],
                 },
             },
@@ -33,13 +51,18 @@ def main() -> int:
         }
     )
 
-    with sp.Popen(dm_config.command) as dm_proc:
-        # with sp.Popen(
-        #     ["mpirun", "my_cool_app"], env={"DM_HOST": ..., "DM_PORT": ...}
-        # ) as mpi_app:
-        #     ...
+    with sp.Popen(dm_config.command) as data_manager:
+        with contextlib.ExitStack() as ctx:
+            producer = ctx.enter_context(
+                sp.Popen(
+                    [sys.executable, os.fspath(HERE / "producer.py")],
+                    env={**os.environ, **dm_config.location.to_env_vars()},
+                )
+            )
+        print("DRIVER:", "waiting 2 minutes")
         time.sleep(120)
-        dm_proc.kill()
+        print("DRIVER:", "All done, terminating DM")
+        data_manager.terminate()
 
     return 0
 
