@@ -59,9 +59,14 @@ def main() -> int:
                     env={**os.environ, **dm_config.location.to_env_vars()},
                 )
             )
-        print("DRIVER:", "waiting 2 minutes")
-        time.sleep(120)
-        print("DRIVER:", "All done, terminating DM")
+
+            consumer = ctx.enter_context(
+                sp.Popen(
+                    [sys.executable, os.fspath(HERE / "consumer.py")],
+                    env={**os.environ, **dm_config.location.to_env_vars()},
+                )
+            )
+
         data_manager.terminate()
 
     return 0
