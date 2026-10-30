@@ -48,6 +48,8 @@ class ProcessDescription(t.TypedDict):
 type WorkflowSpecType = dict[ApplicationName, ProcessDescription]
 type WorkflowIterableType = t.Iterable[tuple[ApplicationName, ProcessDescription]]
 
+type HandleDescriptionType = dict[str, t.Any]  # TODO: make this a better type later
+
 
 class HandleResponseType(t.TypedDict):
     uuid: str
