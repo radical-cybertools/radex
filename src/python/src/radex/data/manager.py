@@ -138,6 +138,33 @@ class Locator:
     def from_environment(cls) -> t.Self:
         return cls._from_str_mapping(os.environ)
 
+    def await_api(self, timeout: int | None = None) -> None:
+        waiting_for_server = True
+
+        if timeout is None:
+            remaining_connection_attempts = 1
+            connect_attempts_decriment = 0
+        else:
+            remaining_connection_attempts = max(0, timeout)
+            connect_attempts_decriment = 1
+
+        while waiting_for_server and remaining_connection_attempts:
+            try:
+                res = requests.get(self.endpoint("/ping"))
+            except requests.exceptions.ConnectionError:
+                # Server not set up yet, try again
+                _LOGGER.debug("Waiting for data manager server to start")
+                remaining_connection_attempts -= connect_attempts_decriment
+                time.sleep(1)
+            else:
+                if not res.ok:
+                    _LOGGER.debug("Attempting to kill the data manager server")
+                    raise RuntimeError("Recieved bad return code from data manager")
+                waiting_for_server = False
+
+            if remaining_connection_attempts == 0:
+                raise RuntimeError("Failed to connect to Data Manager before timeout")
+
 
 @dataclasses.dataclass(frozen=True)
 class ManagedApplication:
