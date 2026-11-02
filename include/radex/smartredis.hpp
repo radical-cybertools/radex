@@ -3,11 +3,15 @@
 
 #include "radex/build_config.hpp"
 #include "radex/client_base.hpp"
+#include "radex/detail/bytes_buffer.hpp"
+#include "radex/detail/types.hpp"
 
 #ifdef RADEX_HAS_SMARTREDIS
 #include <client.h>
 #endif
 
+#include <chrono>
+#include <memory>
 #include <string_view>
 
 namespace radex::redis::smartredis {

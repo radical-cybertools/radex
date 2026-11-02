@@ -1,61 +1,22 @@
-#include "radex/client.hpp"
+#include "radex/client_base.hpp"
 #include "radex/constants.hpp"
+#include "radex/detail/bytes_buffer.hpp"
+#include "radex/detail/item_info.hpp"
+#include "radex/detail/metadata.hpp"
+#include "radex/exceptions.hpp"
 #include "radex/handles.hpp"
 
 #include <chrono>
+#include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <memory>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <thread>
 
 namespace radex {
-namespace detail {
-
-BytesBuffer::BytesBuffer(BytesBuffer &&other) noexcept
-    : data{std::move(other.data)}, length{other.length} {
-    other.length = 0;
-};
-
-BytesBuffer &BytesBuffer::operator=(BytesBuffer &&other) noexcept {
-    if (this != &other) {
-        length = other.length;
-        data = other.release();
-    }
-    return *this;
-}
-
-std::unique_ptr<std::uint8_t[]> BytesBuffer::release() noexcept {
-    length = 0;
-    return std::move(data);
-}
-
-MetaData MetaData::from_buffer(BytesBuffer buffer) {
-    MetaData meta{std::move(buffer)};
-    MetaInt expected_size =
-        (meta.n_dims() + Index::END_OF_HEADER) * sizeof(MetaInt);
-    if (meta.size() != expected_size) {
-        throw radex::MetadataError("Malformed item metadata buffer received");
-    }
-    return meta;
-}
-
-MetaData MetaData::make_buffer(const radex::data::DType dtype,
-                               const MetaInt *dims, MetaInt n_dims) {
-    MetaInt n_bytes = (n_dims + Index::END_OF_HEADER) * sizeof(MetaInt);
-    auto bytes = std::make_unique<std::uint8_t[]>(n_bytes);
-
-    auto buf = static_cast<MetaInt *>(static_cast<void *>(bytes.get()));
-    buf[Index::TYPE] = static_cast<MetaInt>(dtype);
-    buf[Index::N_DIMS] = n_dims;
-    std::memcpy(buf + Index::END_OF_HEADER, dims, n_dims * sizeof(*dims));
-
-    return {BytesBuffer{std::move(bytes), n_bytes}};
-}
-
-} // namespace detail
 
 detail::BytesBuffer IClient::wait_for_bytes(std::string_view key,
                                             std::chrono::milliseconds timeout) {

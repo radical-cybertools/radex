@@ -1,10 +1,17 @@
 #include "radex/smartredis.hpp"
+#include "radex/client_base.hpp"
 #include "radex/constants.hpp"
+#include "radex/detail/bytes_buffer.hpp"
+#include "radex/detail/types.hpp"
 
+#include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <utility>
 
 #ifdef RADEX_HAS_SMARTREDIS
 #include <configoptions.h>
