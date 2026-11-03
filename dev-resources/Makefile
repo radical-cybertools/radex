@@ -10,11 +10,14 @@ HEADER_FILES = $(shell find $(DIRS) \
 
 CPP_SRC = $(shell find $(DIRS) \
     -path '$(ROOT)/../src/python/build/*' -prune \
-    -name '*.cpp' -o -name '*.cc')
+    -o -path '$(ROOT)/../tests/cpp/build/*' -prune \
+	-o -name '*.cpp' -print \
+	-o -name '*.cc' -print)
 
 C_SRC = $(shell find $(DIRS) \
     -path '$(ROOT)/../src/python/build/*' -prune \
-    -name '*.c')
+    -o -path '$(ROOT)/../tests/cpp/build/*' -prune \
+    -o -name '*.c' -print)
 
 PYTEST_ARGS ?=
 PYTHON ?= python3
