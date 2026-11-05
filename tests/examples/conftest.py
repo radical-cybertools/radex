@@ -169,7 +169,9 @@ class DragonExample(Example):
         for example in [
             LocalExample(EXAMPLES_DIR / "cpp-exchange/in-mem"),
             LocalExample(EXAMPLES_DIR / "cpp-exchange/redis"),
+            LocalExample(EXAMPLES_DIR / "multi-rank/redis"),
             DragonExample(EXAMPLES_DIR / "cpp-exchange/dragon", num_nodes=None),
+            DragonExample(EXAMPLES_DIR / "multi-rank/dragon", num_nodes=None),
             DragonExample(
                 EXAMPLES_DIR / "py-cpp-exchange/dragon",
                 num_nodes=None,

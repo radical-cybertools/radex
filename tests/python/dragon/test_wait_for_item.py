@@ -3,6 +3,7 @@ import os
 import sys
 import time
 
+import numpy as np
 import pytest
 
 from radex.clients.core import DragonClient
@@ -149,6 +150,55 @@ def test_put_and_wait_for_scalar(
     assert random_np_value == ret_val
 
 
+def test_put_and_gather_scalars(
+    ddict,
+    client,
+    np_dtype,
+    random_np_value,
+    wait_time_delay,
+    is_acceptable_wait_for_item_time,
+):
+    process = pytest.importorskip("dragon.native.process")
+
+    keys_and_values = [(f"iota-key-{i}", np_dtype(i)) for i in range(3)] + [
+        ("rand-val", random_np_value)
+    ]
+    assert not any(client.contains(key) for key, _ in keys_and_values)
+
+    def put_key_after(dd, key, value, delay):
+        start_t = time.perf_counter()
+        client = DragonClient(descriptor=dd, timeout=1)
+        time.sleep(max(delay - (time.perf_counter() - start_t), 0))
+        client.put_scalar(OutgoingHandle(key), value)
+
+    procs = [
+        process.Process(
+            target=put_key_after,
+            args=(ddict.serialize(), *key_and_val, wait_time_delay),
+        )
+        for key_and_val in keys_and_values
+    ]
+
+    try:
+        for proc in procs:
+            proc.start()
+        with is_acceptable_wait_for_item_time(wait_time_delay):
+            ret_val = client.gather_scalars(
+                [IncomingHandle(key) for key, _ in keys_and_values], timeout=10
+            )
+    finally:
+        for proc in procs:
+            proc.join()
+
+    assert isinstance(ret_val, list)
+    assert all(np_dtype == val.dtype == random_np_value.dtype for val in ret_val)
+    assert len(ret_val) == len(keys_and_values)
+    assert all(
+        r_val == x_val
+        for r_val, x_val in zip(ret_val, (val for _, val in keys_and_values))
+    )
+
+
 def test_put_and_wait_for_tensor(
     ddict,
     client,
@@ -181,6 +231,58 @@ def test_put_and_wait_for_tensor(
 
     assert random_np_tensor.dtype == ret_val.dtype == np_dtype
     assert (random_np_tensor == ret_val).all()
+
+
+def test_put_and_gather_tensors(
+    ddict,
+    client,
+    np_dtype,
+    random_np_value,
+    random_np_tensor,
+    wait_time_delay,
+    is_acceptable_wait_for_item_time,
+):
+    process = pytest.importorskip("dragon.native.process")
+
+    keys_and_values = [
+        ("iota-tensor", np.arange(0, 10, dtype=np_dtype)),
+        ("full-tensor", np.full((7, 2), random_np_value)),
+        ("rand-tensor", random_np_tensor),
+    ]
+    assert not any(client.contains(key) for key, _ in keys_and_values)
+
+    def put_key_after(dd, key, value, delay):
+        start_t = time.perf_counter()
+        client = DragonClient(descriptor=dd, timeout=1)
+        time.sleep(max(delay - (time.perf_counter() - start_t), 0))
+        client.put_tensor(OutgoingHandle(key), value)
+
+    procs = [
+        process.Process(
+            target=put_key_after,
+            args=(ddict.serialize(), *key_and_val, wait_time_delay),
+        )
+        for key_and_val in keys_and_values
+    ]
+
+    try:
+        for proc in procs:
+            proc.start()
+        with is_acceptable_wait_for_item_time(wait_time_delay):
+            ret_val = client.gather_tensors(
+                [IncomingHandle(key) for key, _ in keys_and_values], timeout=10
+            )
+    finally:
+        for proc in procs:
+            proc.join()
+
+    assert isinstance(ret_val, list)
+    assert all(np_dtype == val.dtype == random_np_value.dtype for val in ret_val)
+    assert len(ret_val) == len(keys_and_values)
+    assert all(
+        (r_val.shape == x_val.shape) and ((r_val == x_val).all())
+        for r_val, x_val in zip(ret_val, (val for _, val in keys_and_values))
+    )
 
 
 def test_put_and_wait_for_picklable(

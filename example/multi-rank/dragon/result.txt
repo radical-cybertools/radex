@@ -1,0 +1,20 @@
+Producer rank set a scalar and tensor in the ddict
+Producer rank set a scalar and tensor in the ddict
+Producer rank set a scalar and tensor in the ddict
+Producer rank set a scalar and tensor in the ddict
+Consumer gathered scalars: [ 4, 8, 12, 16, ]
+Consumer gathered tensors:
+  |-- Part:
+  |   |-- Data: [ 0, 1, 2, 3, ]
+  |   \-- Dims: [ 4, ]
+  |-- Part:
+  |   |-- Data: [ 4, 5, 6, 7, ]
+  |   \-- Dims: [ 4, ]
+  |-- Part:
+  |   |-- Data: [ 8, 9, 10, 11, ]
+  |   \-- Dims: [ 4, ]
+  |-- Part:
+  |   |-- Data: [ 12, 13, 14, 15, ]
+  |   \-- Dims: [ 4, ]
+
++++ head proc exited, code 0

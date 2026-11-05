@@ -10,11 +10,14 @@
 #include "radex/handles.hpp"
 #include "radex/tensor.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+// #include <future>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -64,6 +67,9 @@ class IClient {
     std::unique_ptr<detail::ItemInfo>
     wait_for_item_info_ptr(const data::IncomingHandle &handle,
                            std::chrono::milliseconds timeout);
+    std::vector<std::unique_ptr<detail::ItemInfo>>
+    gather_item_info_ptrs(const std::vector<data::IncomingHandle> &handles,
+                          std::chrono::milliseconds timeout);
 
     /// Delete a typed value and its associated metadata.
     void delete_item(const data::OutgoingHandle &handle);
@@ -84,7 +90,7 @@ class IClient {
     ///     type does not match `T`.
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, T>::type
-    get_scalar(const data::IncomingHandle handle) {
+    get_scalar(const data::IncomingHandle &handle) {
         const auto fetch =
             std::bind(&IClient::get_bytes, this, std::placeholders::_1);
         const auto info = get_item_info(fetch, handle);
@@ -95,12 +101,46 @@ class IClient {
     /// @param timeout Maximum time to wait for the value to appear.
     template <typename T>
     typename std::enable_if<data::is_supported_type<T>::value, T>::type
-    wait_for_scalar(const data::IncomingHandle handle,
+    wait_for_scalar(const data::IncomingHandle &handle,
                     std::chrono::milliseconds timeout) {
         const auto fetch = std::bind(&IClient::wait_for_bytes, this,
                                      std::placeholders::_1, timeout);
         const auto info = get_item_info(fetch, handle);
         return assemble_scalar<T>(info);
+    }
+
+    /// Block until a collection of scalar values are available under `handles`
+    /// and return it. Returned values correspond to the order of the handles.
+    /// @param timeout Maximum time to wait for the value to appear.
+    template <typename T>
+    typename std::enable_if<data::is_supported_type<T>::value,
+                            std::vector<T>>::type
+    gather_scalars(const std::vector<data::IncomingHandle> &handles,
+                   std::chrono::milliseconds timeout) {
+        auto handle_to_future_scalar =
+            [this, timeout](const data::IncomingHandle &handle) {
+                // return std::async(std::launch::async,
+                //                   &IClient::wait_for_scalar<T>,
+                //                   this, handle, timeout);
+                return wait_for_scalar<T>(handle, timeout);
+            };
+
+        // TODO: This should be made parallel when it does not break dragon
+        // std::vector<std::future<T>> futures;
+        std::vector<T> futures;
+        futures.reserve(handles.size());
+        std::transform(handles.begin(), handles.end(),
+                       std::back_inserter(futures), handle_to_future_scalar);
+
+        std::vector<T> scalars;
+        scalars.reserve(futures.size());
+        std::transform(std::make_move_iterator(futures.begin()),
+                       std::make_move_iterator(futures.end()),
+                       std::back_inserter(scalars),
+                       // [](std::future<T> f) { return f.get(); });
+                       [](T f) { return f; });
+
+        return scalars;
     }
 
     /// Store a tensor under `handle`.
@@ -152,6 +192,41 @@ class IClient {
                                      std::placeholders::_1, timeout);
         const auto info = get_item_info(fetch, handle);
         return assemble_tensor<T>(info);
+    }
+
+    /// Block until a collection of tensor values are available under `handles`
+    /// and return it. Returned values correspond to the order of the handles.
+    /// @param timeout Maximum time to wait for the value to appear.
+    template <typename T>
+    typename std::enable_if<data::is_supported_type<T>::value,
+                            std::vector<TensorInfo<T>>>::type
+    gather_tensors(const std::vector<data::IncomingHandle> &handles,
+                   std::chrono::milliseconds timeout) {
+        auto handle_to_future_tensor =
+            [this, timeout](const data::IncomingHandle &handle) {
+                // return std::async(std::launch::async,
+                //                   &IClient::wait_for_tensor<T>,
+                //                   this, handle, timeout);
+
+                return wait_for_tensor<T>(handle, timeout);
+            };
+
+        // TODO: This should be made parallel when it does not break dragon
+        // std::vector<std::future<TensorInfo<T>>> futures;
+        std::vector<TensorInfo<T>> futures;
+        futures.reserve(handles.size());
+        std::transform(handles.begin(), handles.end(),
+                       std::back_inserter(futures), handle_to_future_tensor);
+
+        std::vector<TensorInfo<T>> tensors;
+        tensors.reserve(futures.size());
+        std::transform(std::make_move_iterator(futures.begin()),
+                       std::make_move_iterator(futures.end()),
+                       std::back_inserter(tensors),
+                       // [](std::future<TensorInfo<T>> f) { return f.get(); });
+                       [](TensorInfo<T> f) { return f; });
+
+        return tensors;
     }
 
   private:
