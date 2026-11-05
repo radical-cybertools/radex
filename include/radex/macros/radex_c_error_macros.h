@@ -6,7 +6,6 @@
 
 #ifdef __cplusplus
 #include "radex/exceptions.hpp"
-#include <new>
 #endif
 
 /// Log error to stderr and return the error code

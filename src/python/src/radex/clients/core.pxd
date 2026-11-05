@@ -17,7 +17,7 @@ from radex.utils.libcpp_chrono cimport milliseconds
 
 np.import_array()
 
-cdef extern from "radex/client.hpp" namespace "radex":
+cdef extern from "radex/client_base.hpp" namespace "radex":
     cdef cppclass IClient:
         # >>> Start Virtual Methods >>>
         bint contains(string_view) except +raise_py_error

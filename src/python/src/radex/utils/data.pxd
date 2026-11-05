@@ -14,26 +14,32 @@ ctypedef fused SupportedType:
     double
 
 
-cdef extern from "radex/client.hpp" namespace "radex::detail":
+cdef extern from "radex/detail/types.hpp" namespace "radex::detail":
     ctypedef size_t MetaInt
 
+
+cdef extern from "radex/detail/bytes_buffer.hpp" namespace "radex::detail":
     cdef cppclass BytesBuffer:
         const void* get_ptr() except +
         size_t get_length() except +
         unique_ptr[np.uint8_t[]] release() except +
 
+
+cdef extern from "radex/detail/metadata.hpp" namespace "radex::detail":
     cdef cppclass MetaData:
         size_t n_dims() except +
         const size_t *dims_ptr() except +
         size_t n_elements() except +
         DType type() except +
 
+
+cdef extern from "radex/detail/item_info.hpp" namespace "radex::detail":
     cdef cppclass ItemInfo:
         const MetaData &metadata() except +
         const void *data() except +
 
 
-cdef extern from "radex/client.hpp" namespace "radex::data":
+cdef extern from "radex/data.hpp" namespace "radex::data":
     cdef enum class DType(MetaInt):
         INT32,
         INT64,

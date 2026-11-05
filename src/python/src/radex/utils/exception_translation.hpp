@@ -1,12 +1,11 @@
 #ifndef __RADEX_PY_EXCEPTION_TRANSLATION_HPP__
 #define __RADEX_PY_EXCEPTION_TRANSLATION_HPP__
 
+#include "radex/exceptions.hpp"
+
 #include <Python.h>
 
-#include <new>
 #include <stdexcept>
-
-#include "radex/exceptions.hpp"
 
 namespace radex_py {
 

@@ -3,11 +3,15 @@
 
 #include "radex/build_config.hpp"
 #include "radex/client_base.hpp"
+#include "radex/detail/bytes_buffer.hpp"
+#include "radex/detail/types.hpp"
 
 #ifdef RADEX_HAS_DRAGON
 #include <dragon/dictionary.hpp>
 #include <dragon/serializable.hpp>
 #endif
+
+#include <chrono>
 #include <ctime>
 #include <string_view>
 

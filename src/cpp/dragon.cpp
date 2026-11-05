@@ -1,10 +1,18 @@
 #include "radex/dragon.hpp"
 #include "radex/constants.hpp"
+#include "radex/detail/bytes_buffer.hpp"
+#include "radex/detail/types.hpp"
+#include "radex/exceptions.hpp"
 
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
+#include <ctime>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 #include <utility>
 
 #ifdef RADEX_HAS_DRAGON
