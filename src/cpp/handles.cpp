@@ -1,9 +1,9 @@
 #include "radex/handles.hpp"
+#include "radex/errno.h"
 #include "radex/handles_c.h"
 #include "radex/macros/radex_c_error_macros.h"
 
 #include <cstring>
-#include <new>
 #include <sstream>
 #include <string>
 

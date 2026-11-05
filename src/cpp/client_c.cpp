@@ -2,13 +2,17 @@
 #include "radex/client_base.hpp"
 #include "radex/dragon.hpp"
 #include "radex/errno.h"
+#include "radex/exceptions.hpp"
+#include "radex/handles.hpp"
 #include "radex/handles_c.h"
 #include "radex/macros/client_c_implementation_macros.hpp"
 #include "radex/macros/radex_c_error_macros.h"
 #include "radex/smartredis.hpp"
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
 
 extern "C" {
 
@@ -18,10 +22,10 @@ radex_client_t radex_client_dragon_create(void) {
         return static_cast<void *>(client);
     } catch (const radex::BackendUnavailableError &) {
         fprintf(stderr, "RaDex Error: RADEX_ERR_BACKEND_UNAVAILABLE\n");
-        abort();
+        std::abort();
     } catch (const std::exception &) {
         fprintf(stderr, "RaDex Error: RADEX_ERR_UNKNOWN\n");
-        abort();
+        std::abort();
     }
 }
 
@@ -31,10 +35,10 @@ radex_client_t radex_client_smartredis_create(void) {
         return static_cast<void *>(client);
     } catch (const radex::BackendUnavailableError &) {
         fprintf(stderr, "RaDex Error: RADEX_ERR_BACKEND_UNAVAILABLE\n");
-        abort();
+        std::abort();
     } catch (const std::exception &) {
         fprintf(stderr, "RaDex Error: RADEX_ERR_UNKNOWN\n");
-        abort();
+        std::abort();
     }
 }
 
