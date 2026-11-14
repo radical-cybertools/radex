@@ -12,15 +12,21 @@
 
 #include <chrono>
 #include <memory>
+#include <mutex>
 #include <string_view>
 
 namespace radex::redis::smartredis {
 
 #ifdef RADEX_HAS_SMARTREDIS
 /// RaDex client backed by a SmartRedis (Redis) connection.
+///
+/// Thread contract: like the Dragon client, a client runs one call at a time,
+/// whichever threads make the calls; its mutex serializes them. The Python
+/// bindings release the GIL during calls, which used to serialize them.
 class Client : public IClient {
   private:
     SmartRedis::Client client;
+    std::unique_ptr<std::mutex> mutex = std::make_unique<std::mutex>();
     Client(std::unique_ptr<SmartRedis::ConfigOptions> options,
            std::string_view logger_name);
 

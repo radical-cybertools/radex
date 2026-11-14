@@ -8,7 +8,7 @@ from libcpp.string cimport string
 from radex.clients.core cimport IClient
 from radex.clients.dragon cimport Client as _CXXDragonClient
 from radex.clients.redis cimport Client as _CXXSRClient
-from radex.handles.handles cimport IncomingHandle, OutgoingHandle
+from radex.handles.handles cimport CXXOutgoingHandle, IncomingHandle, OutgoingHandle
 from radex.utils.data cimport (
     BytesBuffer,
     DType,
@@ -51,7 +51,11 @@ cdef class PyClient:
         Returns:
             bool: True if the key exists, False otherwise.
         """
-        return self._client.contains(encode_str(key).c_str())
+        cdef string key_ = encode_str(key)
+        cdef bint found
+        with nogil:
+            found = self._client.contains(key_.c_str())
+        return found
 
     def put_scalar(self, OutgoingHandle handle, object value not None):
         """Store a scalar value under the given handle.
@@ -71,7 +75,9 @@ cdef class PyClient:
 
     def delete_item(self, OutgoingHandle handle):
         """Delete a typed value and its associated metadata."""
-        self._client.delete_item(handle.unwrap()[0])
+        cdef CXXOutgoingHandle* h = handle.unwrap()
+        with nogil:
+            self._client.delete_item(h[0])
 
     def _put_scalar(self, OutgoingHandle handle, np.number value not None):
         # FIXME: Get rid of this ugly swith statment. Ideally we could used the
@@ -176,11 +182,14 @@ cdef class PyClient:
         cdef bytes bytes_ = cloudpickle.dumps(picklable)
         cdef void* ptr = <void*><char*>bytes_
         cdef size_t len_ = len(bytes_)
-        self._client.put_bytes(key_.c_str(), ptr, len_)
+        with nogil:
+            self._client.put_bytes(key_.c_str(), ptr, len_)
 
     def get_picklable(self, str key):
         cdef string key_ = encode_str(key)
-        cdef BytesBuffer buf = self._client.get_bytes(key_.c_str())
+        cdef BytesBuffer buf
+        with nogil:
+            buf = self._client.get_bytes(key_.c_str())
 
         cdef size_t len_ = buf.get_length()
         cdef np.uint8_t *ptr = <np.uint8_t*>buf.get_ptr()
@@ -191,7 +200,9 @@ cdef class PyClient:
     def wait_for_picklable(self, str key, float timeout):
         cdef string key_ = encode_str(key)
         cdef milliseconds timeout_ = milliseconds(<int64_t>(timeout * 1000))
-        cdef BytesBuffer buf = self._client.wait_for_bytes(key_.c_str(), timeout_)
+        cdef BytesBuffer buf
+        with nogil:
+            buf = self._client.wait_for_bytes(key_.c_str(), timeout_)
 
         cdef size_t len_ = buf.get_length()
         cdef np.uint8_t *ptr = <np.uint8_t*>buf.get_ptr()
@@ -208,12 +219,19 @@ cdef class DragonClient(PyClient):
             to. If omitted (along with `timeout`), the descriptor and
             timeout are instead read from the environment.
         timeout (int | None): Timeout, in seconds, for attaching to the
-            DDict. Must be set together with `descriptor`, or omitted
-            together with it.
+            DDict and for each Dragon operation within a call. Must be set
+            together with `descriptor`, or omitted together with it.
 
     Raises:
         ValueError: If exactly one of `descriptor`/`timeout` is set, or
             if `descriptor` is empty or `timeout` is negative.
+
+    Threads may share a client: it runs one call at a time, and the calls
+    that move bytes (`contains`, `put_picklable`, `get_picklable`,
+    `wait_for_picklable` and `delete_item`) release the GIL while they wait
+    for Dragon. Threads that should not wait for each other's calls need a
+    client each. A call that fails raises a RaDex error and leaves the client
+    usable.
     """
     def __cinit__(
         self, descriptor: str | None = None, timeout: int | None = None
