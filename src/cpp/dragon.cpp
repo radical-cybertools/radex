@@ -74,7 +74,10 @@ bool Client::contains(std::string_view key) {
 
 void Client::delete_key(std::string_view key) {
     dragon::SerializableString key_{std::string{key}};
-    ddict.erase(key_);
+    // `erase` is a pop: it returns the deleted value in a buffer that Dragon
+    // allocates with `malloc` and leaves to the caller to free.
+    SerializableByteBuffer value = ddict.erase(key_);
+    std::free(value.getPtr());
 }
 
 void Client::put_bytes(std::string_view key, const void *bytes,
