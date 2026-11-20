@@ -10,6 +10,7 @@
 #include <ctime>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -21,6 +22,22 @@
 namespace {
 
 using DDict = dragon::DDict<dragon::Serializable, dragon::Serializable>;
+
+/// Dragon 0.15.0 creates a process's map of requests on its first request,
+/// without a lock, so two threads must not make their first requests at once.
+/// The first client makes one while it is created, under this lock, before
+/// any client's calls can run.
+std::mutex first_request_mutex;
+bool first_request_made = false; // guarded by first_request_mutex
+
+void _make_first_request(DDict &ddict) {
+    std::lock_guard<std::mutex> lock{first_request_mutex};
+    if (!first_request_made) {
+        dragon::SerializableString key{std::string{"radex::first-request"}};
+        ddict.contains(key);
+        first_request_made = true;
+    }
+}
 
 void _validate_ddict(DDict &ddict_ref) {
 
@@ -55,24 +72,31 @@ namespace radex::drg::ddict {
 
 // For now, the validation happens after teh ddict because of a weird problem
 // which seems to originate from copy/move semantics with Dragon DDict.
-Client::Client() : ddict{_ddict_from_radex_env()} { _validate_ddict(ddict); }
+Client::Client() : ddict{_ddict_from_radex_env()} {
+    _validate_ddict(ddict);
+    _make_first_request(ddict);
+}
 
 Client::Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict)
     : ddict{ddict} {
     _validate_ddict(this->ddict);
+    _make_first_request(this->ddict);
 }
 
 Client::Client(const char *descriptor, const timespec *timeout)
     : ddict{descriptor, timeout} {
     _validate_ddict(ddict);
+    _make_first_request(ddict);
 }
 
 bool Client::contains(std::string_view key) {
+    std::lock_guard<std::recursive_mutex> lock{*mutex};
     dragon::SerializableString key_(std::string{key});
     return ddict.contains(key_);
 }
 
 void Client::delete_key(std::string_view key) {
+    std::lock_guard<std::recursive_mutex> lock{*mutex};
     dragon::SerializableString key_{std::string{key}};
     // `erase` is a pop: it returns the deleted value in a buffer that Dragon
     // allocates with `malloc` and leaves to the caller to free.
@@ -88,11 +112,13 @@ void Client::put_bytes(std::string_view key, const void *bytes,
     SerializableString key_{std::string{key}};
     SerializableByteBuffer buf{length, ptr};
 
+    std::lock_guard<std::recursive_mutex> lock{*mutex};
     ddict[key_] = buf;
 }
 
 detail::BytesBuffer Client::wait_for_bytes(std::string_view key,
                                            std::chrono::milliseconds timeout) {
+    std::lock_guard<std::recursive_mutex> lock{*mutex};
     // TODO: Implement this when Dragon supports command-level timeout
     if (!dormant_timeout_warning_triggered) {
         std::cerr << "The timeout for individual get commands has not been "
@@ -113,6 +139,7 @@ detail::BytesBuffer Client::wait_for_bytes(std::string_view key,
 }
 
 radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
+    std::lock_guard<std::recursive_mutex> lock{*mutex};
     const std::chrono::milliseconds fast_timeout{1};
     // TODO: Check if/when Dragon can support bypassing wait for keys
     if (!contains(key)) {
