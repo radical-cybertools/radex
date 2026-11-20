@@ -13,8 +13,6 @@
 
 #include <chrono>
 #include <ctime>
-#include <memory>
-#include <mutex>
 #include <string_view>
 
 namespace radex::drg::ddict {
@@ -22,17 +20,15 @@ namespace radex::drg::ddict {
 #ifdef RADEX_HAS_DRAGON
 /// RaDex client backed by a Dragon Distributed Dictionary (DDict).
 ///
-/// Thread contract: a client runs one call at a time, whichever threads make
-/// the calls; its mutex serializes them. Dragon keeps the state of an
-/// attachment (request tags, manager connections, response channels) without
-/// a lock, so two calls must not use one attachment at once. Calls on
-/// different clients run concurrently.
+/// Thread contract: the Dragon clients of a process make one Dragon call at a
+/// time, whichever threads make the calls; a lock shared by all of them
+/// serializes the calls. Dragon 0.15.0 keys every request in flight in one map
+/// per process, by a field that its C++ DDict leaves uninitialized, so two
+/// requests in flight at once, from one client or several, can get the same
+/// key, and the second one fails.
 class Client : public IClient {
   private:
     dragon::DDict<dragon::Serializable, dragon::Serializable> ddict;
-    /// Recursive: `get_bytes` holds it across its `contains` and its get.
-    std::unique_ptr<std::recursive_mutex> mutex =
-        std::make_unique<std::recursive_mutex>();
 
     Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict);
 

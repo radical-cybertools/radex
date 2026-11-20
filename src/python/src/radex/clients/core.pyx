@@ -233,10 +233,10 @@ cdef class DragonClient(PyClient):
         ValueError: If exactly one of `descriptor`/`timeout` is set, or
             if `descriptor` is empty or `timeout` is negative.
 
-    Threads may share a client: it runs one call at a time, and a call holds
-    the client until it returns. Threads that should not wait for each
-    other's calls, such as a `wait_for_picklable` that blocks until its key
-    appears, need a client each.
+    Threads may share a client or use one each. Either way, a process makes
+    one Dragon call at a time: a call holds up the process's other Dragon
+    calls until it returns, as a `wait_for_picklable` does while it waits for
+    its key.
     """
     def __cinit__(
         self, descriptor: str | None = None, timeout: int | None = None

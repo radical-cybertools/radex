@@ -1,8 +1,8 @@
 """The Dragon client's thread contract, as `radex/dragon.hpp` states it.
 
-A client runs one call at a time, whichever threads make the calls; calls on
-different clients run at once. The calls that move bytes release the GIL, so
-a thread waiting on Dragon does not stop the other threads.
+A process makes one Dragon call at a time, whichever clients and threads make
+the calls. The calls that move bytes release the GIL, so a thread waiting on
+Dragon does not stop the other threads.
 
 No test here makes a call fail. With Dragon 0.15.0, a request that fails
 stays in Dragon's request map, and later calls from the same thread, or from
@@ -75,21 +75,30 @@ def test_threads_with_their_own_clients(ddict):
 
 
 def test_a_waiting_call_lets_other_threads_run(ddict):
+    process = pytest.importorskip("dragon.native.process")
     descriptor = ddict.serialize()
     waiter = DragonClient(descriptor=descriptor, timeout=TIMEOUT)
-    writer = DragonClient(descriptor=descriptor, timeout=TIMEOUT)
     got = []
+
+    def put_after(dd, key, value, delay):
+        start = time.perf_counter()
+        client = DragonClient(descriptor=dd, timeout=TIMEOUT)
+        time.sleep(max(delay - (time.perf_counter() - start), 0))
+        client.put_picklable(key, value)
 
     def wait():
         got.append(waiter.wait_for_picklable("late", TIMEOUT))
 
-    start = time.perf_counter()
+    # The writer is another process: this one makes one Dragon call at a time.
+    writer = process.Process(target=put_after, args=(descriptor, "late", b"value", 1))
+    writer.start()
     thread = threading.Thread(target=wait)
     thread.start()
-    time.sleep(0.5)  # the waiter is now blocked in Dragon, waiting for "late"
-    writer.put_picklable("late", b"value")
-    thread.join(TIMEOUT)
-    # Holding the GIL, the waiter would stop this thread until its wait timed
-    # out, and the value would come too late.
-    assert time.perf_counter() - start < TIMEOUT / 2
+    ticks = 0
+    while thread.is_alive():  # holding the GIL, the waiter would stop this loop
+        time.sleep(0.01)
+        ticks += 1
+    thread.join()
+    writer.join()
     assert got == [b"value"]
+    assert ticks >= 20
