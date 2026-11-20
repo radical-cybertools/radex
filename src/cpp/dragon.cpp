@@ -10,6 +10,7 @@
 #include <ctime>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -21,6 +22,12 @@
 namespace {
 
 using DDict = dragon::DDict<dragon::Serializable, dragon::Serializable>;
+
+/// One Dragon call at a time per process, from any client: see the thread
+/// contract in `radex/dragon.hpp`. Recursive because `get_bytes` holds it
+/// across its `contains` and its get. Attaching makes no request, so the
+/// constructors do not take it.
+std::recursive_mutex dragon_calls;
 
 void _validate_ddict(DDict &ddict_ref) {
 
@@ -68,11 +75,13 @@ Client::Client(const char *descriptor, const timespec *timeout)
 }
 
 bool Client::contains(std::string_view key) {
+    std::lock_guard<std::recursive_mutex> lock{dragon_calls};
     dragon::SerializableString key_(std::string{key});
     return ddict.contains(key_);
 }
 
 void Client::delete_key(std::string_view key) {
+    std::lock_guard<std::recursive_mutex> lock{dragon_calls};
     dragon::SerializableString key_{std::string{key}};
     // `erase` is a pop: it returns the deleted value in a buffer that Dragon
     // allocates with `malloc` and leaves to the caller to free.
@@ -88,11 +97,13 @@ void Client::put_bytes(std::string_view key, const void *bytes,
     SerializableString key_{std::string{key}};
     SerializableByteBuffer buf{length, ptr};
 
+    std::lock_guard<std::recursive_mutex> lock{dragon_calls};
     ddict[key_] = buf;
 }
 
 detail::BytesBuffer Client::wait_for_bytes(std::string_view key,
                                            std::chrono::milliseconds timeout) {
+    std::lock_guard<std::recursive_mutex> lock{dragon_calls};
     // TODO: Implement this when Dragon supports command-level timeout
     if (!dormant_timeout_warning_triggered) {
         std::cerr << "The timeout for individual get commands has not been "
@@ -113,6 +124,7 @@ detail::BytesBuffer Client::wait_for_bytes(std::string_view key,
 }
 
 radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
+    std::lock_guard<std::recursive_mutex> lock{dragon_calls};
     const std::chrono::milliseconds fast_timeout{1};
     // TODO: Check if/when Dragon can support bypassing wait for keys
     if (!contains(key)) {

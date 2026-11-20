@@ -19,10 +19,10 @@ np.import_array()
 cdef extern from "radex/client_base.hpp" namespace "radex":
     cdef cppclass IClient:
         # >>> Start Virtual Methods >>>
-        bint contains(string_view) except +raise_py_error
-        void put_bytes(string_view, const void*, size_t) except +raise_py_error
-        BytesBuffer get_bytes(string_view) except +raise_py_error
-        BytesBuffer wait_for_bytes(string_view, milliseconds) except +raise_py_error
+        bint contains(string_view) nogil except +raise_py_error
+        void put_bytes(string_view, const void*, size_t) nogil except +raise_py_error
+        BytesBuffer get_bytes(string_view) nogil except +raise_py_error
+        BytesBuffer wait_for_bytes(string_view, milliseconds) nogil except +raise_py_error
         void delete_key(string_view) except +
         # <<< End Virtual Methods <<<
 
@@ -34,4 +34,4 @@ cdef extern from "radex/client_base.hpp" namespace "radex":
         unique_ptr[ItemInfo] get_item_info_ptr(const IncomingHandle&) except +raise_py_error
         unique_ptr[ItemInfo] wait_for_item_info_ptr(
                 const IncomingHandle&, milliseconds) except +raise_py_error
-        void delete_item(const OutgoingHandle&) except +raise_py_error
+        void delete_item(const OutgoingHandle&) nogil except +raise_py_error

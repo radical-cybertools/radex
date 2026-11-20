@@ -19,6 +19,13 @@ namespace radex::drg::ddict {
 
 #ifdef RADEX_HAS_DRAGON
 /// RaDex client backed by a Dragon Distributed Dictionary (DDict).
+///
+/// Thread contract: the Dragon clients of a process make one Dragon call at a
+/// time, whichever threads make the calls; a lock shared by all of them
+/// serializes the calls. Dragon 0.15.0 keys every request in flight in one map
+/// per process, by a field that its C++ DDict leaves uninitialized, so two
+/// requests in flight at once, from one client or several, can get the same
+/// key, and the second one fails.
 class Client : public IClient {
   private:
     dragon::DDict<dragon::Serializable, dragon::Serializable> ddict;
