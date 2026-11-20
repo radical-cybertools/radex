@@ -7,23 +7,50 @@
 #include "radex/detail/types.hpp"
 
 #ifdef RADEX_HAS_DRAGON
-#include <dragon/dictionary.hpp>
-#include <dragon/serializable.hpp>
+#include <dragon/ddict.h>
 #endif
 
 #include <chrono>
 #include <ctime>
+#include <memory>
+#include <mutex>
 #include <string_view>
 
 namespace radex::drg::ddict {
 
 #ifdef RADEX_HAS_DRAGON
 /// RaDex client backed by a Dragon Distributed Dictionary (DDict).
+///
+/// Thread contract. A client attaches to the dictionary once and owns that
+/// attachment. Dragon keeps per-attachment state (request tags, manager
+/// connections, response channels) that two calls must not use at once, so
+/// a client runs one call at a time, whichever threads make the calls: calls
+/// on one client from several threads are serialized by the client's mutex.
+/// Calls on different clients run concurrently, so a thread that should not
+/// wait for other threads' calls needs a client of its own. Attaching is
+/// serialized process-wide.
+///
+/// Every call makes its own Dragon requests, gives each one a key that no
+/// other request in the process uses, and finalizes a request that failed
+/// before raising. Dragon 0.15.0 keys its process-wide request map by a
+/// descriptor that its own C++ API leaves uninitialized, so a request that
+/// failed stayed in the map and failed every later request that happened to
+/// reuse its key.
 class Client : public IClient {
   private:
-    dragon::DDict<dragon::Serializable, dragon::Serializable> ddict;
+    dragonDDictDescr_t ddict{};
+    timespec timeout_value{};
+    bool has_timeout = false;
+    std::unique_ptr<std::mutex> mutex = std::make_unique<std::mutex>();
 
-    Client(dragon::DDict<dragon::Serializable, dragon::Serializable> ddict);
+    /// Dragon's timeout for each operation; null means none.
+    const timespec *timeout() const {
+        return has_timeout ? &timeout_value : nullptr;
+    }
+
+    void attach(const char *descriptor, const timespec *timeout);
+    bool contains_unlocked(std::string_view key);
+    detail::BytesBuffer get_unlocked(std::string_view key);
 
     void delete_key(std::string_view key) override;
 
@@ -33,7 +60,8 @@ class Client : public IClient {
     /// Attach using a descriptor/timeout read from the environment.
     Client();
     /// @param descriptor A serialized DDict descriptor to attach to.
-    /// @param timeout Timeout for attaching to the DDict.
+    /// @param timeout Timeout for attaching to the DDict, and for each of
+    ///     Dragon's operations within a call.
     Client(const char *descriptor, const timespec *timeout);
 
     Client(const Client &other) = delete;

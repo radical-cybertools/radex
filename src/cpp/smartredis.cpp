@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -67,19 +68,23 @@ Client::Client(std::string_view logger_name)
     : client{std::string{logger_name}} {}
 
 bool Client::contains(std::string_view key) {
+    std::lock_guard<std::mutex> lock{*mutex};
     return client.key_exists(std::string{key});
 }
 
 void Client::delete_key(std::string_view key) {
+    std::lock_guard<std::mutex> lock{*mutex};
     client.delete_bytes(std::string{key});
 }
 
 void Client::put_bytes(std::string_view key, const void *bytes,
                        detail::MetaInt length) {
+    std::lock_guard<std::mutex> lock{*mutex};
     client.put_bytes(std::string{key}, bytes, length);
 }
 
 radex::detail::BytesBuffer Client::get_bytes(std::string_view key) {
+    std::lock_guard<std::mutex> lock{*mutex};
     void *out_buf = nullptr;
     detail::MetaInt out_n_bytes = 0;
     client.get_bytes(std::string{key}, out_buf, out_n_bytes);
